@@ -12,6 +12,9 @@ class CycleEntries extends Table {
   /// 1=spotting 2=light 3=heavy 4=very heavy
   IntColumn get flowIntensity => integer().nullable()();
 
+  /// 1=very sad … 5=very happy
+  IntColumn get mood => integer().nullable()();
+
   /// Encrypted via EncryptionService.
   TextColumn get notes => text().nullable()();
 

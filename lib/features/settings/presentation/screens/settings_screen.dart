@@ -1,8 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:luna/core/constants/app_constants.dart';
 import 'package:luna/features/subscription/presentation/providers/subscription_providers.dart';
+import 'package:luna/shared/providers/core_providers.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -68,9 +70,44 @@ class SettingsScreen extends ConsumerWidget {
             title: 'Privacy policy',
             onTap: () {},
           ),
+          if (kDebugMode) ...[
+            const _SectionHeader('Debug'),
+            _SettingsTile(
+              icon: Icons.delete_forever_outlined,
+              title: 'Reset profile',
+              subtitle: 'Delete all cycle data',
+              color: Colors.red,
+              onTap: () => _confirmReset(context, ref),
+            ),
+          ],
         ],
       ),
     );
+  }
+
+  Future<void> _confirmReset(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Reset profile?'),
+        content: const Text(
+            'All cycle entries, symptom logs and pregnancies will be deleted. This cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Reset'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      await ref.read(appDatabaseProvider).resetAllData();
+    }
   }
 }
 

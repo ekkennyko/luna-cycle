@@ -55,6 +55,17 @@ class SymptomRepositoryImpl implements ISymptomRepository {
       (_db.delete(_db.symptomLogs)..where((t) => t.id.equals(id))).go();
 
   @override
+  Future<void> deleteLogsForDate(DateTime date) {
+    final day = DateTime(date.year, date.month, date.day).toUtc();
+    final next = day.add(const Duration(days: 1));
+    return (_db.delete(_db.symptomLogs)
+          ..where((t) =>
+              t.date.isBiggerOrEqualValue(day) &
+              t.date.isSmallerThanValue(next)))
+        .go();
+  }
+
+  @override
   Stream<List<SymptomLog>> watchLogsForDate(DateTime date) {
     final day = DateTime(date.year, date.month, date.day).toUtc();
     final next = day.add(const Duration(days: 1));

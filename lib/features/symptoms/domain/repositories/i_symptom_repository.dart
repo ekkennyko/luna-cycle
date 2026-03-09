@@ -10,6 +10,7 @@ abstract interface class ISymptomRepository {
   Future<List<SymptomLog>> getLogsBetween(DateTime from, DateTime to);
   Future<void> saveLog(SymptomLogsCompanion log);
   Future<void> deleteLog(int id);
+  Future<void> deleteLogsForDate(DateTime date);
 
   Stream<List<SymptomLog>> watchLogsForDate(DateTime date);
 }

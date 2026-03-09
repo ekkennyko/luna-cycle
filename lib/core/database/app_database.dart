@@ -9,7 +9,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -17,7 +17,18 @@ class AppDatabase extends _$AppDatabase {
           await m.createAll();
           await _seedDefaultSymptoms();
         },
+        onUpgrade: (m, from, to) async {
+          if (from < 2) {
+            await m.addColumn(cycleEntries, cycleEntries.mood);
+          }
+        },
       );
+
+  Future<void> resetAllData() async {
+    await delete(symptomLogs).go();
+    await delete(cycleEntries).go();
+    await delete(pregnancies).go();
+  }
 
   Future<void> _seedDefaultSymptoms() async {
     const defaults = [

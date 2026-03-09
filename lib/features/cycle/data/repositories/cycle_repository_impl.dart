@@ -36,6 +36,11 @@ class CycleRepositoryImpl implements ICycleRepository {
       _db.into(_db.cycleEntries).insertOnConflictUpdate(entry);
 
   @override
+  Future<void> updateEntryType(int id, String type) =>
+      (_db.update(_db.cycleEntries)..where((t) => t.id.equals(id)))
+          .write(CycleEntriesCompanion(type: Value(type)));
+
+  @override
   Future<void> deleteEntry(int id) =>
       (_db.delete(_db.cycleEntries)..where((t) => t.id.equals(id))).go();
 
@@ -43,6 +48,29 @@ class CycleRepositoryImpl implements ICycleRepository {
   Future<CycleEntry?> getLastPeriodStart() =>
       (_db.select(_db.cycleEntries)
             ..where((t) => t.type.equals('period_start'))
+            ..orderBy([(t) => OrderingTerm.desc(t.date)])
+            ..limit(1))
+          .getSingleOrNull();
+
+  @override
+  Future<void> saveMood(DateTime date, int mood) async {
+    final day = DateTime(date.year, date.month, date.day).toUtc();
+    final existing = await getEntryForDate(date);
+    if (existing != null) {
+      await saveEntry(existing.toCompanion(true).copyWith(mood: Value(mood)));
+    } else {
+      await saveEntry(CycleEntriesCompanion.insert(
+        date: day,
+        type: 'mood_log',
+        mood: Value(mood),
+      ));
+    }
+  }
+
+  @override
+  Future<CycleEntry?> getLastPeriodEnd() =>
+      (_db.select(_db.cycleEntries)
+            ..where((t) => t.type.equals('period_end'))
             ..orderBy([(t) => OrderingTerm.desc(t.date)])
             ..limit(1))
           .getSingleOrNull();

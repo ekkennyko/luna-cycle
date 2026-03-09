@@ -34,6 +34,11 @@ class $CycleEntriesTable extends CycleEntries
   late final GeneratedColumn<int> flowIntensity = GeneratedColumn<int>(
       'flow_intensity', aliasedName, true,
       type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _moodMeta = const VerificationMeta('mood');
+  @override
+  late final GeneratedColumn<int> mood = GeneratedColumn<int>(
+      'mood', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
   static const VerificationMeta _notesMeta = const VerificationMeta('notes');
   @override
   late final GeneratedColumn<String> notes = GeneratedColumn<String>(
@@ -57,7 +62,7 @@ class $CycleEntriesTable extends CycleEntries
       defaultValue: currentDateAndTime);
   @override
   List<GeneratedColumn> get $columns =>
-      [id, date, type, flowIntensity, notes, createdAt, updatedAt];
+      [id, date, type, flowIntensity, mood, notes, createdAt, updatedAt];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -88,6 +93,10 @@ class $CycleEntriesTable extends CycleEntries
           _flowIntensityMeta,
           flowIntensity.isAcceptableOrUnknown(
               data['flow_intensity']!, _flowIntensityMeta));
+    }
+    if (data.containsKey('mood')) {
+      context.handle(
+          _moodMeta, mood.isAcceptableOrUnknown(data['mood']!, _moodMeta));
     }
     if (data.containsKey('notes')) {
       context.handle(
@@ -122,6 +131,8 @@ class $CycleEntriesTable extends CycleEntries
           .read(DriftSqlType.string, data['${effectivePrefix}type'])!,
       flowIntensity: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}flow_intensity']),
+      mood: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}mood']),
       notes: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}notes']),
       createdAt: attachedDatabase.typeMapping
@@ -140,16 +151,19 @@ class $CycleEntriesTable extends CycleEntries
 class CycleEntry extends DataClass implements Insertable<CycleEntry> {
   final int id;
 
-  /// Хранится как UTC midnight для точного сравнения дат
+  /// Stored as UTC midnight for accurate date comparison.
   final DateTime date;
 
   /// 'period_start' | 'period_day' | 'ovulation' | 'fertile' | 'safe'
   final String type;
 
-  /// 1=скудные 2=умеренные 3=обильные 4=очень обильные
+  /// 1=spotting 2=light 3=heavy 4=very heavy
   final int? flowIntensity;
 
-  /// Зашифрованные заметки (AES-256-GCM через EncryptionService)
+  /// 1=very sad … 5=very happy
+  final int? mood;
+
+  /// Encrypted via EncryptionService.
   final String? notes;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -158,6 +172,7 @@ class CycleEntry extends DataClass implements Insertable<CycleEntry> {
       required this.date,
       required this.type,
       this.flowIntensity,
+      this.mood,
       this.notes,
       required this.createdAt,
       required this.updatedAt});
@@ -169,6 +184,9 @@ class CycleEntry extends DataClass implements Insertable<CycleEntry> {
     map['type'] = Variable<String>(type);
     if (!nullToAbsent || flowIntensity != null) {
       map['flow_intensity'] = Variable<int>(flowIntensity);
+    }
+    if (!nullToAbsent || mood != null) {
+      map['mood'] = Variable<int>(mood);
     }
     if (!nullToAbsent || notes != null) {
       map['notes'] = Variable<String>(notes);
@@ -186,6 +204,7 @@ class CycleEntry extends DataClass implements Insertable<CycleEntry> {
       flowIntensity: flowIntensity == null && nullToAbsent
           ? const Value.absent()
           : Value(flowIntensity),
+      mood: mood == null && nullToAbsent ? const Value.absent() : Value(mood),
       notes:
           notes == null && nullToAbsent ? const Value.absent() : Value(notes),
       createdAt: Value(createdAt),
@@ -201,6 +220,7 @@ class CycleEntry extends DataClass implements Insertable<CycleEntry> {
       date: serializer.fromJson<DateTime>(json['date']),
       type: serializer.fromJson<String>(json['type']),
       flowIntensity: serializer.fromJson<int?>(json['flowIntensity']),
+      mood: serializer.fromJson<int?>(json['mood']),
       notes: serializer.fromJson<String?>(json['notes']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
@@ -214,6 +234,7 @@ class CycleEntry extends DataClass implements Insertable<CycleEntry> {
       'date': serializer.toJson<DateTime>(date),
       'type': serializer.toJson<String>(type),
       'flowIntensity': serializer.toJson<int?>(flowIntensity),
+      'mood': serializer.toJson<int?>(mood),
       'notes': serializer.toJson<String?>(notes),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
@@ -225,6 +246,7 @@ class CycleEntry extends DataClass implements Insertable<CycleEntry> {
           DateTime? date,
           String? type,
           Value<int?> flowIntensity = const Value.absent(),
+          Value<int?> mood = const Value.absent(),
           Value<String?> notes = const Value.absent(),
           DateTime? createdAt,
           DateTime? updatedAt}) =>
@@ -234,6 +256,7 @@ class CycleEntry extends DataClass implements Insertable<CycleEntry> {
         type: type ?? this.type,
         flowIntensity:
             flowIntensity.present ? flowIntensity.value : this.flowIntensity,
+        mood: mood.present ? mood.value : this.mood,
         notes: notes.present ? notes.value : this.notes,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
@@ -246,6 +269,7 @@ class CycleEntry extends DataClass implements Insertable<CycleEntry> {
       flowIntensity: data.flowIntensity.present
           ? data.flowIntensity.value
           : this.flowIntensity,
+      mood: data.mood.present ? data.mood.value : this.mood,
       notes: data.notes.present ? data.notes.value : this.notes,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
@@ -259,6 +283,7 @@ class CycleEntry extends DataClass implements Insertable<CycleEntry> {
           ..write('date: $date, ')
           ..write('type: $type, ')
           ..write('flowIntensity: $flowIntensity, ')
+          ..write('mood: $mood, ')
           ..write('notes: $notes, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
@@ -267,8 +292,8 @@ class CycleEntry extends DataClass implements Insertable<CycleEntry> {
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, date, type, flowIntensity, notes, createdAt, updatedAt);
+  int get hashCode => Object.hash(
+      id, date, type, flowIntensity, mood, notes, createdAt, updatedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -277,6 +302,7 @@ class CycleEntry extends DataClass implements Insertable<CycleEntry> {
           other.date == this.date &&
           other.type == this.type &&
           other.flowIntensity == this.flowIntensity &&
+          other.mood == this.mood &&
           other.notes == this.notes &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
@@ -287,6 +313,7 @@ class CycleEntriesCompanion extends UpdateCompanion<CycleEntry> {
   final Value<DateTime> date;
   final Value<String> type;
   final Value<int?> flowIntensity;
+  final Value<int?> mood;
   final Value<String?> notes;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
@@ -295,6 +322,7 @@ class CycleEntriesCompanion extends UpdateCompanion<CycleEntry> {
     this.date = const Value.absent(),
     this.type = const Value.absent(),
     this.flowIntensity = const Value.absent(),
+    this.mood = const Value.absent(),
     this.notes = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -304,6 +332,7 @@ class CycleEntriesCompanion extends UpdateCompanion<CycleEntry> {
     required DateTime date,
     required String type,
     this.flowIntensity = const Value.absent(),
+    this.mood = const Value.absent(),
     this.notes = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -314,6 +343,7 @@ class CycleEntriesCompanion extends UpdateCompanion<CycleEntry> {
     Expression<DateTime>? date,
     Expression<String>? type,
     Expression<int>? flowIntensity,
+    Expression<int>? mood,
     Expression<String>? notes,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
@@ -323,6 +353,7 @@ class CycleEntriesCompanion extends UpdateCompanion<CycleEntry> {
       if (date != null) 'date': date,
       if (type != null) 'type': type,
       if (flowIntensity != null) 'flow_intensity': flowIntensity,
+      if (mood != null) 'mood': mood,
       if (notes != null) 'notes': notes,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
@@ -334,6 +365,7 @@ class CycleEntriesCompanion extends UpdateCompanion<CycleEntry> {
       Value<DateTime>? date,
       Value<String>? type,
       Value<int?>? flowIntensity,
+      Value<int?>? mood,
       Value<String?>? notes,
       Value<DateTime>? createdAt,
       Value<DateTime>? updatedAt}) {
@@ -342,6 +374,7 @@ class CycleEntriesCompanion extends UpdateCompanion<CycleEntry> {
       date: date ?? this.date,
       type: type ?? this.type,
       flowIntensity: flowIntensity ?? this.flowIntensity,
+      mood: mood ?? this.mood,
       notes: notes ?? this.notes,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -363,6 +396,9 @@ class CycleEntriesCompanion extends UpdateCompanion<CycleEntry> {
     if (flowIntensity.present) {
       map['flow_intensity'] = Variable<int>(flowIntensity.value);
     }
+    if (mood.present) {
+      map['mood'] = Variable<int>(mood.value);
+    }
     if (notes.present) {
       map['notes'] = Variable<String>(notes.value);
     }
@@ -382,6 +418,7 @@ class CycleEntriesCompanion extends UpdateCompanion<CycleEntry> {
           ..write('date: $date, ')
           ..write('type: $type, ')
           ..write('flowIntensity: $flowIntensity, ')
+          ..write('mood: $mood, ')
           ..write('notes: $notes, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
@@ -533,13 +570,13 @@ class Symptom extends DataClass implements Insertable<Symptom> {
   final int id;
   final String name;
 
-  /// Unicode codepoint иконки
+  /// Material icon codepoint.
   final int iconCode;
 
   /// 'mood' | 'body' | 'energy' | 'digestion' | 'skin' | 'other'
   final String category;
 
-  /// false = встроенный, true = пользовательский (Premium)
+  /// false = built-in, true = user-created (Premium).
   final bool isCustom;
   final bool isActive;
   final int sortOrder;
@@ -881,7 +918,7 @@ class SymptomLog extends DataClass implements Insertable<SymptomLog> {
   final DateTime date;
   final int symptomId;
 
-  /// 1=лёгкий 2=умеренный 3=сильный
+  /// 1=mild 2=moderate 3=severe
   final int intensity;
   final String? note;
   const SymptomLog(
@@ -1180,7 +1217,7 @@ class $PregnanciesTable extends Pregnancies
 class Pregnancy extends DataClass implements Insertable<Pregnancy> {
   final int id;
 
-  /// Дата последней менструации (LMP)
+  /// Last menstrual period (LMP) — gestational age reference point.
   final DateTime lastMenstrualPeriod;
   final DateTime? dueDate;
   final bool isActive;
@@ -1402,6 +1439,7 @@ typedef $$CycleEntriesTableCreateCompanionBuilder = CycleEntriesCompanion
   required DateTime date,
   required String type,
   Value<int?> flowIntensity,
+  Value<int?> mood,
   Value<String?> notes,
   Value<DateTime> createdAt,
   Value<DateTime> updatedAt,
@@ -1412,6 +1450,7 @@ typedef $$CycleEntriesTableUpdateCompanionBuilder = CycleEntriesCompanion
   Value<DateTime> date,
   Value<String> type,
   Value<int?> flowIntensity,
+  Value<int?> mood,
   Value<String?> notes,
   Value<DateTime> createdAt,
   Value<DateTime> updatedAt,
@@ -1437,6 +1476,9 @@ class $$CycleEntriesTableFilterComposer
 
   ColumnFilters<int> get flowIntensity => $composableBuilder(
       column: $table.flowIntensity, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get mood => $composableBuilder(
+      column: $table.mood, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get notes => $composableBuilder(
       column: $table.notes, builder: (column) => ColumnFilters(column));
@@ -1470,6 +1512,9 @@ class $$CycleEntriesTableOrderingComposer
       column: $table.flowIntensity,
       builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<int> get mood => $composableBuilder(
+      column: $table.mood, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get notes => $composableBuilder(
       column: $table.notes, builder: (column) => ColumnOrderings(column));
 
@@ -1500,6 +1545,9 @@ class $$CycleEntriesTableAnnotationComposer
 
   GeneratedColumn<int> get flowIntensity => $composableBuilder(
       column: $table.flowIntensity, builder: (column) => column);
+
+  GeneratedColumn<int> get mood =>
+      $composableBuilder(column: $table.mood, builder: (column) => column);
 
   GeneratedColumn<String> get notes =>
       $composableBuilder(column: $table.notes, builder: (column) => column);
@@ -1538,6 +1586,7 @@ class $$CycleEntriesTableTableManager extends RootTableManager<
             Value<DateTime> date = const Value.absent(),
             Value<String> type = const Value.absent(),
             Value<int?> flowIntensity = const Value.absent(),
+            Value<int?> mood = const Value.absent(),
             Value<String?> notes = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<DateTime> updatedAt = const Value.absent(),
@@ -1547,6 +1596,7 @@ class $$CycleEntriesTableTableManager extends RootTableManager<
             date: date,
             type: type,
             flowIntensity: flowIntensity,
+            mood: mood,
             notes: notes,
             createdAt: createdAt,
             updatedAt: updatedAt,
@@ -1556,6 +1606,7 @@ class $$CycleEntriesTableTableManager extends RootTableManager<
             required DateTime date,
             required String type,
             Value<int?> flowIntensity = const Value.absent(),
+            Value<int?> mood = const Value.absent(),
             Value<String?> notes = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<DateTime> updatedAt = const Value.absent(),
@@ -1565,6 +1616,7 @@ class $$CycleEntriesTableTableManager extends RootTableManager<
             date: date,
             type: type,
             flowIntensity: flowIntensity,
+            mood: mood,
             notes: notes,
             createdAt: createdAt,
             updatedAt: updatedAt,
