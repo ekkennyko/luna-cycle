@@ -13,10 +13,13 @@ class AppColors {
   static const secondaryLight = Color(0xFFBCA8E0);
 
   // Cycle phase colours
-  static const phaseMenstrual = Color(0xFFE07070);
-  static const phaseFolicular = Color(0xFFF5C26B);
-  static const phaseOvulation = Color(0xFF6BBFA8);
-  static const phaseLuteal = Color(0xFF8E9CC9);
+  static const phaseMenstrual = Color(0xFFE05A7A);
+  static const phaseFolicular = Color(0xFFF4A261);
+  static const phaseOvulation = Color(0xFFA8DADC);
+  static const phaseLuteal = Color(0xFF9B72CF);
+
+  // App background
+  static const appBackground = Color(0xFF120A0A);
 
   // Neutral
   static const surface = Color(0xFFFDF6F8);

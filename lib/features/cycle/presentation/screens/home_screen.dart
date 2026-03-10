@@ -2,11 +2,113 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:luna/core/database/app_database.dart';
-import 'package:luna/core/theme/app_colors.dart';
 import 'package:luna/features/cycle/presentation/providers/cycle_providers.dart';
 import 'package:luna/shared/providers/core_providers.dart';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Phase model
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _Phase {
+  const _Phase({
+    required this.name,
+    required this.color,
+    required this.bgColor,
+    required this.tip,
+  });
+
+  final String name;
+  final Color color;
+  final Color bgColor;
+  final String tip;
+
+  // ignore: constant_identifier_names
+  static const menstrual = _Phase(
+    name: 'Menstrual',
+    color: Color(0xFFE05A7A),
+    bgColor: Color(0x1FE05A7A), // 0.12 alpha
+    tip:
+        'Your body is releasing. Rest, use warmth, and be gentle with yourself. Iron-rich foods like spinach and lentils can help replenish.',
+  );
+
+  // ignore: constant_identifier_names
+  static const follicular = _Phase(
+    name: 'Follicular',
+    color: Color(0xFFF4A261),
+    bgColor: Color(0x1AF4A261), // 0.10 alpha
+    tip:
+        'Estrogen is rising — your energy and creativity are building. Great time to start new projects and try challenging workouts.',
+  );
+
+  // ignore: constant_identifier_names
+  static const ovulation = _Phase(
+    name: 'Ovulation',
+    color: Color(0xFFA8DADC),
+    bgColor: Color(0x1AA8DADC),
+    tip:
+        "Peak energy and confidence! You're magnetic right now. Ideal for social events, big presentations, and high-intensity exercise.",
+  );
+
+  // ignore: constant_identifier_names
+  static const luteal = _Phase(
+    name: 'Luteal',
+    color: Color(0xFF9B72CF),
+    bgColor: Color(0x1A9B72CF),
+    tip:
+        'Progesterone peaks then drops. Prioritize sleep, magnesium-rich foods, and reduce caffeine. Self-care is not optional.',
+  );
+
+  static _Phase forDay(int day) {
+    if (day <= 5) return menstrual;
+    if (day <= 13) return follicular;
+    if (day <= 17) return ovulation;
+    return luteal;
+  }
+
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Constants
+// ─────────────────────────────────────────────────────────────────────────────
+
+const _moods = ['😔', '😐', '🙂', '😊', '🤩'];
+const _moodLabels = ['Low', 'Okay', 'Good', 'Happy', 'Amazing'];
+
+const _intensityLabels = ['Light', 'Medium', 'Heavy', 'Very Heavy'];
+const _intensityColors = [
+  Color(0xFFF4A261),
+  Color(0xFFE07A5F),
+  Color(0xFFE05A7A),
+  Color(0xFFB5179E),
+];
+
+const _symptomNames = [
+  'Cramps',
+  'Bloating',
+  'Headache',
+  'Fatigue',
+  'Breast tenderness',
+  'Mood swings',
+  'Spotting',
+  'Nausea',
+  'Back pain',
+  'Acne',
+];
+
+// Representative day for each phase (used by preview dots)
+const _phaseDotDays = [3, 10, 15, 22];
+const _phaseDotColors = [
+  Color(0xFFE05A7A),
+  Color(0xFFF4A261),
+  Color(0xFFA8DADC),
+  Color(0xFF9B72CF),
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HomeScreen
+// ─────────────────────────────────────────────────────────────────────────────
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -17,477 +119,712 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen>
     with TickerProviderStateMixin {
+  // ── Animations ─────────────────────────────────────────────────────────────
+  late final AnimationController _floatController;
   late final AnimationController _ringController;
-  late final AnimationController _pulseController;
-  late final Animation<double> _ringAnimation;
-  late final Animation<double> _pulseAnimation;
+  late final Animation<double> _floatAnim;
+  late final Animation<double> _ringAnim;
+
+  // ── Local UI state ─────────────────────────────────────────────────────────
+  int? _previewDay; // null = use real data
+  int? _selectedMoodIdx; // 0–4 index; null = show today's DB mood
+  final Set<String> _selectedSymptoms = {};
 
   @override
   void initState() {
     super.initState();
+
+    _floatController = AnimationController(
+      duration: const Duration(seconds: 4),
+      vsync: this,
+    )..repeat(reverse: true);
+
     _ringController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-    _pulseController = AnimationController(
-      duration: const Duration(milliseconds: 1500),
-      vsync: this,
-    )..repeat(reverse: true);
 
-    _ringAnimation = CurvedAnimation(
-      parent: _ringController,
-      curve: Curves.easeOut,
+    _floatAnim = Tween<double>(begin: 0.0, end: -6.0).animate(
+      CurvedAnimation(parent: _floatController, curve: Curves.easeInOut),
     );
-    _pulseAnimation = Tween<double>(begin: 0.95, end: 1.05).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    _ringAnim = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _ringController,
+        curve: const Cubic(0.34, 1.56, 0.64, 1),
+      ),
     );
+
+    // If data is already available on first frame (e.g. hot reload), animate in
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (ref.read(currentCycleDayProvider).asData?.value != null) {
+        _ringController.forward(from: 0);
+      }
+    });
   }
 
   @override
   void dispose() {
+    _floatController.dispose();
     _ringController.dispose();
-    _pulseController.dispose();
     super.dispose();
   }
 
-  void _showStartPeriodSheet() {
-    showModalBottomSheet(
+  // ── Preview dot handler ────────────────────────────────────────────────────
+
+  void _changePreviewDay(int day) {
+    setState(() => _previewDay = day);
+    _ringController.forward(from: 0);
+  }
+
+  // ── Bottom sheet helpers ───────────────────────────────────────────────────
+
+  void _openPeriodSheet({required bool isPeriodActive}) {
+    if (isPeriodActive) {
+      _openEndPeriodSheet();
+    } else {
+      _openStartPeriodSheet();
+    }
+  }
+
+  void _openStartPeriodSheet() {
+    showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => const _StartPeriodSheet(),
+      builder: (_) => _PeriodSheet(
+        onStart: (intensity) async {
+          final today = DateTime.now();
+          final n = ref.read(cycleNotifierProvider.notifier);
+          await n.logPeriodStart(today);
+          if (intensity != 1) await n.updateFlowIntensity(today, intensity);
+          if (mounted) setState(() => _previewDay = null);
+          _ringController.forward(from: 0);
+        },
+      ),
     );
   }
 
-  void _showMoodSheet() {
-    showModalBottomSheet(
+  void _openEndPeriodSheet() {
+    showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => const _MoodBottomSheet(),
+      builder: (_) => _EndPeriodSheet(
+        onEnd: () async {
+          await ref
+              .read(cycleNotifierProvider.notifier)
+              .endPeriod(DateTime.now());
+          if (mounted) setState(() => _previewDay = null);
+        },
+      ),
     );
   }
 
-  void _showSymptomsSheet() {
-    showModalBottomSheet(
+  void _openMoodSheet(_Phase phase) {
+    showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => const _SymptomsBottomSheet(),
+      builder: (_) => _MoodSheet(
+        phase: phase,
+        currentMoodIdx: _selectedMoodIdx,
+        onSelect: (idx) async {
+          if (mounted) setState(() => _selectedMoodIdx = idx);
+          await ref
+              .read(cycleNotifierProvider.notifier)
+              .saveMood(DateTime.now(), idx + 1);
+        },
+      ),
     );
   }
 
-  void _showEndPeriodSheet() {
-    showModalBottomSheet(
+  void _openSymptomsSheet(_Phase phase) {
+    showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => const _EndPeriodSheet(),
+      builder: (_) => _SymptomsSheet(
+        phase: phase,
+        initialSelected: Set.from(_selectedSymptoms),
+        onSave: (selected) async {
+          if (mounted) {
+            setState(() {
+              _selectedSymptoms
+                ..clear()
+                ..addAll(selected);
+            });
+          }
+          // Persist to DB by name-matching to seeded symptoms
+          final repo = ref.read(symptomRepositoryProvider);
+          final today = DateTime.now();
+          await repo.deleteLogsForDate(today);
+          final allSymptoms = await ref.read(activeSymptomsProvider.future);
+          final day = DateTime(today.year, today.month, today.day).toUtc();
+          for (final sym in allSymptoms) {
+            if (selected.contains(sym.name)) {
+              await repo.saveLog(
+                SymptomLogsCompanion.insert(date: day, symptomId: sym.id),
+              );
+            }
+          }
+        },
+      ),
     );
   }
+
+  // ── Build ──────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
+    // Animate ring when real data first arrives
     ref.listen<AsyncValue<int?>>(currentCycleDayProvider, (prev, next) {
-      final hadData = prev?.hasValue == true && prev?.value != null;
-      final hasData = next.hasValue && next.value != null;
-      if (!hadData && hasData) _ringController.forward(from: 0);
+      if (prev?.asData?.value == null &&
+          next.asData?.value != null &&
+          _previewDay == null) {
+        _ringController.forward(from: 0);
+      }
     });
 
-    final cycleDay = ref.watch(currentCycleDayProvider).when(
-          data: (v) => v,
-          loading: () => null,
-          error: (_, __) => null,
-        );
-    final phase = ref.watch(currentCyclePhaseProvider).when(
-          data: (v) => v,
-          loading: () => null,
-          error: (_, __) => null,
-        );
-    final avgLen = ref.watch(averageCycleLengthProvider).when(
-          data: (v) => v,
-          loading: () => 28,
-          error: (_, __) => 28,
-        );
-    final nextPeriod = ref.watch(nextPeriodDateProvider).when(
-          data: (v) => v,
-          loading: () => null,
-          error: (_, __) => null,
-        );
-    final isPeriodActive = ref.watch(isPeriodActiveProvider).when(
-          data: (v) => v,
-          loading: () => false,
-          error: (_, __) => false,
-        );
-    final periodDay = ref.watch(activePeriodDayProvider).when(
-          data: (v) => v,
-          loading: () => null,
-          error: (_, __) => null,
-        );
+    final cycleDay = ref.watch(currentCycleDayProvider).asData?.value;
+    final isPeriodActive =
+        ref.watch(isPeriodActiveProvider).asData?.value ?? false;
+    final avgLen = ref.watch(averageCycleLengthProvider).asData?.value ?? 28;
+    final nextPeriod = ref.watch(nextPeriodDateProvider).asData?.value;
+    final todayMood = ref.watch(todayMoodProvider); // int? 1–5
+    final todayLogs =
+        ref.watch(todaySymptomLogsProvider).asData?.value ??
+        const <SymptomLog>[];
 
-    final hasData = cycleDay != null;
+    // Display day: preview takes priority over real data
+    final displayDay = _previewDay ?? cycleDay ?? 0;
+    final phase = displayDay > 0 ? _Phase.forDay(displayDay) : _Phase.menstrual;
 
-    final Color ringColor;
-    final double progress;
-    final String centerDay;
-    final String centerSub;
+    // Ring progress (0.0–1.0)
+    final targetProgress =
+        displayDay > 0 ? (displayDay / avgLen).clamp(0.0, 1.0).toDouble() : 0.0;
 
-    if (isPeriodActive && periodDay != null) {
-      ringColor = AppColors.phaseMenstrual;
-      progress = 1.0;
-      centerDay = 'Day $periodDay';
-      centerSub = 'of period';
+    // Period pill label
+    final String periodLabel;
+    if (isPeriodActive) {
+      periodLabel = 'Period active 🩸';
+    } else if (nextPeriod != null) {
+      final diff = nextPeriod.difference(DateTime.now()).inDays;
+      periodLabel = diff > 0 ? 'Period in ${diff}d' : 'Period expected';
     } else {
-      ringColor = _phaseColor(phase);
-      final day = cycleDay ?? 0;
-      progress = hasData ? (day / avgLen).clamp(0.0, 1.0).toDouble() : 0.0;
-      centerDay = hasData ? 'Day $day' : '';
-      centerSub = _phaseName(phase);
+      periodLabel = '';
     }
 
+    // Mood chip: prefer locally selected, then today's DB value (convert 1-5 → 0-4)
+    final moodIdx = _selectedMoodIdx ??
+        (todayMood != null && todayMood >= 1 && todayMood <= 5
+            ? todayMood - 1
+            : null);
+
+    // Symptoms count: prefer local selection, then DB logs
+    final symptomsCount =
+        _selectedSymptoms.isNotEmpty ? _selectedSymptoms.length : todayLogs.length;
+
     return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 16),
-            Text(
-              'Luna',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurface
-                        .withValues(alpha: 0.35),
-                    fontWeight: FontWeight.w300,
-                    letterSpacing: 2,
-                  ),
+      backgroundColor: const Color(0xFF120A0A),
+      body: Stack(
+        children: [
+          // ── Ambient glow ──────────────────────────────────────────────────
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 280,
+            child: AnimatedContainer(
+              duration: const Duration(seconds: 1),
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  center: Alignment.topCenter,
+                  radius: 1.0,
+                  colors: [
+                    phase.color.withValues(alpha: 0.13),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
             ),
-            const Spacer(),
-            GestureDetector(
-              onTap: isPeriodActive ? _showEndPeriodSheet : _showStartPeriodSheet,
-              child: hasData
-                  ? AnimatedBuilder(
-                      animation: _ringAnimation,
-                      builder: (_, __) => _CycleRing(
-                        progress: progress * _ringAnimation.value,
-                        color: ringColor,
-                        centerDay: centerDay,
-                        centerSub: centerSub,
-                        subtitle: isPeriodActive
-                            ? null
-                            : _ringSubtitle(nextPeriod),
-                      ),
-                    )
-                  : AnimatedBuilder(
-                      animation: _pulseAnimation,
-                      builder: (_, __) => Transform.scale(
-                        scale: _pulseAnimation.value,
-                        child: const _CycleRingEmpty(),
+          ),
+
+          // ── Main scrollable content ───────────────────────────────────────
+          SafeArea(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildHeader(phase),
+                  _buildRingSection(
+                    phase: phase,
+                    displayDay: displayDay,
+                    targetProgress: targetProgress,
+                    isPeriodActive: isPeriodActive,
+                    periodLabel: periodLabel,
+                  ),
+                  const SizedBox(height: 16),
+                  _buildQuickChips(
+                    phase: phase,
+                    isPeriodActive: isPeriodActive,
+                    moodIdx: moodIdx,
+                    symptomsCount: symptomsCount,
+                  ),
+                  _buildInsightCard(phase),
+                  _buildMiniStats(avgLen),
+                  const SizedBox(height: 24),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Header ────────────────────────────────────────────────────────────────
+
+  Widget _buildHeader(_Phase phase) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Luna',
+                style: GoogleFonts.playfairDisplay(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white.withValues(alpha: 0.9),
+                  letterSpacing: -0.5,
+                  height: 1.1,
+                ),
+              ),
+              Text(
+                'CYCLE TRACKER',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: phase.color,
+                  letterSpacing: 2,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.06),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.08),
+              ),
+            ),
+            child: const Center(
+              child: Text('🔔', style: TextStyle(fontSize: 16)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Ring section ──────────────────────────────────────────────────────────
+
+  Widget _buildRingSection({
+    required _Phase phase,
+    required int displayDay,
+    required double targetProgress,
+    required bool isPeriodActive,
+    required String periodLabel,
+  }) {
+    return Column(
+      children: [
+        const SizedBox(height: 16),
+
+        // Floating ring with animation
+        AnimatedBuilder(
+          animation: Listenable.merge([_floatAnim, _ringAnim]),
+          builder: (_, __) {
+            final progress = targetProgress * _ringAnim.value;
+            return Transform.translate(
+              offset: Offset(0, _floatAnim.value),
+              child: SizedBox(
+                width: 230,
+                height: 230,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    // Ring painter
+                    CustomPaint(
+                      size: const Size(230, 230),
+                      painter: _CycleRingPainter(
+                        progress: progress,
+                        phaseColor: phase.color,
+                        phaseBgColor: phase.bgColor,
+                        isPeriodActive: isPeriodActive,
                       ),
                     ),
+
+                    // Center labels
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'DAY',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.white.withValues(alpha: 0.5),
+                            letterSpacing: 2,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          displayDay > 0 ? '$displayDay' : '–',
+                          style: GoogleFonts.playfairDisplay(
+                            fontSize: 56,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                            height: 1,
+                            shadows: [
+                              Shadow(
+                                color: phase.color.withValues(alpha: 0.53),
+                                blurRadius: 30,
+                              ),
+                            ],
+                          ),
+                        ),
+                        Text(
+                          phase.name,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: phase.color,
+                            fontWeight: FontWeight.w500,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        if (periodLabel.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.05),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.06),
+                              ),
+                            ),
+                            child: Text(
+                              periodLabel,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.white.withValues(alpha: 0.6),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+
+        // Phase selector dots
+        const SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(4, (i) {
+            final dotDay = _phaseDotDays[i];
+            final dotColor = _phaseDotColors[i];
+            final isActive = displayDay == dotDay;
+
+            return GestureDetector(
+              onTap: () => _changePreviewDay(dotDay),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  curve: const Cubic(0.34, 1.56, 0.64, 1),
+                  width: isActive ? 28 : 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: isActive
+                        ? dotColor
+                        : Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ),
+            );
+          }),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'TAP TO PREVIEW PHASES',
+          style: TextStyle(
+            fontSize: 10,
+            color: Colors.white.withValues(alpha: 0.3),
+            letterSpacing: 1,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+
+  // ── Quick log chips ───────────────────────────────────────────────────────
+
+  Widget _buildQuickChips({
+    required _Phase phase,
+    required bool isPeriodActive,
+    required int? moodIdx,
+    required int symptomsCount,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 0, 24, 0),
+      child: Row(
+        children: [
+          // Period / End Period
+          Expanded(
+            child: _QuickChip(
+              icon: '🩸',
+              label: isPeriodActive ? 'End Period' : 'Period',
+              active: isPeriodActive,
+              activeColor: phase.color,
+              onTap: () => _openPeriodSheet(isPeriodActive: isPeriodActive),
             ),
-            const SizedBox(height: 32),
-            _QuickLogRow(
-              isPeriodActive: isPeriodActive,
-              onPeriodTap: _showStartPeriodSheet,
-              onEndPeriodTap: _showEndPeriodSheet,
-              onMoodTap: _showMoodSheet,
-              onSymptomsTap: _showSymptomsSheet,
+          ),
+          const SizedBox(width: 10),
+          // Mood
+          Expanded(
+            child: _QuickChip(
+              icon: moodIdx != null ? _moods[moodIdx] : '💭',
+              label: moodIdx != null ? _moodLabels[moodIdx] : 'Mood',
+              onTap: () => _openMoodSheet(phase),
             ),
-            const SizedBox(height: 12),
-            const _TodayDataRow(),
-            const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: _PhaseInfoCard(phase: phase, hasData: hasData),
+          ),
+          const SizedBox(width: 10),
+          // Symptoms
+          Expanded(
+            child: _QuickChip(
+              icon: '✦',
+              label:
+                  symptomsCount > 0 ? '$symptomsCount symptoms' : 'Symptoms',
+              onTap: () => _openSymptomsSheet(phase),
             ),
-            const Spacer(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Phase insight card ────────────────────────────────────────────────────
+
+  Widget _buildInsightCard(_Phase phase) {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 500),
+      transitionBuilder: (child, anim) => FadeTransition(
+        opacity: anim,
+        child: SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0, 0.08),
+            end: Offset.zero,
+          ).animate(anim),
+          child: child,
+        ),
+      ),
+      child: Container(
+        key: ValueKey(phase.name),
+        margin: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [phase.bgColor, Colors.white.withValues(alpha: 0.02)],
+          ),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: phase.color.withValues(alpha: 0.25)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: phase.color.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Center(
+                    child: Text(
+                      '✦',
+                      style: TextStyle(fontSize: 14, color: Colors.white),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  '${phase.name.toUpperCase()} PHASE',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: phase.color,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 1,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              phase.tip,
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.white.withValues(alpha: 0.9),
+                height: 1.6,
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  static Color _phaseColor(String? phase) => switch (phase) {
-        'menstrual' => AppColors.phaseMenstrual,
-        'follicular' => AppColors.phaseFolicular,
-        'ovulation' => AppColors.phaseOvulation,
-        'luteal' => AppColors.phaseLuteal,
-        _ => AppColors.primary,
-      };
+  // ── Mini stats ────────────────────────────────────────────────────────────
 
-  static String _phaseName(String? phase) => switch (phase) {
-        'menstrual' => 'Menstrual',
-        'follicular' => 'Follicular',
-        'ovulation' => 'Ovulation',
-        'luteal' => 'Luteal',
-        _ => '',
-      };
+  Widget _buildMiniStats(int avgLen) {
+    final stats = [
+      ('Cycle length', '${avgLen}d'),
+      ('Period', '5d'),
+      ('Avg length', '${avgLen}d'),
+    ];
 
-  static String? _ringSubtitle(DateTime? nextPeriod) {
-    if (nextPeriod == null) return null;
-    final diff = nextPeriod.difference(DateTime.now()).inDays;
-    if (diff > 0) return 'Period in $diff days';
-    if (diff == 0) return 'Period expected today';
-    return 'Period started ${-diff} days ago';
-  }
-}
-
-// ── Cycle ring (with data) ────────────────────────────────────────────────────
-
-class _CycleRing extends StatelessWidget {
-  const _CycleRing({
-    required this.progress,
-    required this.color,
-    required this.centerDay,
-    required this.centerSub,
-    this.subtitle,
-  });
-
-  final double progress;
-  final Color color;
-  final String centerDay;
-  final String centerSub;
-  final String? subtitle;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 280,
-      height: 280,
-      child: CustomPaint(
-        painter: _RingPainter(progress: progress, color: color),
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (centerDay.isNotEmpty)
-                Text(
-                  centerDay,
-                  style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                        color: color,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 14, 24, 0),
+      child: Row(
+        children: List.generate(stats.length, (i) {
+          final (label, value) = stats[i];
+          return Expanded(
+            child: Padding(
+              padding: EdgeInsets.only(
+                left: i == 0 ? 0 : 5,
+                right: i == stats.length - 1 ? 0 : 5,
+              ),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.04),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.07),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      value,
+                      style: GoogleFonts.playfairDisplay(
+                        fontSize: 17,
                         fontWeight: FontWeight.w700,
+                        color: Colors.white,
                       ),
-                ),
-              if (centerSub.isNotEmpty)
-                Text(
-                  centerSub,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurface
-                            .withValues(alpha: 0.6),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      label.toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 9,
+                        color: Colors.white.withValues(alpha: 0.4),
+                        letterSpacing: 0.5,
                       ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
                 ),
-              if (subtitle != null) ...[
-                const SizedBox(height: 4),
-                Text(
-                  subtitle!,
-                  style: Theme.of(context).textTheme.bodyMedium,
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ],
-          ),
-        ),
+              ),
+            ),
+          );
+        }),
       ),
     );
   }
 }
 
-class _RingPainter extends CustomPainter {
-  const _RingPainter({required this.progress, required this.color});
-
-  final double progress;
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2 - 12;
-    const strokeWidth = 10.0;
-
-    canvas.drawCircle(
-      center,
-      radius,
-      Paint()
-        ..color = color.withValues(alpha: 0.15)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = strokeWidth,
-    );
-
-    if (progress > 0) {
-      canvas.drawArc(
-        Rect.fromCircle(center: center, radius: radius),
-        -math.pi / 2,
-        2 * math.pi * progress,
-        false,
-        Paint()
-          ..color = color
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = strokeWidth
-          ..strokeCap = StrokeCap.round,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(_RingPainter old) =>
-      old.progress != progress || old.color != color;
-}
-
-// ── Cycle ring (empty state) ──────────────────────────────────────────────────
-
-class _CycleRingEmpty extends StatelessWidget {
-  const _CycleRingEmpty();
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 280,
-      height: 280,
-      child: CustomPaint(
-        painter:
-            _DashedRingPainter(color: AppColors.primary.withValues(alpha: 0.3)),
-        child: Center(
-          child: Text(
-            'Tap to begin',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .onSurface
-                      .withValues(alpha: 0.35),
-                ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _DashedRingPainter extends CustomPainter {
-  const _DashedRingPainter({required this.color});
-
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2 - 12;
-    const dashCount = 24;
-    const dashLen = 0.18;
-    const gapLen = 0.08;
-
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 10
-      ..strokeCap = StrokeCap.round;
-
-    for (int i = 0; i < dashCount; i++) {
-      final start = -math.pi / 2 + i * (dashLen + gapLen);
-      canvas.drawArc(
-        Rect.fromCircle(center: center, radius: radius),
-        start,
-        dashLen,
-        false,
-        paint,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(_DashedRingPainter old) => old.color != color;
-}
-
-// ── Quick log row ─────────────────────────────────────────────────────────────
-
-class _QuickLogRow extends StatelessWidget {
-  const _QuickLogRow({
-    required this.isPeriodActive,
-    required this.onPeriodTap,
-    required this.onEndPeriodTap,
-    required this.onMoodTap,
-    required this.onSymptomsTap,
-  });
-
-  final bool isPeriodActive;
-  final VoidCallback onPeriodTap;
-  final VoidCallback onEndPeriodTap;
-  final VoidCallback onMoodTap;
-  final VoidCallback onSymptomsTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        if (isPeriodActive)
-          _QuickChip(
-            icon: Icons.stop_circle_outlined,
-            label: 'End period',
-            accent: true,
-            onTap: onEndPeriodTap,
-          )
-        else
-          _QuickChip(
-            icon: Icons.water_drop_outlined,
-            label: 'Period',
-            onTap: onPeriodTap,
-          ),
-        const SizedBox(width: 12),
-        _QuickChip(icon: Icons.mood_outlined, label: 'Mood', onTap: onMoodTap),
-        const SizedBox(width: 12),
-        _QuickChip(icon: Icons.favorite_border, label: 'Symptoms', onTap: onSymptomsTap),
-      ],
-    );
-  }
-}
+// ─────────────────────────────────────────────────────────────────────────────
+// Quick chip widget
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _QuickChip extends StatelessWidget {
   const _QuickChip({
     required this.icon,
     required this.label,
-    this.accent = false,
     required this.onTap,
+    this.active = false,
+    this.activeColor,
   });
 
-  final IconData icon;
+  final String icon;
   final String label;
-  final bool accent;
   final VoidCallback onTap;
+  final bool active;
+  final Color? activeColor;
 
   @override
   Widget build(BuildContext context) {
-    final color = accent ? AppColors.phaseMenstrual : AppColors.textSecondary;
+    final color = activeColor ?? Colors.white;
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
         decoration: BoxDecoration(
-          color: accent
-              ? AppColors.phaseMenstrual.withValues(alpha: 0.12)
-              : Theme.of(context)
-                  .colorScheme
-                  .surfaceContainerHighest
-                  .withValues(alpha: 0.6),
-          borderRadius: BorderRadius.circular(20),
-          border: accent
-              ? Border.all(color: AppColors.phaseMenstrual.withValues(alpha: 0.4))
+          gradient: active
+              ? LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    color.withValues(alpha: 0.30),
+                    color.withValues(alpha: 0.15),
+                  ],
+                )
               : null,
+          color: active ? null : Colors.white.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: active
+                ? color.withValues(alpha: 0.50)
+                : Colors.white.withValues(alpha: 0.08),
+          ),
         ),
-        child: Row(
+        child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 16, color: color),
-            const SizedBox(width: 6),
+            Text(icon, style: const TextStyle(fontSize: 18)),
+            const SizedBox(height: 4),
             Text(
               label,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 10,
+                color: Colors.white.withValues(alpha: 0.8),
                 fontWeight: FontWeight.w500,
-                color: color,
               ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
@@ -496,585 +833,672 @@ class _QuickChip extends StatelessWidget {
   }
 }
 
-// ── Phase info card ───────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Cycle ring CustomPainter
+// ─────────────────────────────────────────────────────────────────────────────
 
-class _PhaseInfoCard extends StatelessWidget {
-  const _PhaseInfoCard({required this.phase, required this.hasData});
+class _CycleRingPainter extends CustomPainter {
+  const _CycleRingPainter({
+    required this.progress,
+    required this.phaseColor,
+    required this.phaseBgColor,
+    this.isPeriodActive = false,
+  });
 
-  final String? phase;
-  final bool hasData;
+  final double progress;
+  final Color phaseColor;
+  final Color phaseBgColor;
+  final bool isPeriodActive;
 
-  static const _hints = {
-    'menstrual': 'Rest and warmth help during menstruation',
-    'follicular': 'Good time for new projects — energy is rising',
-    'ovulation': 'Energy tends to peak around ovulation',
-    'luteal': 'Slow down and listen to your body',
-  };
+  static const _stroke = 14.0;
 
   @override
-  Widget build(BuildContext context) {
-    final text = hasData
-        ? (_hints[phase] ?? '')
-        : 'Log your first day to start tracking';
+  void paint(Canvas canvas, Size size) {
+    final cx = size.width / 2;
+    final cy = size.height / 2;
+    final center = Offset(cx, cy);
+    final r = (size.width - _stroke * 2) / 2; // 101 at 230px
 
-    if (text.isEmpty) return const SizedBox.shrink();
+    // 1. Outer decorative dashed ring (r + 20)
+    _drawDashedRing(canvas, center, r + 20, phaseColor.withValues(alpha: 0.15));
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-      decoration: BoxDecoration(
-        color: Theme.of(context)
-            .colorScheme
-            .surfaceContainerHighest
-            .withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Text(
-        text,
-        style: Theme.of(context).textTheme.bodyMedium,
-        textAlign: TextAlign.center,
-      ),
+    // 2. Background track
+    canvas.drawCircle(
+      center,
+      r,
+      Paint()
+        ..color = const Color(0x08FFFFFF)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = _stroke,
     );
-  }
-}
 
-// ── Start period bottom sheet ─────────────────────────────────────────────────
+    // 3. Inner glow fill circle
+    canvas.drawCircle(center, r - 30, Paint()..color = phaseBgColor);
 
-class _StartPeriodSheet extends ConsumerStatefulWidget {
-  const _StartPeriodSheet();
+    if (progress <= 0) return;
 
-  @override
-  ConsumerState<_StartPeriodSheet> createState() => _StartPeriodSheetState();
-}
+    final sweepAngle = 2 * math.pi * progress;
+    final rect = Rect.fromCircle(center: center, radius: r);
 
-class _StartPeriodSheetState extends ConsumerState<_StartPeriodSheet> {
-  int _flowIntensity = 2;
-  int? _mood;
-
-  @override
-  Widget build(BuildContext context) {
-    final formatted = DateFormat('MMMM d').format(DateTime.now());
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      padding: EdgeInsets.only(
-        left: 24,
-        right: 24,
-        top: 16,
-        bottom: MediaQuery.viewInsetsOf(context).bottom + 32,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: Container(
-              width: 36,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.outline,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-          Text(formatted, style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 20),
-          const _Label('Flow intensity'),
-          const SizedBox(height: 8),
-          _FlowRow(
-            value: _flowIntensity,
-            onChanged: (v) => setState(() => _flowIntensity = v),
-          ),
-          const SizedBox(height: 20),
-          const _Label('Mood'),
-          const SizedBox(height: 8),
-          _MoodRow(
-            value: _mood,
-            onChanged: (v) => setState(() => _mood = _mood == v ? null : v),
-          ),
-          const SizedBox(height: 24),
-          FilledButton(
-            onPressed: _save,
-            child: const Text('Start period'),
-          ),
-        ],
-      ),
+    // 4a. Glow layer behind arc
+    canvas.drawArc(
+      rect,
+      -math.pi / 2,
+      sweepAngle,
+      false,
+      Paint()
+        ..color = phaseColor.withValues(alpha: 0.35)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = _stroke + 8
+        ..strokeCap = StrokeCap.round
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
     );
-  }
 
-  Future<void> _save() async {
-    final today = DateTime.now();
-    final notifier = ref.read(cycleNotifierProvider.notifier);
-    await notifier.logPeriodStart(today);
-    if (_flowIntensity != 2) {
-      await notifier.updateFlowIntensity(today, _flowIntensity);
-    }
-    if (mounted) Navigator.of(context).pop();
-  }
-}
-
-// ── Mood bottom sheet ─────────────────────────────────────────────────────────
-
-class _MoodBottomSheet extends ConsumerStatefulWidget {
-  const _MoodBottomSheet();
-
-  @override
-  ConsumerState<_MoodBottomSheet> createState() => _MoodBottomSheetState();
-}
-
-class _MoodBottomSheetState extends ConsumerState<_MoodBottomSheet> {
-  int? _mood;
-  bool _saving = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      padding: EdgeInsets.only(
-        left: 24,
-        right: 24,
-        top: 16,
-        bottom: MediaQuery.viewInsetsOf(context).bottom + 32,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: Container(
-              width: 36,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.outline,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-          Text(
-            DateFormat('MMMM d').format(DateTime.now()),
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const SizedBox(height: 20),
-          const _Label('Mood'),
-          const SizedBox(height: 12),
-          _MoodRow(
-            value: _mood,
-            onChanged: (v) => setState(() => _mood = _mood == v ? null : v),
-          ),
-          const SizedBox(height: 24),
-          FilledButton(
-            onPressed: _saving ? null : _save,
-            child: const Text('Save'),
-          ),
-        ],
-      ),
+    // 4b. Progress arc with linear gradient
+    final arcColor2 =
+        isPeriodActive ? const Color(0xFFFF6B9D) : phaseColor.withValues(alpha: 0.7);
+    canvas.drawArc(
+      rect,
+      -math.pi / 2,
+      sweepAngle,
+      false,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [phaseColor, arcColor2],
+        ).createShader(rect)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = _stroke
+        ..strokeCap = StrokeCap.round,
     );
+
+    // 5. Dot indicator at end of arc
+    final endAngle = 2 * math.pi * progress - math.pi / 2;
+    final dotPos = Offset(cx + r * math.cos(endAngle), cy + r * math.sin(endAngle));
+
+    // Dot glow
+    canvas.drawCircle(
+      dotPos,
+      10,
+      Paint()
+        ..color = phaseColor.withValues(alpha: 0.4)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
+    );
+    // Dot fill
+    canvas.drawCircle(dotPos, 7, Paint()..color = phaseColor);
+    // Dot white center
+    canvas.drawCircle(dotPos, 3, Paint()..color = Colors.white);
   }
 
-  Future<void> _save() async {
-    if (_mood == null) {
-      Navigator.of(context).pop();
-      return;
-    }
-    setState(() => _saving = true);
-    await ref
-        .read(cycleNotifierProvider.notifier)
-        .saveMood(DateTime.now(), _mood!);
-    if (mounted) {
-      Navigator.of(context).pop();
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Mood saved')));
+  void _drawDashedRing(
+    Canvas canvas,
+    Offset center,
+    double radius,
+    Color color,
+  ) {
+    final rect = Rect.fromCircle(center: center, radius: radius);
+    final circumference = 2 * math.pi * radius;
+    const dashLen = 4.0;
+    const gapLen = 8.0;
+    final count = (circumference / (dashLen + gapLen)).floor();
+    final angleDash = (dashLen / circumference) * 2 * math.pi;
+    final angleStep = ((dashLen + gapLen) / circumference) * 2 * math.pi;
+
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.5;
+
+    double angle = -math.pi / 2;
+    for (int i = 0; i < count; i++) {
+      canvas.drawArc(rect, angle, angleDash, false, paint);
+      angle += angleStep;
     }
   }
-}
-
-// ── Symptoms bottom sheet ─────────────────────────────────────────────────────
-
-class _SymptomsBottomSheet extends ConsumerStatefulWidget {
-  const _SymptomsBottomSheet();
 
   @override
-  ConsumerState<_SymptomsBottomSheet> createState() =>
-      _SymptomsBottomSheetState();
+  bool shouldRepaint(_CycleRingPainter old) =>
+      old.progress != progress ||
+      old.phaseColor != phaseColor ||
+      old.phaseBgColor != phaseBgColor ||
+      old.isPeriodActive != isPeriodActive;
 }
 
-class _SymptomsBottomSheetState extends ConsumerState<_SymptomsBottomSheet> {
-  final _selectedIds = <int>{};
-  bool _saving = false;
+// ─────────────────────────────────────────────────────────────────────────────
+// Dark sheet container (shared by all bottom sheets)
+// ─────────────────────────────────────────────────────────────────────────────
 
-  @override
-  Widget build(BuildContext context) {
-    final symptomsAsync = ref.watch(activeSymptomsProvider);
+class _SheetContainer extends StatelessWidget {
+  const _SheetContainer({required this.title, required this.child});
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      padding: EdgeInsets.only(
-        left: 24,
-        right: 24,
-        top: 16,
-        bottom: MediaQuery.viewInsetsOf(context).bottom + 32,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: Container(
-              width: 36,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.outline,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-          Text(
-            DateFormat('MMMM d').format(DateTime.now()),
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const SizedBox(height: 20),
-          const _Label('Symptoms'),
-          const SizedBox(height: 12),
-          symptomsAsync.when(
-            data: (symptoms) => Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: symptoms.map((s) {
-                final selected = _selectedIds.contains(s.id);
-                return GestureDetector(
-                  onTap: () => setState(() => selected
-                      ? _selectedIds.remove(s.id)
-                      : _selectedIds.add(s.id)),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 150),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: selected
-                          ? AppColors.primary.withValues(alpha: 0.12)
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color:
-                            selected ? AppColors.primary : AppColors.outline,
-                      ),
-                    ),
-                    child: Text(
-                      s.name,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: selected
-                            ? AppColors.primary
-                            : AppColors.textSecondary,
-                      ),
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (_, __) => const SizedBox.shrink(),
-          ),
-          const SizedBox(height: 24),
-          FilledButton(
-            onPressed: _saving ? null : _save,
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _save() async {
-    if (_selectedIds.isEmpty) {
-      Navigator.of(context).pop();
-      return;
-    }
-    setState(() => _saving = true);
-    final today = DateTime.now();
-    final day = DateTime(today.year, today.month, today.day).toUtc();
-    final repo = ref.read(symptomRepositoryProvider);
-    await repo.deleteLogsForDate(today);
-    for (final id in _selectedIds) {
-      await repo.saveLog(SymptomLogsCompanion.insert(date: day, symptomId: id));
-    }
-    if (mounted) {
-      Navigator.of(context).pop();
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Symptoms saved')));
-    }
-  }
-}
-
-class _Label extends StatelessWidget {
-  const _Label(this.text);
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(text, style: Theme.of(context).textTheme.labelLarge);
-  }
-}
-
-class _FlowRow extends StatelessWidget {
-  const _FlowRow({required this.value, required this.onChanged});
-
-  final int value;
-  final ValueChanged<int> onChanged;
-
-  static const _labels = ['', 'Spotting', 'Light', 'Heavy', 'Very\nheavy'];
-  static const _icons = [
-    null,
-    Icons.water_drop_outlined,
-    Icons.water_drop,
-    Icons.opacity,
-    Icons.waves,
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: List.generate(4, (i) {
-        final v = i + 1;
-        final selected = v == value;
-        return GestureDetector(
-          onTap: () => onChanged(v),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 150),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            decoration: BoxDecoration(
-              color: selected
-                  ? AppColors.primary.withValues(alpha: 0.15)
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: selected ? AppColors.primary : AppColors.outline,
-              ),
-            ),
-            child: Column(
-              children: [
-                Icon(
-                  _icons[v],
-                  size: 20,
-                  color:
-                      selected ? AppColors.primary : AppColors.textSecondary,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  _labels[v],
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: selected
-                        ? AppColors.primary
-                        : AppColors.textSecondary,
-                    fontWeight:
-                        selected ? FontWeight.w600 : FontWeight.w400,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      }),
-    );
-  }
-}
-
-class _MoodRow extends StatelessWidget {
-  const _MoodRow({required this.value, required this.onChanged});
-
-  final int? value;
-  final ValueChanged<int> onChanged;
-
-  static const _moods = ['😢', '😕', '😐', '🙂', '😊'];
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: List.generate(5, (i) {
-        final v = i + 1;
-        final selected = v == value;
-        return GestureDetector(
-          onTap: () => onChanged(v),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 150),
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: selected
-                  ? AppColors.primary.withValues(alpha: 0.12)
-                  : Colors.transparent,
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: selected ? AppColors.primary : Colors.transparent,
-              ),
-            ),
-            child: Text(
-              _moods[i],
-              style: TextStyle(fontSize: selected ? 28 : 24),
-            ),
-          ),
-        );
-      }),
-    );
-  }
-}
-
-// ── Today's saved data ────────────────────────────────────────────────────────
-
-class _TodayDataRow extends ConsumerWidget {
-  const _TodayDataRow();
-
-  static const _moodEmoji = ['😢', '😕', '😐', '🙂', '😊'];
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final mood = ref.watch(todayMoodProvider);
-    final logs = ref.watch(todaySymptomLogsProvider).when(
-          data: (v) => v,
-          loading: () => <SymptomLog>[],
-          error: (_, __) => <SymptomLog>[],
-        );
-    final symptoms = ref.watch(activeSymptomsProvider).when(
-          data: (v) => v,
-          loading: () => <Symptom>[],
-          error: (_, __) => <Symptom>[],
-        );
-
-    if (mood == null && logs.isEmpty) return const SizedBox.shrink();
-
-    final nameById = {for (final s in symptoms) s.id: s.name};
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 6,
-        children: [
-          if (mood != null && mood >= 1 && mood <= 5)
-            _DataChip(label: _moodEmoji[mood - 1]),
-          for (final log in logs)
-            if (nameById.containsKey(log.symptomId))
-              _DataChip(label: nameById[log.symptomId]!),
-        ],
-      ),
-    );
-  }
-}
-
-class _DataChip extends StatelessWidget {
-  const _DataChip({required this.label});
-
-  final String label;
+  final String title;
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.25)),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          fontSize: 13,
-          color: AppColors.primary,
-          fontWeight: FontWeight.w500,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFF1E1118), Color(0xFF150D12)],
+        ),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        border: Border(
+          top: BorderSide(color: Color(0x0FFFFFFF)),
+          left: BorderSide(color: Color(0x0FFFFFFF)),
+          right: BorderSide(color: Color(0x0FFFFFFF)),
         ),
       ),
-    );
-  }
-}
-
-// ── End period bottom sheet ───────────────────────────────────────────────────
-
-class _EndPeriodSheet extends ConsumerWidget {
-  const _EndPeriodSheet();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
       padding: EdgeInsets.only(
-        left: 24,
-        right: 24,
-        top: 16,
+        left: 20,
+        right: 20,
+        top: 20,
         bottom: MediaQuery.viewInsetsOf(context).bottom + 32,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 36,
-            height: 4,
-            decoration: BoxDecoration(
-              color: AppColors.outline,
-              borderRadius: BorderRadius.circular(2),
+          // Drag handle
+          Center(
+            child: Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
           ),
           const SizedBox(height: 20),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              DateFormat('MMMM d').format(DateTime.now()),
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-          ),
-          const SizedBox(height: 20),
-          Icon(
-            Icons.stop_circle_outlined,
-            size: 48,
-            color: AppColors.phaseMenstrual.withValues(alpha: 0.8),
-          ),
-          const SizedBox(height: 16),
           Text(
-            'End period today?',
-            style: Theme.of(context).textTheme.titleLarge,
+            title,
+            style: GoogleFonts.playfairDisplay(
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+            ),
           ),
+          const SizedBox(height: 20),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Period (start) sheet
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _PeriodSheet extends StatefulWidget {
+  const _PeriodSheet({required this.onStart});
+
+  final Future<void> Function(int intensity) onStart;
+
+  @override
+  State<_PeriodSheet> createState() => _PeriodSheetState();
+}
+
+class _PeriodSheetState extends State<_PeriodSheet> {
+  int _intensity = 1; // 0–3 index
+  bool _saving = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return _SheetContainer(
+      title: 'Log Period',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Flow intensity label
+          Text(
+            'FLOW INTENSITY',
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.white.withValues(alpha: 0.5),
+              letterSpacing: 1,
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Intensity buttons
+          Row(
+            children: List.generate(4, (i) {
+              final selected = i == _intensity;
+              final color = _intensityColors[i];
+              return Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    left: i == 0 ? 0 : 4,
+                    right: i == 3 ? 0 : 4,
+                  ),
+                  child: GestureDetector(
+                    onTap: () => setState(() => _intensity = i),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      decoration: BoxDecoration(
+                        color: selected
+                            ? color.withValues(alpha: 0.4)
+                            : Colors.white.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          width: 1.5,
+                          color: selected
+                              ? color
+                              : Colors.white.withValues(alpha: 0.08),
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            '●' * (i + 1),
+                            style: TextStyle(
+                              color: selected
+                                  ? color
+                                  : Colors.white.withValues(alpha: 0.6),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            _intensityLabels[i],
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 9,
+                              color: selected
+                                  ? color
+                                  : Colors.white.withValues(alpha: 0.6),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ),
+          const SizedBox(height: 20),
+
+          // Start period button
+          GestureDetector(
+            onTap: _saving
+                ? null
+                : () async {
+                    setState(() => _saving = true);
+                    final nav = Navigator.of(context);
+                    await widget.onStart(_intensity + 1); // 0-3 → 1-4
+                    if (!mounted) return;
+                    nav.pop();
+                  },
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFFE05A7A), Color(0xFFB5179E)],
+                ),
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFE05A7A).withValues(alpha: 0.4),
+                    blurRadius: 24,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: const Center(
+                child: Text(
+                  '🩸 Start Period',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// End period sheet
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _EndPeriodSheet extends StatefulWidget {
+  const _EndPeriodSheet({required this.onEnd});
+
+  final Future<void> Function() onEnd;
+
+  @override
+  State<_EndPeriodSheet> createState() => _EndPeriodSheetState();
+}
+
+class _EndPeriodSheetState extends State<_EndPeriodSheet> {
+  bool _saving = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return _SheetContainer(
+      title: 'End Period?',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
           const SizedBox(height: 8),
+          const Center(child: Text('🌙', style: TextStyle(fontSize: 40))),
+          const SizedBox(height: 12),
           Text(
-            'This will mark today as the last day of your period.',
-            style: Theme.of(context).textTheme.bodyMedium,
+            'Mark your period as ended.\nThis will update your cycle data.',
             textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 28),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.phaseMenstrual,
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.white.withValues(alpha: 0.7),
+              height: 1.6,
             ),
-            onPressed: () async {
-              await ref
-                  .read(cycleNotifierProvider.notifier)
-                  .endPeriod(DateTime.now());
-              if (context.mounted) Navigator.of(context).pop();
-            },
-            child: const Text('End period today'),
           ),
-          const SizedBox(height: 8),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              // Cancel
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => Navigator.of(context).pop(),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.06),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.1),
+                      ),
+                    ),
+                    child: const Center(
+                      child: Text(
+                        'Cancel',
+                        style: TextStyle(color: Colors.white, fontSize: 14),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              // End Period
+              Expanded(
+                flex: 2,
+                child: GestureDetector(
+                  onTap: _saving
+                      ? null
+                      : () async {
+                          setState(() => _saving = true);
+                          final nav = Navigator.of(context);
+                          await widget.onEnd();
+                          if (!mounted) return;
+                          nav.pop();
+                        },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [Color(0xFF9B72CF), Color(0xFF7C3AED)],
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF9B72CF).withValues(alpha: 0.4),
+                          blurRadius: 24,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: const Center(
+                      child: Text(
+                        '✓ End Period',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Mood sheet
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _MoodSheet extends StatefulWidget {
+  const _MoodSheet({
+    required this.phase,
+    required this.currentMoodIdx,
+    required this.onSelect,
+  });
+
+  final _Phase phase;
+  final int? currentMoodIdx;
+  final Future<void> Function(int idx) onSelect;
+
+  @override
+  State<_MoodSheet> createState() => _MoodSheetState();
+}
+
+class _MoodSheetState extends State<_MoodSheet> {
+  late int? _mood;
+
+  @override
+  void initState() {
+    super.initState();
+    _mood = widget.currentMoodIdx;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _SheetContainer(
+      title: 'How are you feeling?',
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: List.generate(5, (i) {
+          final selected = _mood == i;
+          return GestureDetector(
+            onTap: () async {
+              setState(() => _mood = i);
+              final nav = Navigator.of(context);
+              await widget.onSelect(i);
+              await Future<void>.delayed(const Duration(milliseconds: 400));
+              if (!mounted) return;
+              nav.pop();
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              curve: const Cubic(0.34, 1.56, 0.64, 1),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+              decoration: BoxDecoration(
+                color: selected
+                    ? Colors.white.withValues(alpha: 0.1)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: selected
+                      ? Colors.white.withValues(alpha: 0.2)
+                      : Colors.transparent,
+                ),
+              ),
+              child: Column(
+                children: [
+                  AnimatedScale(
+                    scale: selected ? 1.1 : 1.0,
+                    duration: const Duration(milliseconds: 200),
+                    child: Text(
+                      _moods[i],
+                      style: const TextStyle(fontSize: 30),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    _moodLabels[i].toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 9,
+                      color: Colors.white.withValues(alpha: 0.5),
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Symptoms sheet
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _SymptomsSheet extends StatefulWidget {
+  const _SymptomsSheet({
+    required this.phase,
+    required this.initialSelected,
+    required this.onSave,
+  });
+
+  final _Phase phase;
+  final Set<String> initialSelected;
+  final Future<void> Function(Set<String> selected) onSave;
+
+  @override
+  State<_SymptomsSheet> createState() => _SymptomsSheetState();
+}
+
+class _SymptomsSheetState extends State<_SymptomsSheet> {
+  late final Set<String> _selected;
+  bool _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _selected = Set.from(widget.initialSelected);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final phase = widget.phase;
+    return _SheetContainer(
+      title: 'Log Symptoms',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _symptomNames.map((sym) {
+              final active = _selected.contains(sym);
+              return GestureDetector(
+                onTap: () => setState(() {
+                  if (active) {
+                    _selected.remove(sym);
+                  } else {
+                    _selected.add(sym);
+                  }
+                }),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: active
+                        ? phase.color.withValues(alpha: 0.3)
+                        : Colors.white.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: active
+                          ? phase.color.withValues(alpha: 0.7)
+                          : Colors.white.withValues(alpha: 0.1),
+                    ),
+                  ),
+                  child: Text(
+                    sym,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: active
+                          ? phase.color
+                          : Colors.white.withValues(alpha: 0.7),
+                      fontWeight:
+                          active ? FontWeight.w600 : FontWeight.w400,
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 20),
+
+          // Save button
+          GestureDetector(
+            onTap: _saving
+                ? null
+                : () async {
+                    setState(() => _saving = true);
+                    final nav = Navigator.of(context);
+                    await widget.onSave(Set.from(_selected));
+                    if (!mounted) return;
+                    nav.pop();
+                  },
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 15),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [phase.color, phase.color.withValues(alpha: 0.8)],
+                ),
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: [
+                  BoxShadow(
+                    color: phase.color.withValues(alpha: 0.4),
+                    blurRadius: 24,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: Text(
+                  _selected.isNotEmpty
+                      ? 'Save (${_selected.length} selected)'
+                      : 'Save',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
       ),
