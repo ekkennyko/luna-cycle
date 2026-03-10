@@ -90,8 +90,7 @@ class SettingsScreen extends ConsumerWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Reset profile?'),
-        content: const Text(
-            'All cycle entries, symptom logs and pregnancies will be deleted. This cannot be undone.'),
+        content: const Text('All cycle entries, symptom logs and pregnancies will be deleted. This cannot be undone.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
@@ -154,9 +153,7 @@ class _SettingsTile extends StatelessWidget {
       leading: Icon(icon, color: color),
       title: Text(title),
       subtitle: subtitle != null ? Text(subtitle!) : null,
-      trailing: isPremium
-          ? const _PremiumBadge()
-          : const Icon(Icons.chevron_right, size: 20),
+      trailing: isPremium ? const _PremiumBadge() : const Icon(Icons.chevron_right, size: 20),
       onTap: onTap,
     );
   }

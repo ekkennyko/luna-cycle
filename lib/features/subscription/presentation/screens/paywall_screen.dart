@@ -54,10 +54,7 @@ class _PaywallContent extends ConsumerWidget {
           children: [
             Text(
               'Luna Premium',
-              style: Theme.of(context)
-                  .textTheme
-                  .displayLarge
-                  ?.copyWith(color: AppColors.primary),
+              style: Theme.of(context).textTheme.displayLarge?.copyWith(color: AppColors.primary),
             ),
             const SizedBox(height: 8),
             Text(
@@ -76,11 +73,8 @@ class _PaywallContent extends ConsumerWidget {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(f.$2,
-                            style:
-                                Theme.of(context).textTheme.titleMedium),
-                        Text(f.$3,
-                            style: Theme.of(context).textTheme.bodyMedium),
+                        Text(f.$2, style: Theme.of(context).textTheme.titleMedium),
+                        Text(f.$3, style: Theme.of(context).textTheme.bodyMedium),
                       ],
                     ),
                   ],
@@ -143,8 +137,7 @@ class _PackageButton extends StatelessWidget {
         if (sublabel != null)
           Text(
             sublabel!,
-            style: const TextStyle(
-                fontSize: 12, fontWeight: FontWeight.w400),
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w400),
           ),
       ],
     );
@@ -154,8 +147,7 @@ class _PackageButton extends StatelessWidget {
         onPressed: loading ? null : () => onTap(package!),
         style: OutlinedButton.styleFrom(
           minimumSize: const Size.fromHeight(52),
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           side: const BorderSide(color: AppColors.primary),
         ),
         child: child,
@@ -168,8 +160,7 @@ class _PackageButton extends StatelessWidget {
           ? const SizedBox(
               width: 20,
               height: 20,
-              child: CircularProgressIndicator(
-                  color: Colors.white, strokeWidth: 2),
+              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
             )
           : child,
     );

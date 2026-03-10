@@ -74,8 +74,7 @@ class _MainShell extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final location = GoRouterState.of(context).matchedLocation;
-    final phaseColor =
-        _phaseColor(ref.watch(currentCyclePhaseProvider).asData?.value);
+    final phaseColor = _phaseColor(ref.watch(currentCyclePhaseProvider).asData?.value);
 
     int selectedIndex = 0;
     if (location.startsWith('/analytics')) selectedIndex = 1;
@@ -114,9 +113,7 @@ class _MainShell extends ConsumerWidget {
                       vertical: 8,
                     ),
                     decoration: BoxDecoration(
-                      color: selected
-                          ? phaseColor.withValues(alpha: 0.2)
-                          : Colors.transparent,
+                      color: selected ? phaseColor.withValues(alpha: 0.2) : Colors.transparent,
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Column(
@@ -126,9 +123,7 @@ class _MainShell extends ConsumerWidget {
                           item.icon,
                           style: TextStyle(
                             fontSize: 18,
-                            color: selected
-                                ? phaseColor
-                                : Colors.white.withValues(alpha: 0.3),
+                            color: selected ? phaseColor : Colors.white.withValues(alpha: 0.3),
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -136,9 +131,7 @@ class _MainShell extends ConsumerWidget {
                           item.label,
                           style: TextStyle(
                             fontSize: 10,
-                            color: selected
-                                ? phaseColor
-                                : Colors.white.withValues(alpha: 0.3),
+                            color: selected ? phaseColor : Colors.white.withValues(alpha: 0.3),
                             letterSpacing: 0.5,
                           ),
                         ),

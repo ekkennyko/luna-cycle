@@ -8,49 +8,37 @@ class CycleRepositoryImpl implements ICycleRepository {
   final AppDatabase _db;
 
   @override
-  Future<List<CycleEntry>> getAllEntries() =>
-      (_db.select(_db.cycleEntries)
-            ..orderBy([(t) => OrderingTerm.desc(t.date)]))
-          .get();
+  Future<List<CycleEntry>> getAllEntries() => (_db.select(_db.cycleEntries)..orderBy([(t) => OrderingTerm.desc(t.date)])).get();
 
   @override
-  Future<List<CycleEntry>> getEntriesBetween(DateTime from, DateTime to) =>
-      (_db.select(_db.cycleEntries)
-            ..where((t) => t.date.isBetweenValues(from, to))
-            ..orderBy([(t) => OrderingTerm.asc(t.date)]))
-          .get();
+  Future<List<CycleEntry>> getEntriesBetween(DateTime from, DateTime to) => (_db.select(_db.cycleEntries)
+        ..where((t) => t.date.isBetweenValues(from, to))
+        ..orderBy([(t) => OrderingTerm.asc(t.date)]))
+      .get();
 
   @override
   Future<CycleEntry?> getEntryForDate(DateTime date) {
     final day = DateTime(date.year, date.month, date.day).toUtc();
     final next = day.add(const Duration(days: 1));
-    return (_db.select(_db.cycleEntries)
-          ..where((t) =>
-              t.date.isBiggerOrEqualValue(day) &
-              t.date.isSmallerThanValue(next)))
-        .getSingleOrNull();
+    return (_db.select(_db.cycleEntries)..where((t) => t.date.isBiggerOrEqualValue(day) & t.date.isSmallerThanValue(next))).getSingleOrNull();
   }
 
   @override
-  Future<void> saveEntry(CycleEntriesCompanion entry) =>
-      _db.into(_db.cycleEntries).insertOnConflictUpdate(entry);
+  Future<void> saveEntry(CycleEntriesCompanion entry) => _db.into(_db.cycleEntries).insertOnConflictUpdate(entry);
 
   @override
   Future<void> updateEntryType(int id, String type) =>
-      (_db.update(_db.cycleEntries)..where((t) => t.id.equals(id)))
-          .write(CycleEntriesCompanion(type: Value(type)));
+      (_db.update(_db.cycleEntries)..where((t) => t.id.equals(id))).write(CycleEntriesCompanion(type: Value(type)));
 
   @override
-  Future<void> deleteEntry(int id) =>
-      (_db.delete(_db.cycleEntries)..where((t) => t.id.equals(id))).go();
+  Future<void> deleteEntry(int id) => (_db.delete(_db.cycleEntries)..where((t) => t.id.equals(id))).go();
 
   @override
-  Future<CycleEntry?> getLastPeriodStart() =>
-      (_db.select(_db.cycleEntries)
-            ..where((t) => t.type.equals('period_start'))
-            ..orderBy([(t) => OrderingTerm.desc(t.date)])
-            ..limit(1))
-          .getSingleOrNull();
+  Future<CycleEntry?> getLastPeriodStart() => (_db.select(_db.cycleEntries)
+        ..where((t) => t.type.equals('period_start'))
+        ..orderBy([(t) => OrderingTerm.desc(t.date)])
+        ..limit(1))
+      .getSingleOrNull();
 
   @override
   Future<void> saveMood(DateTime date, int mood) async {
@@ -68,23 +56,18 @@ class CycleRepositoryImpl implements ICycleRepository {
   }
 
   @override
-  Future<CycleEntry?> getLastPeriodEnd() =>
-      (_db.select(_db.cycleEntries)
-            ..where((t) => t.type.equals('period_end'))
-            ..orderBy([(t) => OrderingTerm.desc(t.date)])
-            ..limit(1))
-          .getSingleOrNull();
+  Future<CycleEntry?> getLastPeriodEnd() => (_db.select(_db.cycleEntries)
+        ..where((t) => t.type.equals('period_end'))
+        ..orderBy([(t) => OrderingTerm.desc(t.date)])
+        ..limit(1))
+      .getSingleOrNull();
 
   @override
-  Future<List<CycleEntry>> getAllPeriodStarts() =>
-      (_db.select(_db.cycleEntries)
-            ..where((t) => t.type.equals('period_start'))
-            ..orderBy([(t) => OrderingTerm.asc(t.date)]))
-          .get();
+  Future<List<CycleEntry>> getAllPeriodStarts() => (_db.select(_db.cycleEntries)
+        ..where((t) => t.type.equals('period_start'))
+        ..orderBy([(t) => OrderingTerm.asc(t.date)]))
+      .get();
 
   @override
-  Stream<List<CycleEntry>> watchAllEntries() =>
-      (_db.select(_db.cycleEntries)
-            ..orderBy([(t) => OrderingTerm.desc(t.date)]))
-          .watch();
+  Stream<List<CycleEntry>> watchAllEntries() => (_db.select(_db.cycleEntries)..orderBy([(t) => OrderingTerm.desc(t.date)])).watch();
 }

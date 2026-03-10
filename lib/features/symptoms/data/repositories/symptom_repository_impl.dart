@@ -8,71 +8,50 @@ class SymptomRepositoryImpl implements ISymptomRepository {
   final AppDatabase _db;
 
   @override
-  Future<List<Symptom>> getAllSymptoms() =>
-      (_db.select(_db.symptoms)
-            ..orderBy([(t) => OrderingTerm.asc(t.sortOrder)]))
-          .get();
+  Future<List<Symptom>> getAllSymptoms() => (_db.select(_db.symptoms)..orderBy([(t) => OrderingTerm.asc(t.sortOrder)])).get();
 
   @override
-  Future<List<Symptom>> getActiveSymptoms() =>
-      (_db.select(_db.symptoms)
-            ..where((t) => t.isActive.equals(true))
-            ..orderBy([(t) => OrderingTerm.asc(t.sortOrder)]))
-          .get();
+  Future<List<Symptom>> getActiveSymptoms() => (_db.select(_db.symptoms)
+        ..where((t) => t.isActive.equals(true))
+        ..orderBy([(t) => OrderingTerm.asc(t.sortOrder)]))
+      .get();
 
   @override
-  Future<void> saveSymptom(SymptomsCompanion symptom) =>
-      _db.into(_db.symptoms).insertOnConflictUpdate(symptom);
+  Future<void> saveSymptom(SymptomsCompanion symptom) => _db.into(_db.symptoms).insertOnConflictUpdate(symptom);
 
   @override
-  Future<void> deleteSymptom(int id) =>
-      (_db.delete(_db.symptoms)..where((t) => t.id.equals(id))).go();
+  Future<void> deleteSymptom(int id) => (_db.delete(_db.symptoms)..where((t) => t.id.equals(id))).go();
 
   @override
   Future<List<SymptomLog>> getLogsForDate(DateTime date) {
     final day = DateTime(date.year, date.month, date.day).toUtc();
     final next = day.add(const Duration(days: 1));
-    return (_db.select(_db.symptomLogs)
-          ..where((t) =>
-              t.date.isBiggerOrEqualValue(day) &
-              t.date.isSmallerThanValue(next)))
-        .get();
+    return (_db.select(_db.symptomLogs)..where((t) => t.date.isBiggerOrEqualValue(day) & t.date.isSmallerThanValue(next))).get();
   }
 
   @override
-  Future<List<SymptomLog>> getLogsBetween(DateTime from, DateTime to) =>
-      (_db.select(_db.symptomLogs)
-            ..where((t) => t.date.isBetweenValues(from, to))
-            ..orderBy([(t) => OrderingTerm.asc(t.date)]))
-          .get();
+  Future<List<SymptomLog>> getLogsBetween(DateTime from, DateTime to) => (_db.select(_db.symptomLogs)
+        ..where((t) => t.date.isBetweenValues(from, to))
+        ..orderBy([(t) => OrderingTerm.asc(t.date)]))
+      .get();
 
   @override
-  Future<void> saveLog(SymptomLogsCompanion log) =>
-      _db.into(_db.symptomLogs).insertOnConflictUpdate(log);
+  Future<void> saveLog(SymptomLogsCompanion log) => _db.into(_db.symptomLogs).insertOnConflictUpdate(log);
 
   @override
-  Future<void> deleteLog(int id) =>
-      (_db.delete(_db.symptomLogs)..where((t) => t.id.equals(id))).go();
+  Future<void> deleteLog(int id) => (_db.delete(_db.symptomLogs)..where((t) => t.id.equals(id))).go();
 
   @override
   Future<void> deleteLogsForDate(DateTime date) {
     final day = DateTime(date.year, date.month, date.day).toUtc();
     final next = day.add(const Duration(days: 1));
-    return (_db.delete(_db.symptomLogs)
-          ..where((t) =>
-              t.date.isBiggerOrEqualValue(day) &
-              t.date.isSmallerThanValue(next)))
-        .go();
+    return (_db.delete(_db.symptomLogs)..where((t) => t.date.isBiggerOrEqualValue(day) & t.date.isSmallerThanValue(next))).go();
   }
 
   @override
   Stream<List<SymptomLog>> watchLogsForDate(DateTime date) {
     final day = DateTime(date.year, date.month, date.day).toUtc();
     final next = day.add(const Duration(days: 1));
-    return (_db.select(_db.symptomLogs)
-          ..where((t) =>
-              t.date.isBiggerOrEqualValue(day) &
-              t.date.isSmallerThanValue(next)))
-        .watch();
+    return (_db.select(_db.symptomLogs)..where((t) => t.date.isBiggerOrEqualValue(day) & t.date.isSmallerThanValue(next))).watch();
   }
 }

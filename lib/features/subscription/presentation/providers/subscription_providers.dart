@@ -8,9 +8,7 @@ Future<void> initRevenueCat() async {
   await Purchases.setLogLevel(LogLevel.debug);
 
   final config = PurchasesConfiguration(
-    Platform.isAndroid
-        ? AppConstants.revenueCatApiKeyAndroid
-        : AppConstants.revenueCatApiKeyIos,
+    Platform.isAndroid ? AppConstants.revenueCatApiKeyAndroid : AppConstants.revenueCatApiKeyIos,
   );
   await Purchases.configure(config);
 }
@@ -52,7 +50,6 @@ class SubscriptionNotifier extends AsyncNotifier<CustomerInfo?> {
   }
 }
 
-final subscriptionNotifierProvider =
-    AsyncNotifierProvider<SubscriptionNotifier, CustomerInfo?>(
+final subscriptionNotifierProvider = AsyncNotifierProvider<SubscriptionNotifier, CustomerInfo?>(
   SubscriptionNotifier.new,
 );

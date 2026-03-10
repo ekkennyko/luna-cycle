@@ -44,8 +44,7 @@ class _LogScreenState extends ConsumerState<LogScreen> {
                   if (_isPeriod) ...[
                     const Divider(),
                     Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -56,8 +55,7 @@ class _LogScreenState extends ConsumerState<LogScreen> {
                           const SizedBox(height: 8),
                           _FlowIntensitySelector(
                             value: _flowIntensity,
-                            onChanged: (v) =>
-                                setState(() => _flowIntensity = v),
+                            onChanged: (v) => setState(() => _flowIntensity = v),
                           ),
                         ],
                       ),
@@ -79,9 +77,7 @@ class _LogScreenState extends ConsumerState<LogScreen> {
 
   Future<void> _save() async {
     if (_isPeriod) {
-      await ref
-          .read(cycleNotifierProvider.notifier)
-          .logPeriodStart(widget.date);
+      await ref.read(cycleNotifierProvider.notifier).logPeriodStart(widget.date);
     }
     if (mounted) context.pop();
   }
@@ -101,8 +97,7 @@ class _SectionCard extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Text(title,
-                style: Theme.of(context).textTheme.titleMedium),
+            child: Text(title, style: Theme.of(context).textTheme.titleMedium),
           ),
           child,
         ],
@@ -112,8 +107,7 @@ class _SectionCard extends StatelessWidget {
 }
 
 class _FlowIntensitySelector extends StatelessWidget {
-  const _FlowIntensitySelector(
-      {required this.value, required this.onChanged});
+  const _FlowIntensitySelector({required this.value, required this.onChanged});
 
   final int value;
   final ValueChanged<int> onChanged;
@@ -144,12 +138,9 @@ class _FlowIntensitySelector extends StatelessWidget {
           onTap: () => onChanged(v),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 150),
-            padding:
-                const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: BoxDecoration(
-              color: selected
-                  ? AppColors.primary.withValues(alpha: 0.15)
-                  : Colors.transparent,
+              color: selected ? AppColors.primary.withValues(alpha: 0.15) : Colors.transparent,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: selected ? AppColors.primary : AppColors.outline,
@@ -159,9 +150,7 @@ class _FlowIntensitySelector extends StatelessWidget {
               children: [
                 Icon(
                   _icons[v],
-                  color: selected
-                      ? AppColors.primary
-                      : AppColors.textSecondary,
+                  color: selected ? AppColors.primary : AppColors.textSecondary,
                   size: 20,
                 ),
                 const SizedBox(height: 4),
@@ -170,12 +159,8 @@ class _FlowIntensitySelector extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 10,
-                    color: selected
-                        ? AppColors.primary
-                        : AppColors.textSecondary,
-                    fontWeight: selected
-                        ? FontWeight.w600
-                        : FontWeight.w400,
+                    color: selected ? AppColors.primary : AppColors.textSecondary,
+                    fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
                   ),
                 ),
               ],

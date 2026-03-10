@@ -95,9 +95,9 @@ class CycleNotifier extends AsyncNotifier<void> {
     if (existing != null) {
       await _repo.saveEntry(
         existing.toCompanion(true).copyWith(
-          type: const Value('period_start'),
-          flowIntensity: Value(flowIntensity),
-        ),
+              type: const Value('period_start'),
+              flowIntensity: Value(flowIntensity),
+            ),
       );
     } else {
       await _repo.saveEntry(
@@ -110,8 +110,7 @@ class CycleNotifier extends AsyncNotifier<void> {
     }
   }
 
-  Future<void> saveMood(DateTime date, int mood) =>
-      _repo.saveMood(date, mood);
+  Future<void> saveMood(DateTime date, int mood) => _repo.saveMood(date, mood);
 
   Future<void> endPeriod(DateTime date) async {
     final day = DateTime(date.year, date.month, date.day).toUtc();
@@ -128,8 +127,7 @@ class CycleNotifier extends AsyncNotifier<void> {
   Future<void> deleteEntry(int id) => _repo.deleteEntry(id);
 }
 
-final cycleNotifierProvider =
-    AsyncNotifierProvider<CycleNotifier, void>(CycleNotifier.new);
+final cycleNotifierProvider = AsyncNotifierProvider<CycleNotifier, void>(CycleNotifier.new);
 
 /// Mood value (1–5) saved for today, derived from the entries stream.
 final todayMoodProvider = Provider<int?>((ref) {

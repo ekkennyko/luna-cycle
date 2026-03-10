@@ -29,8 +29,7 @@ class _Phase {
     name: 'Menstrual',
     color: Color(0xFFE05A7A),
     bgColor: Color(0x1FE05A7A), // 0.12 alpha
-    tip:
-        'Your body is releasing. Rest, use warmth, and be gentle with yourself. Iron-rich foods like spinach and lentils can help replenish.',
+    tip: 'Your body is releasing. Rest, use warmth, and be gentle with yourself. Iron-rich foods like spinach and lentils can help replenish.',
   );
 
   // ignore: constant_identifier_names
@@ -38,8 +37,7 @@ class _Phase {
     name: 'Follicular',
     color: Color(0xFFF4A261),
     bgColor: Color(0x1AF4A261), // 0.10 alpha
-    tip:
-        'Estrogen is rising — your energy and creativity are building. Great time to start new projects and try challenging workouts.',
+    tip: 'Estrogen is rising — your energy and creativity are building. Great time to start new projects and try challenging workouts.',
   );
 
   // ignore: constant_identifier_names
@@ -47,8 +45,7 @@ class _Phase {
     name: 'Ovulation',
     color: Color(0xFFA8DADC),
     bgColor: Color(0x1AA8DADC),
-    tip:
-        "Peak energy and confidence! You're magnetic right now. Ideal for social events, big presentations, and high-intensity exercise.",
+    tip: "Peak energy and confidence! You're magnetic right now. Ideal for social events, big presentations, and high-intensity exercise.",
   );
 
   // ignore: constant_identifier_names
@@ -56,8 +53,7 @@ class _Phase {
     name: 'Luteal',
     color: Color(0xFF9B72CF),
     bgColor: Color(0x1A9B72CF),
-    tip:
-        'Progesterone peaks then drops. Prioritize sleep, magnesium-rich foods, and reduce caffeine. Self-care is not optional.',
+    tip: 'Progesterone peaks then drops. Prioritize sleep, magnesium-rich foods, and reduce caffeine. Self-care is not optional.',
   );
 
   static _Phase forDay(int day) {
@@ -66,7 +62,6 @@ class _Phase {
     if (day <= 17) return ovulation;
     return luteal;
   }
-
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -117,8 +112,7 @@ class HomeScreen extends ConsumerStatefulWidget {
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends ConsumerState<HomeScreen>
-    with TickerProviderStateMixin {
+class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStateMixin {
   // ── Animations ─────────────────────────────────────────────────────────────
   late final AnimationController _floatController;
   late final AnimationController _ringController;
@@ -195,9 +189,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       builder: (_) => _PeriodSheet(
         onStart: (intensity) async {
           final today = DateTime.now();
-          await ref
-              .read(cycleNotifierProvider.notifier)
-              .logPeriodStart(today, flowIntensity: intensity);
+          await ref.read(cycleNotifierProvider.notifier).logPeriodStart(today, flowIntensity: intensity);
           if (mounted) setState(() => _previewDay = null);
           _ringController.forward(from: 0);
         },
@@ -212,9 +204,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       backgroundColor: Colors.transparent,
       builder: (_) => _EndPeriodSheet(
         onEnd: () async {
-          await ref
-              .read(cycleNotifierProvider.notifier)
-              .endPeriod(DateTime.now());
+          await ref.read(cycleNotifierProvider.notifier).endPeriod(DateTime.now());
           if (mounted) setState(() => _previewDay = null);
         },
       ),
@@ -231,9 +221,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         currentMoodIdx: _selectedMoodIdx,
         onSelect: (idx) async {
           if (mounted) setState(() => _selectedMoodIdx = idx);
-          await ref
-              .read(cycleNotifierProvider.notifier)
-              .saveMood(DateTime.now(), idx + 1);
+          await ref.read(cycleNotifierProvider.notifier).saveMood(DateTime.now(), idx + 1);
         },
       ),
     );
@@ -279,30 +267,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   Widget build(BuildContext context) {
     // Animate ring when real data first arrives
     ref.listen<AsyncValue<int?>>(currentCycleDayProvider, (prev, next) {
-      if (prev?.asData?.value == null &&
-          next.asData?.value != null &&
-          _previewDay == null) {
+      if (prev?.asData?.value == null && next.asData?.value != null && _previewDay == null) {
         _ringController.forward(from: 0);
       }
     });
 
     final cycleDay = ref.watch(currentCycleDayProvider).asData?.value;
-    final isPeriodActive =
-        ref.watch(isPeriodActiveProvider).asData?.value ?? false;
+    final isPeriodActive = ref.watch(isPeriodActiveProvider).asData?.value ?? false;
     final avgLen = ref.watch(averageCycleLengthProvider).asData?.value ?? 28;
     final nextPeriod = ref.watch(nextPeriodDateProvider).asData?.value;
     final todayMood = ref.watch(todayMoodProvider); // int? 1–5
-    final todayLogs =
-        ref.watch(todaySymptomLogsProvider).asData?.value ??
-        const <SymptomLog>[];
+    final todayLogs = ref.watch(todaySymptomLogsProvider).asData?.value ?? const <SymptomLog>[];
 
     // Display day: preview takes priority over real data
     final displayDay = _previewDay ?? cycleDay ?? 0;
     final phase = displayDay > 0 ? _Phase.forDay(displayDay) : _Phase.menstrual;
 
     // Ring progress (0.0–1.0)
-    final targetProgress =
-        displayDay > 0 ? (displayDay / avgLen).clamp(0.0, 1.0).toDouble() : 0.0;
+    final targetProgress = displayDay > 0 ? (displayDay / avgLen).clamp(0.0, 1.0).toDouble() : 0.0;
 
     // Period pill label
     final String periodLabel;
@@ -316,14 +298,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     }
 
     // Mood chip: prefer locally selected, then today's DB value (convert 1-5 → 0-4)
-    final moodIdx = _selectedMoodIdx ??
-        (todayMood != null && todayMood >= 1 && todayMood <= 5
-            ? todayMood - 1
-            : null);
+    final moodIdx = _selectedMoodIdx ?? (todayMood != null && todayMood >= 1 && todayMood <= 5 ? todayMood - 1 : null);
 
     // Symptoms count: prefer local selection, then DB logs
-    final symptomsCount =
-        _selectedSymptoms.isNotEmpty ? _selectedSymptoms.length : todayLogs.length;
+    final symptomsCount = _selectedSymptoms.isNotEmpty ? _selectedSymptoms.length : todayLogs.length;
 
     return Scaffold(
       backgroundColor: const Color(0xFF120A0A),
@@ -560,9 +538,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   width: isActive ? 28 : 8,
                   height: 8,
                   decoration: BoxDecoration(
-                    color: isActive
-                        ? dotColor
-                        : Colors.white.withValues(alpha: 0.2),
+                    color: isActive ? dotColor : Colors.white.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),
@@ -620,8 +596,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           Expanded(
             child: _QuickChip(
               icon: '✦',
-              label:
-                  symptomsCount > 0 ? '$symptomsCount symptoms' : 'Symptoms',
+              label: symptomsCount > 0 ? '$symptomsCount symptoms' : 'Symptoms',
               onTap: () => _openSymptomsSheet(phase),
             ),
           ),
@@ -805,9 +780,7 @@ class _QuickChip extends StatelessWidget {
           color: active ? null : Colors.white.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: active
-                ? color.withValues(alpha: 0.50)
-                : Colors.white.withValues(alpha: 0.08),
+            color: active ? color.withValues(alpha: 0.50) : Colors.white.withValues(alpha: 0.08),
           ),
         ),
         child: Column(
@@ -895,8 +868,7 @@ class _CycleRingPainter extends CustomPainter {
     );
 
     // 4b. Progress arc with linear gradient
-    final arcColor2 =
-        isPeriodActive ? const Color(0xFFFF6B9D) : phaseColor.withValues(alpha: 0.7);
+    final arcColor2 = isPeriodActive ? const Color(0xFFFF6B9D) : phaseColor.withValues(alpha: 0.7);
     canvas.drawArc(
       rect,
       -math.pi / 2,
@@ -959,10 +931,7 @@ class _CycleRingPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_CycleRingPainter old) =>
-      old.progress != progress ||
-      old.phaseColor != phaseColor ||
-      old.phaseBgColor != phaseBgColor ||
-      old.isPeriodActive != isPeriodActive;
+      old.progress != progress || old.phaseColor != phaseColor || old.phaseBgColor != phaseBgColor || old.isPeriodActive != isPeriodActive;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1081,15 +1050,11 @@ class _PeriodSheetState extends State<_PeriodSheet> {
                       duration: const Duration(milliseconds: 200),
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       decoration: BoxDecoration(
-                        color: selected
-                            ? color.withValues(alpha: 0.4)
-                            : Colors.white.withValues(alpha: 0.05),
+                        color: selected ? color.withValues(alpha: 0.4) : Colors.white.withValues(alpha: 0.05),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           width: 1.5,
-                          color: selected
-                              ? color
-                              : Colors.white.withValues(alpha: 0.08),
+                          color: selected ? color : Colors.white.withValues(alpha: 0.08),
                         ),
                       ),
                       child: Column(
@@ -1097,9 +1062,7 @@ class _PeriodSheetState extends State<_PeriodSheet> {
                           Text(
                             '●' * (i + 1),
                             style: TextStyle(
-                              color: selected
-                                  ? color
-                                  : Colors.white.withValues(alpha: 0.6),
+                              color: selected ? color : Colors.white.withValues(alpha: 0.6),
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
                             ),
@@ -1110,9 +1073,7 @@ class _PeriodSheetState extends State<_PeriodSheet> {
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 9,
-                              color: selected
-                                  ? color
-                                  : Colors.white.withValues(alpha: 0.6),
+                              color: selected ? color : Colors.white.withValues(alpha: 0.6),
                             ),
                           ),
                         ],
@@ -1334,14 +1295,10 @@ class _MoodSheetState extends State<_MoodSheet> {
               curve: const Cubic(0.34, 1.56, 0.64, 1),
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
               decoration: BoxDecoration(
-                color: selected
-                    ? Colors.white.withValues(alpha: 0.1)
-                    : Colors.transparent,
+                color: selected ? Colors.white.withValues(alpha: 0.1) : Colors.transparent,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: selected
-                      ? Colors.white.withValues(alpha: 0.2)
-                      : Colors.transparent,
+                  color: selected ? Colors.white.withValues(alpha: 0.2) : Colors.transparent,
                 ),
               ),
               child: Column(
@@ -1430,25 +1387,18 @@ class _SymptomsSheetState extends State<_SymptomsSheet> {
                     vertical: 8,
                   ),
                   decoration: BoxDecoration(
-                    color: active
-                        ? phase.color.withValues(alpha: 0.3)
-                        : Colors.white.withValues(alpha: 0.05),
+                    color: active ? phase.color.withValues(alpha: 0.3) : Colors.white.withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: active
-                          ? phase.color.withValues(alpha: 0.7)
-                          : Colors.white.withValues(alpha: 0.1),
+                      color: active ? phase.color.withValues(alpha: 0.7) : Colors.white.withValues(alpha: 0.1),
                     ),
                   ),
                   child: Text(
                     sym,
                     style: TextStyle(
                       fontSize: 12,
-                      color: active
-                          ? phase.color
-                          : Colors.white.withValues(alpha: 0.7),
-                      fontWeight:
-                          active ? FontWeight.w600 : FontWeight.w400,
+                      color: active ? phase.color : Colors.white.withValues(alpha: 0.7),
+                      fontWeight: active ? FontWeight.w600 : FontWeight.w400,
                     ),
                   ),
                 ),
@@ -1488,9 +1438,7 @@ class _SymptomsSheetState extends State<_SymptomsSheet> {
               ),
               child: Center(
                 child: Text(
-                  _selected.isNotEmpty
-                      ? 'Save (${_selected.length} selected)'
-                      : 'Save',
+                  _selected.isNotEmpty ? 'Save (${_selected.length} selected)' : 'Save',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 15,
