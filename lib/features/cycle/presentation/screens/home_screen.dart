@@ -456,14 +456,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             return Transform.translate(
               offset: Offset(0, _floatAnim.value),
               child: SizedBox(
-                width: 230,
-                height: 230,
+                width: 310,
+                height: 310,
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
                     // Ring painter
                     CustomPaint(
-                      size: const Size(230, 230),
+                      size: const Size(310, 310),
                       painter: _CycleRingPainter(
                         progress: progress,
                         phaseColor: phase.color,
@@ -479,7 +479,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                         Text(
                           'DAY',
                           style: TextStyle(
-                            fontSize: 11,
+                            fontSize: 14,
                             color: Colors.white.withValues(alpha: 0.5),
                             letterSpacing: 2,
                           ),
@@ -488,7 +488,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                         Text(
                           displayDay > 0 ? '$displayDay' : '–',
                           style: GoogleFonts.playfairDisplay(
-                            fontSize: 56,
+                            fontSize: 72,
                             fontWeight: FontWeight.w700,
                             color: Colors.white,
                             height: 1,
@@ -503,7 +503,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                         Text(
                           phase.name,
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: 17,
                             color: phase.color,
                             fontWeight: FontWeight.w500,
                             letterSpacing: 0.5,
@@ -526,7 +526,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                             child: Text(
                               periodLabel,
                               style: TextStyle(
-                                fontSize: 11,
+                                fontSize: 14,
                                 color: Colors.white.withValues(alpha: 0.6),
                               ),
                             ),
@@ -850,14 +850,14 @@ class _CycleRingPainter extends CustomPainter {
   final Color phaseBgColor;
   final bool isPeriodActive;
 
-  static const _stroke = 14.0;
+  static const _stroke = 19.0;
 
   @override
   void paint(Canvas canvas, Size size) {
     final cx = size.width / 2;
     final cy = size.height / 2;
     final center = Offset(cx, cy);
-    final r = (size.width - _stroke * 2) / 2; // 101 at 230px
+    final r = (size.width - _stroke * 2) / 2; // 136 at 310px
 
     // 1. Outer decorative dashed ring (r + 20)
     _drawDashedRing(canvas, center, r + 20, phaseColor.withValues(alpha: 0.15));
@@ -873,7 +873,7 @@ class _CycleRingPainter extends CustomPainter {
     );
 
     // 3. Inner glow fill circle
-    canvas.drawCircle(center, r - 30, Paint()..color = phaseBgColor);
+    canvas.drawCircle(center, r - 40, Paint()..color = phaseBgColor);
 
     if (progress <= 0) return;
 
@@ -926,9 +926,9 @@ class _CycleRingPainter extends CustomPainter {
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
     );
     // Dot fill
-    canvas.drawCircle(dotPos, 7, Paint()..color = phaseColor);
+    canvas.drawCircle(dotPos, 9, Paint()..color = phaseColor);
     // Dot white center
-    canvas.drawCircle(dotPos, 3, Paint()..color = Colors.white);
+    canvas.drawCircle(dotPos, 4, Paint()..color = Colors.white);
   }
 
   void _drawDashedRing(
