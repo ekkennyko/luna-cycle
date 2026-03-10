@@ -195,9 +195,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       builder: (_) => _PeriodSheet(
         onStart: (intensity) async {
           final today = DateTime.now();
-          final n = ref.read(cycleNotifierProvider.notifier);
-          await n.logPeriodStart(today);
-          if (intensity != 1) await n.updateFlowIntensity(today, intensity);
+          await ref
+              .read(cycleNotifierProvider.notifier)
+              .logPeriodStart(today, flowIntensity: intensity);
           if (mounted) setState(() => _previewDay = null);
           _ringController.forward(from: 0);
         },

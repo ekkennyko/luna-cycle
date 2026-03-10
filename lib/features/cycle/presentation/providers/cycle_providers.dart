@@ -89,23 +89,25 @@ class CycleNotifier extends AsyncNotifier<void> {
   @override
   Future<void> build() async {}
 
-  Future<void> logPeriodStart(DateTime date) async {
+  Future<void> logPeriodStart(DateTime date, {int flowIntensity = 2}) async {
     final day = DateTime(date.year, date.month, date.day).toUtc();
-    await _repo.saveEntry(
-      CycleEntriesCompanion.insert(
-        date: day,
-        type: 'period_start',
-        flowIntensity: const Value(2),
-      ),
-    );
-  }
-
-  Future<void> updateFlowIntensity(DateTime date, int intensity) async {
     final existing = await _repo.getEntryForDate(date);
-    if (existing == null) return;
-    await _repo.saveEntry(
-      existing.toCompanion(true).copyWith(flowIntensity: Value(intensity)),
-    );
+    if (existing != null) {
+      await _repo.saveEntry(
+        existing.toCompanion(true).copyWith(
+          type: const Value('period_start'),
+          flowIntensity: Value(flowIntensity),
+        ),
+      );
+    } else {
+      await _repo.saveEntry(
+        CycleEntriesCompanion.insert(
+          date: day,
+          type: 'period_start',
+          flowIntensity: Value(flowIntensity),
+        ),
+      );
+    }
   }
 
   Future<void> saveMood(DateTime date, int mood) =>
