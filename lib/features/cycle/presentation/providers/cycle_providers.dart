@@ -4,37 +4,61 @@ import 'package:luna/core/constants/app_constants.dart';
 import 'package:luna/core/database/app_database.dart';
 import 'package:luna/features/cycle/domain/repositories/i_cycle_repository.dart';
 import 'package:luna/shared/providers/core_providers.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-// Symptoms available for logging (non-mood categories).
+// All active symptoms except mood entries.
 final activeSymptomsProvider = FutureProvider<List<Symptom>>((ref) async {
   final all = await ref.read(symptomRepositoryProvider).getActiveSymptoms();
   return all.where((s) => s.category != 'mood').toList();
 });
 
+// Live stream of all cycle entries.
 final cycleEntriesProvider = StreamProvider<List<CycleEntry>>((ref) {
   return ref.watch(cycleRepositoryProvider).watchAllEntries();
 });
 
+// The most recent period_start entry, or null if none exists.
 final lastPeriodStartProvider = FutureProvider<CycleEntry?>((ref) async {
   ref.watch(cycleEntriesProvider);
   return ref.read(cycleRepositoryProvider).getLastPeriodStart();
 });
 
+// The most recent period_end entry, or null if none exists.
 final lastPeriodEndProvider = FutureProvider<CycleEntry?>((ref) async {
   ref.watch(cycleEntriesProvider);
   return ref.read(cycleRepositoryProvider).getLastPeriodEnd();
 });
 
-/// True when the most recent period_start has no period_end after it.
+// Period length saved during onboarding or settings. Falls back to the app default.
+final userPeriodLengthProvider = FutureProvider<int>((ref) async {
+  final prefs = await SharedPreferences.getInstance();
+  return prefs.getInt('user_period_length') ?? AppConstants.defaultPeriodLength;
+});
+
+// Whether the current period is still ongoing.
+// If no period_end exists and the expected window has passed, closes the period automatically.
 final isPeriodActiveProvider = FutureProvider<bool>((ref) async {
   final start = await ref.watch(lastPeriodStartProvider.future);
   if (start == null) return false;
+
   final end = await ref.watch(lastPeriodEndProvider.future);
-  if (end == null) return true;
-  return end.date.isBefore(start.date);
+  if (end != null && !end.date.isBefore(start.date)) return false;
+
+  final periodLen = await ref.watch(userPeriodLengthProvider.future);
+  final now = DateTime.now();
+  final todayUtc = DateTime(now.year, now.month, now.day).toUtc();
+  final overdueThreshold = start.date.add(Duration(days: periodLen));
+
+  if (!todayUtc.isBefore(overdueThreshold)) {
+    final expectedEnd = start.date.add(Duration(days: periodLen - 1));
+    await ref.read(cycleNotifierProvider.notifier).endPeriod(expectedEnd);
+    return false;
+  }
+
+  return true;
 });
 
-/// Day number within the active period (1-based), or null if not active.
+// Current day number within the active period (1-based). Null if no period is active.
 final activePeriodDayProvider = FutureProvider<int?>((ref) async {
   final isActive = await ref.watch(isPeriodActiveProvider.future);
   if (!isActive) return null;
@@ -43,10 +67,13 @@ final activePeriodDayProvider = FutureProvider<int?>((ref) async {
   return DateTime.now().difference(start.date).inDays + 1;
 });
 
+// All period_start entries in chronological order.
 final allPeriodStartsProvider = FutureProvider<List<CycleEntry>>((ref) {
   return ref.watch(cycleRepositoryProvider).getAllPeriodStarts();
 });
 
+// Average cycle length across all recorded cycles. Falls back to the app default
+// when fewer than two period starts exist.
 final averageCycleLengthProvider = FutureProvider<int>((ref) async {
   final starts = await ref.watch(allPeriodStartsProvider.future);
   if (starts.length < 2) return AppConstants.defaultCycleLength;
@@ -57,8 +84,7 @@ final averageCycleLengthProvider = FutureProvider<int>((ref) async {
   return totalDays ~/ (starts.length - 1);
 });
 
-/// Length of the most recently completed cycle in days.
-/// null when fewer than 2 period_starts exist (i.e. first cycle).
+// Duration of the last completed cycle in days. Null when fewer than two cycles exist.
 final cycleLengthProvider = FutureProvider<int?>((ref) async {
   final starts = await ref.watch(allPeriodStartsProvider.future);
   if (starts.length < 2) return null;
@@ -67,23 +93,30 @@ final cycleLengthProvider = FutureProvider<int?>((ref) async {
   return last.date.difference(prev.date).inDays;
 });
 
-/// Length of the current or last completed period in days (1-based, inclusive).
-/// - Active period: days elapsed since last period_start (ongoing).
-/// - Completed period: period_end − period_start + 1.
-/// - null if no period has ever been started.
+// Duration of the current or most recent period in days.
+// Returns the recorded length if the period is complete, the settings length if
+// the window has passed without a period_end, or the number of days elapsed if
+// the period is still ongoing. Null if no period has ever been started.
 final periodLengthProvider = FutureProvider<int?>((ref) async {
   final start = await ref.watch(lastPeriodStartProvider.future);
   if (start == null) return null;
+
   final end = await ref.watch(lastPeriodEndProvider.future);
   if (end != null && !end.date.isBefore(start.date)) {
-    // Completed: end is on or after start
     return end.date.difference(start.date).inDays + 1;
   }
-  // Still active: count from start to today (inclusive)
-  return DateTime.now().difference(start.date).inDays + 1;
+
+  final periodLen = await ref.watch(userPeriodLengthProvider.future);
+  final now = DateTime.now();
+  final todayUtc = DateTime(now.year, now.month, now.day).toUtc();
+  final overdueThreshold = start.date.add(Duration(days: periodLen));
+
+  if (!todayUtc.isBefore(overdueThreshold)) return periodLen;
+
+  return todayUtc.difference(start.date).inDays + 1;
 });
 
-/// Average cycle length across all completed cycles, or null if < 2 cycles.
+// Average cycle length across all completed cycles. Null when fewer than two cycles exist.
 final avgCycleLengthNullableProvider = FutureProvider<int?>((ref) async {
   final starts = await ref.watch(allPeriodStartsProvider.future);
   if (starts.length < 2) return null;
@@ -94,6 +127,7 @@ final avgCycleLengthNullableProvider = FutureProvider<int?>((ref) async {
   return total ~/ (starts.length - 1);
 });
 
+// Predicted start date of the next period based on the average cycle length.
 final nextPeriodDateProvider = FutureProvider<DateTime?>((ref) async {
   final last = await ref.watch(lastPeriodStartProvider.future);
   if (last == null) return null;
@@ -101,12 +135,14 @@ final nextPeriodDateProvider = FutureProvider<DateTime?>((ref) async {
   return last.date.add(Duration(days: avgLen));
 });
 
+// Current day number within the cycle (1-based, counting from the last period start).
 final currentCycleDayProvider = FutureProvider<int?>((ref) async {
   final last = await ref.watch(lastPeriodStartProvider.future);
   if (last == null) return null;
   return DateTime.now().difference(last.date).inDays + 1;
 });
 
+// Current phase of the cycle: menstrual, follicular, ovulation, or luteal.
 final currentCyclePhaseProvider = FutureProvider<String?>((ref) async {
   final day = await ref.watch(currentCycleDayProvider.future);
   if (day == null) return null;
@@ -166,7 +202,7 @@ class CycleNotifier extends AsyncNotifier<void> {
 
 final cycleNotifierProvider = AsyncNotifierProvider<CycleNotifier, void>(CycleNotifier.new);
 
-/// Mood value (1–5) saved for today, derived from the entries stream.
+// Mood value (1-5) logged for today. Null if no mood has been recorded today.
 final todayMoodProvider = Provider<int?>((ref) {
   final entries = ref.watch(cycleEntriesProvider).when(
         data: (v) => v,
@@ -184,7 +220,7 @@ final todayMoodProvider = Provider<int?>((ref) {
   return null;
 });
 
-/// Symptom logs saved for today.
+// Symptom logs recorded for today.
 final todaySymptomLogsProvider = StreamProvider<List<SymptomLog>>((ref) {
   return ref.read(symptomRepositoryProvider).watchLogsForDate(DateTime.now());
 });
