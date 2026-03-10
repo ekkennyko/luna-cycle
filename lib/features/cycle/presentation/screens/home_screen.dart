@@ -276,6 +276,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
     final isPeriodActive = ref.watch(isPeriodActiveProvider).asData?.value ?? false;
     final avgLen = ref.watch(averageCycleLengthProvider).asData?.value ?? 28;
     final nextPeriod = ref.watch(nextPeriodDateProvider).asData?.value;
+    final cycleLen = ref.watch(cycleLengthProvider).asData?.value;
+    final periodLen = ref.watch(periodLengthProvider).asData?.value;
+    final avgLenNullable = ref.watch(avgCycleLengthNullableProvider).asData?.value;
     final todayMood = ref.watch(todayMoodProvider); // int? 1–5
     final todayLogs = ref.watch(todaySymptomLogsProvider).asData?.value ?? const <SymptomLog>[];
 
@@ -351,7 +354,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                     symptomsCount: symptomsCount,
                   ),
                   _buildInsightCard(phase),
-                  _buildMiniStats(avgLen),
+                  _buildMiniStats(
+                    cycleLen: cycleLen,
+                    periodLen: periodLen,
+                    avgLen: avgLenNullable,
+                  ),
                   const SizedBox(height: 24),
                 ],
               ),
@@ -681,11 +688,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
 
   // ── Mini stats ────────────────────────────────────────────────────────────
 
-  Widget _buildMiniStats(int avgLen) {
+  Widget _buildMiniStats({
+    required int? cycleLen,
+    required int? periodLen,
+    required int? avgLen,
+  }) {
+    // Cycle length: last completed cycle, or avg as fallback, or '--'
+    final cycleLenStr = cycleLen != null ? '${cycleLen}d' : (avgLen != null ? '~${avgLen}d' : '--');
     final stats = [
-      ('Cycle length', '${avgLen}d'),
-      ('Period', '5d'),
-      ('Avg length', '${avgLen}d'),
+      ('Cycle length', cycleLenStr),
+      ('Period', periodLen != null ? '${periodLen}d' : '--'),
+      ('Avg length', avgLen != null ? '${avgLen}d' : '--'),
     ];
 
     return Padding(

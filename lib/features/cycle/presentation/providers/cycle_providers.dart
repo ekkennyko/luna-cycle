@@ -57,6 +57,43 @@ final averageCycleLengthProvider = FutureProvider<int>((ref) async {
   return totalDays ~/ (starts.length - 1);
 });
 
+/// Length of the most recently completed cycle in days.
+/// null when fewer than 2 period_starts exist (i.e. first cycle).
+final cycleLengthProvider = FutureProvider<int?>((ref) async {
+  final starts = await ref.watch(allPeriodStartsProvider.future);
+  if (starts.length < 2) return null;
+  final last = starts[starts.length - 1];
+  final prev = starts[starts.length - 2];
+  return last.date.difference(prev.date).inDays;
+});
+
+/// Length of the current or last completed period in days (1-based, inclusive).
+/// - Active period: days elapsed since last period_start (ongoing).
+/// - Completed period: period_end − period_start + 1.
+/// - null if no period has ever been started.
+final periodLengthProvider = FutureProvider<int?>((ref) async {
+  final start = await ref.watch(lastPeriodStartProvider.future);
+  if (start == null) return null;
+  final end = await ref.watch(lastPeriodEndProvider.future);
+  if (end != null && !end.date.isBefore(start.date)) {
+    // Completed: end is on or after start
+    return end.date.difference(start.date).inDays + 1;
+  }
+  // Still active: count from start to today (inclusive)
+  return DateTime.now().difference(start.date).inDays + 1;
+});
+
+/// Average cycle length across all completed cycles, or null if < 2 cycles.
+final avgCycleLengthNullableProvider = FutureProvider<int?>((ref) async {
+  final starts = await ref.watch(allPeriodStartsProvider.future);
+  if (starts.length < 2) return null;
+  int total = 0;
+  for (int i = 1; i < starts.length; i++) {
+    total += starts[i].date.difference(starts[i - 1].date).inDays;
+  }
+  return total ~/ (starts.length - 1);
+});
+
 final nextPeriodDateProvider = FutureProvider<DateTime?>((ref) async {
   final last = await ref.watch(lastPeriodStartProvider.future);
   if (last == null) return null;
