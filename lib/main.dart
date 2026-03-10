@@ -4,15 +4,20 @@ import 'package:luna/core/router/app_router.dart';
 import 'package:luna/core/theme/app_theme.dart';
 import 'package:luna/features/subscription/presentation/providers/subscription_providers.dart';
 import 'package:luna/shared/providers/core_providers.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  final prefs = await SharedPreferences.getInstance();
+  final onboardingDone = prefs.getBool('onboarding_complete') ?? false;
   await initRevenueCat();
-  runApp(const ProviderScope(child: LunaApp()));
+  runApp(ProviderScope(child: LunaApp(showOnboarding: !onboardingDone)));
 }
 
 class LunaApp extends ConsumerWidget {
-  const LunaApp({super.key});
+  const LunaApp({super.key, required this.showOnboarding});
+
+  final bool showOnboarding;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -26,7 +31,7 @@ class LunaApp extends ConsumerWidget {
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: ThemeMode.system,
-      routerConfig: appRouter,
+      routerConfig: createRouter(showOnboarding ? '/onboarding' : '/'),
     );
   }
 }

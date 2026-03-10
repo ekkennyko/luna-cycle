@@ -5,56 +5,62 @@ import 'package:luna/features/cycle/presentation/providers/cycle_providers.dart'
 import 'package:luna/features/cycle/presentation/screens/home_screen.dart';
 import 'package:luna/features/cycle/presentation/screens/log_screen.dart';
 import 'package:luna/features/analytics/presentation/screens/analytics_screen.dart';
+import 'package:luna/features/onboarding/presentation/screens/onboarding_screen.dart';
 import 'package:luna/features/settings/presentation/screens/settings_screen.dart';
 import 'package:luna/features/subscription/presentation/screens/paywall_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
-final appRouter = GoRouter(
-  navigatorKey: _rootNavigatorKey,
-  initialLocation: '/',
-  routes: [
-    ShellRoute(
-      navigatorKey: _shellNavigatorKey,
-      builder: (context, state, child) => _MainShell(child: child),
+GoRouter createRouter(String initialLocation) => GoRouter(
+      navigatorKey: _rootNavigatorKey,
+      initialLocation: initialLocation,
       routes: [
         GoRoute(
-          path: '/',
-          pageBuilder: (context, state) => const NoTransitionPage(
-            child: HomeScreen(),
-          ),
+          path: '/onboarding',
+          parentNavigatorKey: _rootNavigatorKey,
+          builder: (context, state) => const OnboardingScreen(),
+        ),
+        ShellRoute(
+          navigatorKey: _shellNavigatorKey,
+          builder: (context, state, child) => _MainShell(child: child),
+          routes: [
+            GoRoute(
+              path: '/',
+              pageBuilder: (context, state) => const NoTransitionPage(
+                child: HomeScreen(),
+              ),
+            ),
+            GoRoute(
+              path: '/analytics',
+              pageBuilder: (context, state) => const NoTransitionPage(
+                child: AnalyticsScreen(),
+              ),
+            ),
+            GoRoute(
+              path: '/settings',
+              pageBuilder: (context, state) => const NoTransitionPage(
+                child: SettingsScreen(),
+              ),
+            ),
+          ],
         ),
         GoRoute(
-          path: '/analytics',
-          pageBuilder: (context, state) => const NoTransitionPage(
-            child: AnalyticsScreen(),
-          ),
+          path: '/log',
+          parentNavigatorKey: _rootNavigatorKey,
+          builder: (context, state) {
+            final dateStr = state.uri.queryParameters['date'];
+            final date = dateStr != null ? DateTime.parse(dateStr) : DateTime.now();
+            return LogScreen(date: date);
+          },
         ),
         GoRoute(
-          path: '/settings',
-          pageBuilder: (context, state) => const NoTransitionPage(
-            child: SettingsScreen(),
-          ),
+          path: '/paywall',
+          parentNavigatorKey: _rootNavigatorKey,
+          builder: (context, state) => const PaywallScreen(),
         ),
       ],
-    ),
-    GoRoute(
-      path: '/log',
-      parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) {
-        final dateStr = state.uri.queryParameters['date'];
-        final date = dateStr != null ? DateTime.parse(dateStr) : DateTime.now();
-        return LogScreen(date: date);
-      },
-    ),
-    GoRoute(
-      path: '/paywall',
-      parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) => const PaywallScreen(),
-    ),
-  ],
-);
+    );
 
 // ── Shell with dark bottom nav ─────────────────────────────────────────────
 
