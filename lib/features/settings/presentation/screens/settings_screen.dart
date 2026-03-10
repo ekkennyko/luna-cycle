@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:luna/core/constants/app_constants.dart';
 import 'package:luna/features/subscription/presentation/providers/subscription_providers.dart';
 import 'package:luna/shared/providers/core_providers.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -106,6 +107,9 @@ class SettingsScreen extends ConsumerWidget {
     );
     if (confirmed == true) {
       await ref.read(appDatabaseProvider).resetAllData();
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+      if (context.mounted) context.go('/onboarding');
     }
   }
 }
