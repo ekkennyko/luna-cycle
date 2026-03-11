@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:luna/core/database/app_database.dart';
+import 'package:luna/features/cycle/domain/cycle_phase_calculator.dart';
 import 'package:luna/features/cycle/presentation/providers/cycle_providers.dart';
 import 'package:luna/shared/providers/core_providers.dart';
 
@@ -56,6 +57,15 @@ class _Phase {
     tip: 'Progesterone peaks then drops. Prioritize sleep, magnesium-rich foods, and reduce caffeine. Self-care is not optional.',
   );
 
+  /// Maps a [CyclePhase] from the calculator to this display model.
+  static _Phase forPhase(CyclePhase phase) => switch (phase) {
+        CyclePhase.menstrual => menstrual,
+        CyclePhase.follicular => follicular,
+        CyclePhase.ovulation => ovulation,
+        CyclePhase.luteal => luteal,
+      };
+
+  /// Used for phase preview dots only (assumes a default 28-day / 5-day cycle).
   static _Phase forDay(int day) {
     if (day <= 5) return menstrual;
     if (day <= 13) return follicular;
@@ -148,10 +158,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
       ),
     );
 
-    // If data is already available on first frame (e.g. hot reload), animate in
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      if (ref.read(currentCycleDayProvider).asData?.value != null) {
+      if (ref.read(currentPhaseProvider).asData?.value != null) {
         _ringController.forward(from: 0);
       }
     });
@@ -265,45 +274,42 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
 
   @override
   Widget build(BuildContext context) {
-    // Animate ring when real data first arrives
-    ref.listen<AsyncValue<int?>>(currentCycleDayProvider, (prev, next) {
+    ref.listen<AsyncValue<PhaseResult?>>(currentPhaseProvider, (prev, next) {
       if (prev?.asData?.value == null && next.asData?.value != null && _previewDay == null) {
         _ringController.forward(from: 0);
       }
     });
 
-    final cycleDay = ref.watch(currentCycleDayProvider).asData?.value;
+    final phaseResult = ref.watch(currentPhaseProvider).asData?.value;
     final isPeriodActive = ref.watch(isPeriodActiveProvider).asData?.value ?? false;
-    final avgLen = ref.watch(averageCycleLengthProvider).asData?.value ?? 28;
-    final nextPeriod = ref.watch(nextPeriodDateProvider).asData?.value;
     final cycleLen = ref.watch(cycleLengthProvider).asData?.value;
     final periodLen = ref.watch(periodLengthProvider).asData?.value;
     final avgLenNullable = ref.watch(avgCycleLengthNullableProvider).asData?.value;
-    final todayMood = ref.watch(todayMoodProvider); // int? 1–5
+    final todayMood = ref.watch(todayMoodProvider);
     final todayLogs = ref.watch(todaySymptomLogsProvider).asData?.value ?? const <SymptomLog>[];
 
-    // Display day: preview takes priority over real data
-    final displayDay = _previewDay ?? cycleDay ?? 0;
-    final phase = displayDay > 0 ? _Phase.forDay(displayDay) : _Phase.menstrual;
+    // Preview day takes priority; falls back to calculator result
+    final displayDay = _previewDay ?? phaseResult?.dayOfCycle ?? 0;
+    final phase = _previewDay != null
+        ? _Phase.forDay(_previewDay!)
+        : phaseResult != null
+            ? _Phase.forPhase(phaseResult.phase)
+            : _Phase.menstrual;
 
-    // Ring progress (0.0–1.0)
-    final targetProgress = displayDay > 0 ? (displayDay / avgLen).clamp(0.0, 1.0).toDouble() : 0.0;
+    final ringCycleLen = phaseResult?.cycleLength ?? 28;
+    final targetProgress = displayDay > 0 ? (displayDay / ringCycleLen).clamp(0.0, 1.0).toDouble() : 0.0;
 
-    // Period pill label
     final String periodLabel;
     if (isPeriodActive) {
       periodLabel = 'Period active 🩸';
-    } else if (nextPeriod != null) {
-      final diff = nextPeriod.difference(DateTime.now()).inDays;
-      periodLabel = diff > 0 ? 'Period in ${diff}d' : 'Period expected';
+    } else if (phaseResult != null) {
+      final d = phaseResult.daysUntilNextPeriod;
+      periodLabel = d > 0 ? 'Period in ${d}d' : 'Period expected';
     } else {
       periodLabel = '';
     }
 
-    // Mood chip: prefer locally selected, then today's DB value (convert 1-5 → 0-4)
     final moodIdx = _selectedMoodIdx ?? (todayMood != null && todayMood >= 1 && todayMood <= 5 ? todayMood - 1 : null);
-
-    // Symptoms count: prefer local selection, then DB logs
     final symptomsCount = _selectedSymptoms.isNotEmpty ? _selectedSymptoms.length : todayLogs.length;
 
     return Scaffold(

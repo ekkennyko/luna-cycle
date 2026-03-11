@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:luna/core/constants/app_constants.dart';
 import 'package:luna/core/database/app_database.dart';
+import 'package:luna/features/cycle/domain/cycle_phase_calculator.dart';
 import 'package:luna/features/cycle/domain/repositories/i_cycle_repository.dart';
 import 'package:luna/shared/providers/core_providers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -142,18 +143,27 @@ final currentCycleDayProvider = FutureProvider<int?>((ref) async {
   return DateTime.now().difference(last.date).inDays + 1;
 });
 
-// Current phase of the cycle: menstrual, follicular, ovulation, or luteal.
-final currentCyclePhaseProvider = FutureProvider<String?>((ref) async {
-  final day = await ref.watch(currentCycleDayProvider.future);
-  if (day == null) return null;
-  final avgLen = await ref.watch(averageCycleLengthProvider.future);
-  const avgPeriod = AppConstants.defaultPeriodLength;
+// Phase calculation for today using the formula-based calculator.
+final currentPhaseProvider = FutureProvider<PhaseResult?>((ref) async {
+  final lastStart = await ref.watch(lastPeriodStartProvider.future);
+  if (lastStart == null) return null;
 
-  if (day <= avgPeriod) return 'menstrual';
-  final ovulationDay = (avgLen / 2).round();
-  if (day < ovulationDay - 2) return 'follicular';
-  if (day <= ovulationDay + 1) return 'ovulation';
-  return 'luteal';
+  final periodLen = await ref.watch(userPeriodLengthProvider.future);
+  final cycleLen = await ref.watch(averageCycleLengthProvider.future);
+
+  return CyclePhaseCalculator.calculate(
+    periodStart: lastStart.date,
+    periodLength: periodLen,
+    cycleLength: cycleLen,
+    today: DateTime.now().toUtc(),
+  );
+});
+
+// Phase name string for consumers that need a plain string (e.g. nav bar color).
+final currentCyclePhaseProvider = FutureProvider<String?>((ref) async {
+  final result = await ref.watch(currentPhaseProvider.future);
+  if (result == null) return null;
+  return CyclePhaseCalculator.phaseName(result.phase).toLowerCase();
 });
 
 class CycleNotifier extends AsyncNotifier<void> {
