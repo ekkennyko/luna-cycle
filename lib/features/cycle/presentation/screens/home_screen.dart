@@ -342,11 +342,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
     final ringCycleLen = phaseResult?.cycleLength ?? 28;
     final targetProgress = displayDay > 0 ? (displayDay / ringCycleLen).clamp(0.0, 1.0).toDouble() : 0.0;
 
+    final activePeriodDay = ref.watch(activePeriodDayProvider).asData?.value;
     final String periodLabel = switch (periodStatus) {
-      PeriodStatus.active => 'Period active 🩸',
+      PeriodStatus.active => activePeriodDay != null ? 'Day $activePeriodDay of period' : 'Period active',
       PeriodStatus.late => '$daysLate day${daysLate == 1 ? '' : 's'} late',
       PeriodStatus.expected => 'Period expected today',
-      PeriodStatus.upcoming => phaseResult != null ? 'Period in ${phaseResult.daysUntilNextPeriod}d' : '',
+      PeriodStatus.upcoming => phaseResult != null ? 'Period in ${phaseResult.daysUntilNextPeriod} day${phaseResult.daysUntilNextPeriod == 1 ? '' : 's'}' : '',
     };
 
     final now = DateTime.now();
@@ -800,47 +801,78 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
 
   Widget _buildLateBanner(int daysLate) {
     const color = Color(0xFFE05A7A);
+    final body =
+        daysLate >= 7 ? 'Your period is $daysLate days late. This is normal — cycles vary.' : 'Did your period start? Log it to keep predictions accurate.';
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.12),
+          color: color.withValues(alpha: 0.10),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withValues(alpha: 0.30)),
+          border: Border.all(color: const Color(0x30E05A7A)),
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('🌙', style: TextStyle(fontSize: 20)),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Period is $daysLate day${daysLate == 1 ? '' : 's'} late',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Stress, illness, or cycle variation can cause delays.',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.white.withValues(alpha: 0.6),
-                      height: 1.4,
-                    ),
-                  ),
-                ],
+            Text(
+              body,
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.white.withValues(alpha: 0.9),
+                height: 1.5,
               ),
             ),
-            const SizedBox(width: 8),
-            GestureDetector(
-              onTap: _dismissBannerFor24Hours,
-              child: Icon(Icons.close, size: 18, color: Colors.white.withValues(alpha: 0.4)),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: _openStartPeriodSheet,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 9),
+                      decoration: BoxDecoration(
+                        color: color.withValues(alpha: 0.20),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: color.withValues(alpha: 0.40)),
+                      ),
+                      alignment: Alignment.center,
+                      child: const Text(
+                        'Log period',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFFE05A7A),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: _dismissBannerFor24Hours,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 9),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        'Not yet',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.white.withValues(alpha: 0.6),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
