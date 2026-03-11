@@ -25,11 +25,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   bool _done = false;
   bool _saving = false;
 
-  // Step 0
   DateTime? _periodStart;
   DateTime? _periodEnd;
-
-  // Step 1
   DateTime? _prevStart;
 
   // ── Computed values ────────────────────────────────────────────────────────
@@ -47,8 +44,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   bool get _canProceed => _step == 0 ? _periodStart != null : true;
-
-  // ── Date picker ────────────────────────────────────────────────────────────
 
   Future<DateTime?> _pickDate(
     BuildContext context, {
@@ -77,8 +72,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     );
   }
 
-  // ── Navigation ─────────────────────────────────────────────────────────────
-
   void _handleNext() {
     if (_step < 1) {
       setState(() => _step++);
@@ -91,26 +84,21 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     if (_step > 0) setState(() => _step--);
   }
 
-  // ── Save logic ─────────────────────────────────────────────────────────────
-
   Future<void> _saveAndFinish() async {
     if (_saving || _periodStart == null) return;
     setState(() => _saving = true);
 
     final notifier = ref.read(cycleNotifierProvider.notifier);
 
-    // Log period starts chronologically (oldest first)
     if (_prevStart != null) {
       await notifier.logPeriodStart(_prevStart!, flowIntensity: 2);
     }
     await notifier.logPeriodStart(_periodStart!, flowIntensity: 2);
 
-    // Log period end if provided
     if (_periodEnd != null) {
       await notifier.endPeriod(_periodEnd!);
     }
 
-    // Save computed cycle/period length, fall back to defaults
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('user_cycle_length', _cycleLength ?? 28);
     await prefs.setInt('user_period_length', _periodLength ?? 5);
@@ -128,8 +116,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     if (!mounted) return;
     context.go('/');
   }
-
-  // ── Build ──────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -189,8 +175,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     );
   }
 
-  // ── Logo bar ───────────────────────────────────────────────────────────────
-
   Widget _buildLogoBar() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
@@ -219,8 +203,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       ),
     );
   }
-
-  // ── Progress dots (2 steps) ────────────────────────────────────────────────
 
   Widget _buildProgressDots() {
     return Padding(
@@ -349,7 +331,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     final pl = _periodLength;
     final cl = _cycleLength;
 
-    // Period length display
     final String periodLenStr;
     if (pl != null) {
       periodLenStr = '$pl days';
@@ -359,7 +340,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       periodLenStr = '—';
     }
 
-    // Cycle length display
     final String cycleLenStr;
     if (cl != null) {
       cycleLenStr = '$cl days';
@@ -477,8 +457,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     );
   }
 
-  // ── Bottom buttons ─────────────────────────────────────────────────────────
-
   Widget _buildBottomButtons() {
     final isLastStep = _step == 1;
     final label = _saving
@@ -527,8 +505,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       ),
     );
   }
-
-  // ── Completion screen ──────────────────────────────────────────────────────
 
   Widget _buildCompletionScreen() {
     final dateStr = _periodStart != null ? DateFormat('MMM d, y').format(_periodStart!) : '—';
@@ -806,7 +782,6 @@ class _DatePickerField extends StatelessWidget {
             ),
           ),
         ),
-        // Animated hint
         AnimatedSize(
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeOut,
