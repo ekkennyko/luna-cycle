@@ -379,10 +379,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             optional: true,
             hint: cl != null ? '$cl day cycle — calculated from your data ✓' : null,
             onTap: () async {
+              final last = _periodStart?.subtract(const Duration(days: 1));
               final d = await _pickDate(
                 context,
-                initial: _prevStart,
-                lastDate: _periodStart?.subtract(const Duration(days: 1)),
+                initial: _prevStart ?? last,
+                lastDate: last,
               );
               if (d != null) setState(() => _prevStart = d);
             },
