@@ -21,49 +21,34 @@ class OnboardingScreen extends ConsumerStatefulWidget {
 }
 
 class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
-  final _pageController = PageController();
   int _step = 0;
+  bool _done = false;
   bool _saving = false;
 
   // Step 0
-  DateTime? _lastPeriodDate;
+  DateTime? _periodStart;
+  DateTime? _periodEnd;
 
   // Step 1
-  double _cycleLength = 28;
-  double _periodLength = 5;
+  DateTime? _prevStart;
 
-  // Step 2
-  DateTime? _prevDate1; // period before last
-  DateTime? _prevDate2; // two periods ago
+  // ── Computed values ────────────────────────────────────────────────────────
 
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
+  int? get _periodLength {
+    if (_periodStart == null || _periodEnd == null) return null;
+    final diff = _periodEnd!.difference(_periodStart!).inDays;
+    return diff > 0 ? diff : null;
   }
 
-  void _goToStep(int step) {
-    setState(() => _step = step);
-    if (step < 3) {
-      _pageController.animateToPage(
-        step,
-        duration: const Duration(milliseconds: 350),
-        curve: Curves.easeInOut,
-      );
-    }
+  int? get _cycleLength {
+    if (_prevStart == null || _periodStart == null) return null;
+    final diff = _periodStart!.difference(_prevStart!).inDays;
+    return diff > 0 ? diff : null;
   }
 
-  void _handleNext() {
-    if (_step < 2) {
-      _goToStep(_step + 1);
-    } else {
-      _saveAndFinish();
-    }
-  }
+  bool get _canProceed => _step == 0 ? _periodStart != null : true;
 
-  void _handleBack() {
-    if (_step > 0 && _step < 3) _goToStep(_step - 1);
-  }
+  // ── Date picker ────────────────────────────────────────────────────────────
 
   Future<DateTime?> _pickDate(
     BuildContext context, {
@@ -92,24 +77,48 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     );
   }
 
+  // ── Navigation ─────────────────────────────────────────────────────────────
+
+  void _handleNext() {
+    if (_step < 1) {
+      setState(() => _step++);
+    } else {
+      _saveAndFinish();
+    }
+  }
+
+  void _handleBack() {
+    if (_step > 0) setState(() => _step--);
+  }
+
+  // ── Save logic ─────────────────────────────────────────────────────────────
+
   Future<void> _saveAndFinish() async {
-    if (_saving || _lastPeriodDate == null) return;
+    if (_saving || _periodStart == null) return;
     setState(() => _saving = true);
 
-    // Save period starts chronologically (oldest first)
     final notifier = ref.read(cycleNotifierProvider.notifier);
-    if (_prevDate2 != null) await notifier.logPeriodStart(_prevDate2!, flowIntensity: 2);
-    if (_prevDate1 != null) await notifier.logPeriodStart(_prevDate1!, flowIntensity: 2);
-    await notifier.logPeriodStart(_lastPeriodDate!, flowIntensity: 2);
 
+    // Log period starts chronologically (oldest first)
+    if (_prevStart != null) {
+      await notifier.logPeriodStart(_prevStart!, flowIntensity: 2);
+    }
+    await notifier.logPeriodStart(_periodStart!, flowIntensity: 2);
+
+    // Log period end if provided
+    if (_periodEnd != null) {
+      await notifier.endPeriod(_periodEnd!);
+    }
+
+    // Save computed cycle/period length, fall back to defaults
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('user_cycle_length', _cycleLength.round());
-    await prefs.setInt('user_period_length', _periodLength.round());
+    await prefs.setInt('user_cycle_length', _cycleLength ?? 28);
+    await prefs.setInt('user_period_length', _periodLength ?? 5);
 
     if (!mounted) return;
     setState(() {
       _saving = false;
-      _step = 3; // completion screen
+      _done = true;
     });
   }
 
@@ -120,11 +129,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     context.go('/');
   }
 
-  // ── Build ─────────────────────────────────────────────────────────────────
+  // ── Build ──────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
-    if (_step == 3) return _buildCompletionScreen();
+    if (_done) return _buildCompletionScreen();
 
     return Scaffold(
       backgroundColor: _bg,
@@ -146,7 +155,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               ),
             ),
           ),
-
           SafeArea(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -154,14 +162,22 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 _buildLogoBar(),
                 _buildProgressDots(),
                 Expanded(
-                  child: PageView(
-                    controller: _pageController,
-                    physics: const NeverScrollableScrollPhysics(),
-                    children: [
-                      _buildStep0(),
-                      _buildStep1(),
-                      _buildStep2(),
-                    ],
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 350),
+                    transitionBuilder: (child, animation) {
+                      final slide = Tween<Offset>(
+                        begin: const Offset(0.06, 0),
+                        end: Offset.zero,
+                      ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOut));
+                      return FadeTransition(
+                        opacity: animation,
+                        child: SlideTransition(position: slide, child: child),
+                      );
+                    },
+                    child: KeyedSubtree(
+                      key: ValueKey(_step),
+                      child: _step == 0 ? _buildStep0() : _buildStep1(),
+                    ),
                   ),
                 ),
                 _buildBottomButtons(),
@@ -173,7 +189,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     );
   }
 
-  // ── Logo bar ──────────────────────────────────────────────────────────────
+  // ── Logo bar ───────────────────────────────────────────────────────────────
 
   Widget _buildLogoBar() {
     return Padding(
@@ -204,14 +220,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     );
   }
 
-  // ── Progress dots ─────────────────────────────────────────────────────────
+  // ── Progress dots (2 steps) ────────────────────────────────────────────────
 
   Widget _buildProgressDots() {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 20),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: List.generate(3, (i) {
+        children: List.generate(2, (i) {
           final active = i == _step;
           final past = i < _step;
           return Padding(
@@ -236,7 +252,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     );
   }
 
-  // ── Step 0: Last period date ───────────────────────────────────────────────
+  // ── Step 0: Last period start + end ───────────────────────────────────────
 
   Widget _buildStep0() {
     return SingleChildScrollView(
@@ -245,7 +261,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'When did your last\nperiod start?',
+            'Tell us about your\nlast period',
             style: GoogleFonts.playfairDisplay(
               fontSize: 24,
               fontWeight: FontWeight.w600,
@@ -255,7 +271,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'This helps Luna calculate where you are in your cycle right now.',
+            'Enter the start and end dates — Luna will calculate everything automatically.',
             style: TextStyle(
               fontSize: 13,
               color: Colors.white.withValues(alpha: 0.45),
@@ -264,14 +280,39 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           ),
           const SizedBox(height: 28),
           _DatePickerField(
-            label: 'First day of last period',
-            date: _lastPeriodDate,
+            label: 'When did it start?',
+            date: _periodStart,
             onTap: () async {
-              final d = await _pickDate(context, initial: _lastPeriodDate);
-              if (d != null) setState(() => _lastPeriodDate = d);
+              final d = await _pickDate(context, initial: _periodStart);
+              if (d != null) {
+                setState(() {
+                  _periodStart = d;
+                  // Clear end if it's no longer valid
+                  if (_periodEnd != null && !_periodEnd!.isAfter(d)) {
+                    _periodEnd = null;
+                  }
+                });
+              }
             },
           ),
           const SizedBox(height: 16),
+          _DatePickerField(
+            label: 'When did it end?',
+            date: _periodEnd,
+            optional: true,
+            hint: _periodLength != null ? '$_periodLength day period — got it!' : null,
+            onTap: () async {
+              if (_periodStart == null) return;
+              final d = await _pickDate(
+                context,
+                initial: _periodEnd,
+                firstDate: _periodStart!.add(const Duration(days: 1)),
+              );
+              if (d != null) setState(() => _periodEnd = d);
+            },
+          ),
+          const SizedBox(height: 16),
+          // Privacy notice
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
@@ -302,16 +343,39 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     );
   }
 
-  // ── Step 1: Cycle settings ─────────────────────────────────────────────────
+  // ── Step 1: Previous period start (optional) ───────────────────────────────
 
   Widget _buildStep1() {
+    final pl = _periodLength;
+    final cl = _cycleLength;
+
+    // Period length display
+    final String periodLenStr;
+    if (pl != null) {
+      periodLenStr = '$pl days';
+    } else if (_periodStart != null && _periodEnd == null) {
+      periodLenStr = 'Ongoing';
+    } else {
+      periodLenStr = '—';
+    }
+
+    // Cycle length display
+    final String cycleLenStr;
+    if (cl != null) {
+      cycleLenStr = '$cl days';
+    } else if (_prevStart != null) {
+      cycleLenStr = '...';
+    } else {
+      cycleLenStr = 'Add date above';
+    }
+
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(24, 4, 24, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Tell us about your cycle',
+            'One more for accuracy',
             style: GoogleFonts.playfairDisplay(
               fontSize: 24,
               fontWeight: FontWeight.w600,
@@ -321,7 +385,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'These are typical values — you can always adjust them later in Settings.',
+            'When did the period before that start? Luna will calculate your cycle length from real dates.',
             style: TextStyle(
               fontSize: 13,
               color: Colors.white.withValues(alpha: 0.45),
@@ -329,26 +393,61 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             ),
           ),
           const SizedBox(height: 28),
-          _LabeledSlider(
-            label: 'Average cycle length',
-            value: _cycleLength,
-            min: 21,
-            max: 40,
-            unit: 'days',
-            onChanged: (v) => setState(() => _cycleLength = v),
+          _DatePickerField(
+            label: 'Previous period — start date',
+            date: _prevStart,
+            optional: true,
+            hint: cl != null ? '$cl day cycle — calculated from your data ✓' : null,
+            onTap: () async {
+              final d = await _pickDate(
+                context,
+                initial: _prevStart,
+                lastDate: _periodStart?.subtract(const Duration(days: 1)),
+              );
+              if (d != null) setState(() => _prevStart = d);
+            },
           ),
-          const SizedBox(height: 24),
-          _LabeledSlider(
-            label: 'Average period length',
-            value: _periodLength,
-            min: 2,
-            max: 10,
-            unit: 'days',
-            onChanged: (v) => setState(() => _periodLength = v),
-          ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
+          // Preview card
           Container(
             padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.03),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'PREVIEW',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.4),
+                    fontSize: 11,
+                    letterSpacing: 1,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _PreviewRow(
+                  label: 'Period length',
+                  value: periodLenStr,
+                  isPlaceholder: periodLenStr == '—',
+                  hasDivider: true,
+                ),
+                _PreviewRow(
+                  label: 'Cycle length',
+                  value: cycleLenStr,
+                  isPlaceholder: cycleLenStr == '—' || cycleLenStr == 'Add date above',
+                  hasDivider: false,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Did you know card
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
             decoration: BoxDecoration(
               color: _accent.withValues(alpha: 0.07),
               borderRadius: BorderRadius.circular(14),
@@ -358,12 +457,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Did you know?',
+                  '💡 Did you know?',
                   style: TextStyle(fontSize: 12, color: _accent, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'A typical cycle is 21–35 days. Only 13% of people have exactly 28-day cycles.',
+                  'Only 13% of people have exactly 28-day cycles. Real data gives you real predictions.',
                   style: TextStyle(
                     fontSize: 12,
                     color: Colors.white.withValues(alpha: 0.5),
@@ -378,98 +477,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     );
   }
 
-  // ── Step 2: Optional historical dates ────────────────────────────────────
-
-  Widget _buildStep2() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(24, 4, 24, 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Want more accurate\npredictions?',
-            style: GoogleFonts.playfairDisplay(
-              fontSize: 24,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-              height: 1.2,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Add start dates of your last 2 periods. Luna will calculate your average cycle length from real data.',
-            style: TextStyle(
-              fontSize: 13,
-              color: Colors.white.withValues(alpha: 0.45),
-              height: 1.6,
-            ),
-          ),
-          const SizedBox(height: 28),
-          _DatePickerField(
-            label: 'Period before last — start date',
-            date: _prevDate1,
-            optional: true,
-            onTap: () async {
-              final d = await _pickDate(
-                context,
-                initial: _prevDate1,
-                lastDate: _lastPeriodDate?.subtract(const Duration(days: 1)),
-              );
-              if (d != null) {
-                setState(() {
-                  _prevDate1 = d;
-                  if (_prevDate2 != null && !_prevDate2!.isBefore(d)) _prevDate2 = null;
-                });
-              }
-            },
-          ),
-          const SizedBox(height: 16),
-          _DatePickerField(
-            label: 'Two periods ago — start date',
-            date: _prevDate2,
-            optional: true,
-            onTap: () async {
-              final latestAllowed = _prevDate1?.subtract(const Duration(days: 1)) ?? _lastPeriodDate?.subtract(const Duration(days: 20));
-              final d = await _pickDate(context, initial: _prevDate2, lastDate: latestAllowed);
-              if (d != null) setState(() => _prevDate2 = d);
-            },
-          ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.03),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('💡', style: TextStyle(fontSize: 14)),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'More data = better predictions. You can skip this and add it later.',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.white.withValues(alpha: 0.35),
-                      height: 1.5,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── Shared bottom buttons ─────────────────────────────────────────────────
+  // ── Bottom buttons ─────────────────────────────────────────────────────────
 
   Widget _buildBottomButtons() {
-    final canProceed = _step == 0 ? _lastPeriodDate != null : true;
-    final isLastStep = _step == 2;
+    final isLastStep = _step == 1;
     final label = _saving
         ? 'Saving…'
         : isLastStep
@@ -483,8 +494,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         children: [
           _GradientButton(
             label: label,
-            enabled: canProceed && !_saving,
-            onTap: (canProceed && !_saving) ? _handleNext : null,
+            enabled: _canProceed && !_saving,
+            onTap: (_canProceed && !_saving) ? _handleNext : null,
           ),
           const SizedBox(height: 4),
           Row(
@@ -517,16 +528,28 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     );
   }
 
-  // ── Completion screen ─────────────────────────────────────────────────────
+  // ── Completion screen ──────────────────────────────────────────────────────
 
   Widget _buildCompletionScreen() {
-    final extraCycles = (_prevDate1 != null ? 1 : 0) + (_prevDate2 != null ? 1 : 0);
-    final dateStr = _lastPeriodDate != null ? DateFormat('MMM d, y').format(_lastPeriodDate!) : '—';
+    final dateStr = _periodStart != null ? DateFormat('MMM d, y').format(_periodStart!) : '—';
+
+    final String periodLenStr;
+    final pl = _periodLength;
+    if (pl != null) {
+      periodLenStr = '$pl days';
+    } else if (_periodStart != null && _periodEnd == null) {
+      periodLenStr = 'Still ongoing';
+    } else {
+      periodLenStr = '—';
+    }
+
+    final cl = _cycleLength;
+    final cycleLenStr = cl != null ? '$cl days' : '—';
+
     final rows = [
-      ('Last period', dateStr),
-      ('Cycle length', '${_cycleLength.round()} days'),
-      ('Period length', '${_periodLength.round()} days'),
-      ('Extra cycles', extraCycles > 0 ? '$extraCycles added' : '—'),
+      ('Last period started', dateStr),
+      ('Period length', periodLenStr),
+      ('Cycle length', cycleLenStr),
     ];
 
     return Scaffold(
@@ -597,6 +620,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 40),
+                        // Summary card
                         Container(
                           width: double.infinity,
                           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -608,10 +632,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                           child: Column(
                             children: List.generate(rows.length, (i) {
                               final row = rows[i];
+                              final isDim = row.$2 == '—';
                               return Column(
                                 children: [
                                   Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 8),
+                                    padding: const EdgeInsets.symmetric(vertical: 10),
                                     child: Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
@@ -624,16 +649,20 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                                         ),
                                         Text(
                                           row.$2,
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontSize: 13,
-                                            color: Colors.white,
+                                            color: isDim ? Colors.white.withValues(alpha: 0.25) : Colors.white,
                                             fontWeight: FontWeight.w500,
                                           ),
                                         ),
                                       ],
                                     ),
                                   ),
-                                  if (i < rows.length - 1) Divider(height: 1, color: Colors.white.withValues(alpha: 0.04)),
+                                  if (i < rows.length - 1)
+                                    Divider(
+                                      height: 1,
+                                      color: Colors.white.withValues(alpha: 0.04),
+                                    ),
                                 ],
                               );
                             }),
@@ -662,26 +691,75 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Shared helper widgets
+// Helper widgets
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// Date picker field with label + optional tag + tappable date input.
+class _PreviewRow extends StatelessWidget {
+  const _PreviewRow({
+    required this.label,
+    required this.value,
+    required this.isPlaceholder,
+    required this.hasDivider,
+  });
+
+  final String label;
+  final String value;
+  final bool isPlaceholder;
+  final bool hasDivider;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.white.withValues(alpha: 0.45),
+                ),
+              ),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: isPlaceholder ? Colors.white.withValues(alpha: 0.2) : _accent,
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (hasDivider) Divider(height: 1, color: Colors.white.withValues(alpha: 0.04)),
+      ],
+    );
+  }
+}
+
 class _DatePickerField extends StatelessWidget {
   const _DatePickerField({
     required this.label,
     required this.date,
     required this.onTap,
     this.optional = false,
+    this.hint,
   });
 
   final String label;
   final DateTime? date;
   final VoidCallback onTap;
   final bool optional;
+  final String? hint;
 
   @override
   Widget build(BuildContext context) {
     final hasDate = date != null;
+    final showHint = hasDate && hint != null;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -728,79 +806,35 @@ class _DatePickerField extends StatelessWidget {
             ),
           ),
         ),
-      ],
-    );
-  }
-}
-
-class _LabeledSlider extends StatelessWidget {
-  const _LabeledSlider({
-    required this.label,
-    required this.value,
-    required this.min,
-    required this.max,
-    required this.unit,
-    required this.onChanged,
-  });
-
-  final String label;
-  final double value;
-  final double min;
-  final double max;
-  final String unit;
-  final ValueChanged<double> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              label,
-              style: TextStyle(fontSize: 13, color: Colors.white.withValues(alpha: 0.7)),
-            ),
-            Text(
-              '${value.round()} $unit',
-              style: const TextStyle(
-                fontSize: 16,
-                color: _accent,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        SliderTheme(
-          data: SliderThemeData(
-            activeTrackColor: _accent,
-            inactiveTrackColor: Colors.white.withValues(alpha: 0.1),
-            thumbColor: _accent,
-            overlayColor: _accent.withValues(alpha: 0.15),
-            trackHeight: 4,
-          ),
-          child: Slider(
-            value: value,
-            min: min,
-            max: max,
-            divisions: (max - min).round(),
-            onChanged: onChanged,
-          ),
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              '${min.round()} $unit',
-              style: TextStyle(fontSize: 10, color: Colors.white.withValues(alpha: 0.15)),
-            ),
-            Text(
-              '${max.round()} $unit',
-              style: TextStyle(fontSize: 10, color: Colors.white.withValues(alpha: 0.15)),
-            ),
-          ],
+        // Animated hint
+        AnimatedSize(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+          child: showHint
+              ? Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: _accent.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: _accent.withValues(alpha: 0.19)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Text('✦', style: TextStyle(color: _accent, fontSize: 11)),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            hint!,
+                            style: const TextStyle(color: _accent, fontSize: 12),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              : const SizedBox.shrink(),
         ),
       ],
     );
