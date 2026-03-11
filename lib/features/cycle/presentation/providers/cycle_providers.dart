@@ -13,7 +13,6 @@ final activeSymptomsProvider = FutureProvider<List<Symptom>>((ref) async {
   return all.where((s) => s.category != 'mood').toList();
 });
 
-// Live stream of all cycle entries.
 final cycleEntriesProvider = StreamProvider<List<CycleEntry>>((ref) {
   return ref.watch(cycleRepositoryProvider).watchAllEntries();
 });
@@ -143,7 +142,6 @@ final currentCycleDayProvider = FutureProvider<int?>((ref) async {
   return DateTime.now().difference(last.date).inDays + 1;
 });
 
-// Phase calculation for today using the formula-based calculator.
 final currentPhaseProvider = FutureProvider<PhaseResult?>((ref) async {
   final lastStart = await ref.watch(lastPeriodStartProvider.future);
   if (lastStart == null) return null;
@@ -230,7 +228,6 @@ final todayMoodProvider = Provider<int?>((ref) {
   return null;
 });
 
-// Symptom logs recorded for today.
 final todaySymptomLogsProvider = StreamProvider<List<SymptomLog>>((ref) {
   return ref.read(symptomRepositoryProvider).watchLogsForDate(DateTime.now());
 });

@@ -33,7 +33,7 @@ class EncryptionService {
   /// Returns base64(iv + ciphertext).
   String encrypt(String plaintext) {
     _assertInitialized();
-    final iv = IV.fromSecureRandom(12); // GCM requires a 96-bit IV
+    final iv = IV.fromSecureRandom(12);
     final encrypter = Encrypter(AES(_key!, mode: AESMode.gcm));
     final encrypted = encrypter.encrypt(plaintext, iv: iv);
     final combined = Uint8List(12 + encrypted.bytes.length)

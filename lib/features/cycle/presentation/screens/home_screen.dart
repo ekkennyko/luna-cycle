@@ -173,8 +173,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
     super.dispose();
   }
 
-  // ── Preview dot handler ────────────────────────────────────────────────────
-
   void _changePreviewDay(int day) {
     setState(() => _previewDay = day);
     _ringController.forward(from: 0);
@@ -252,7 +250,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                 ..addAll(selected);
             });
           }
-          // Persist to DB by name-matching to seeded symptoms
           final repo = ref.read(symptomRepositoryProvider);
           final today = DateTime.now();
           await repo.deleteLogsForDate(today);
@@ -269,8 +266,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
       ),
     );
   }
-
-  // ── Build ──────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -375,8 +370,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
     );
   }
 
-  // ── Header ────────────────────────────────────────────────────────────────
-
   Widget _buildHeader(_Phase phase) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
@@ -425,8 +418,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
       ),
     );
   }
-
-  // ── Ring section ──────────────────────────────────────────────────────────
 
   Widget _buildRingSection({
     required _Phase phase,
@@ -573,8 +564,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
     );
   }
 
-  // ── Quick log chips ───────────────────────────────────────────────────────
-
   Widget _buildQuickChips({
     required _Phase phase,
     required bool isPeriodActive,
@@ -617,8 +606,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
       ),
     );
   }
-
-  // ── Phase insight card ────────────────────────────────────────────────────
 
   Widget _buildInsightCard(_Phase phase) {
     return AnimatedSwitcher(
@@ -691,8 +678,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
       ),
     );
   }
-
-  // ── Mini stats ────────────────────────────────────────────────────────────
 
   Widget _buildMiniStats({
     required int? cycleLen,

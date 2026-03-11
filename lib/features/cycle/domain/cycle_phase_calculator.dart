@@ -53,7 +53,6 @@ class CyclePhaseCalculator {
     required int cycleLength,
     required DateTime today,
   }) {
-    // Normalize both dates to midnight UTC for consistent day arithmetic
     final start = DateTime.utc(periodStart.year, periodStart.month, periodStart.day);
     final now = DateTime.utc(today.year, today.month, today.day);
 
@@ -75,7 +74,6 @@ class CyclePhaseCalculator {
     final nextPeriodDate = start.add(Duration(days: cycleLength));
     final daysUntilNextPeriod = nextPeriodDate.difference(now).inDays;
 
-    // day N in a 1-based cycle = start + N−1 days
     final ovulationDate = start.add(Duration(days: ovDay - 1));
 
     final fertileWindow = DateRange(
