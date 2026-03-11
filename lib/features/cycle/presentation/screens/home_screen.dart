@@ -7,6 +7,7 @@ import 'package:luna/core/database/app_database.dart';
 import 'package:luna/features/cycle/domain/cycle_phase_calculator.dart';
 import 'package:luna/features/cycle/presentation/providers/cycle_providers.dart';
 import 'package:luna/shared/providers/core_providers.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Phase model
@@ -126,13 +127,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
   // ── Animations ─────────────────────────────────────────────────────────────
   late final AnimationController _floatController;
   late final AnimationController _ringController;
+  late final AnimationController _pulseController;
   late final Animation<double> _floatAnim;
   late final Animation<double> _ringAnim;
+  late final Animation<double> _pulseAnim;
 
   // ── Local UI state ─────────────────────────────────────────────────────────
   int? _previewDay; // null = use real data
   int? _selectedMoodIdx; // 0–4 index; null = show today's DB mood
   final Set<String> _selectedSymptoms = {};
+  DateTime? _bannerHiddenUntil;
 
   @override
   void initState() {
@@ -148,6 +152,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
       vsync: this,
     );
 
+    _pulseController = AnimationController(
+      duration: const Duration(milliseconds: 1400),
+      vsync: this,
+    );
+
     _floatAnim = Tween<double>(begin: 0.0, end: -6.0).animate(
       CurvedAnimation(parent: _floatController, curve: Curves.easeInOut),
     );
@@ -157,20 +166,48 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
         curve: const Cubic(0.34, 1.56, 0.64, 1),
       ),
     );
+    _pulseAnim = Tween<double>(begin: 0.3, end: 1.0).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       if (ref.read(currentPhaseProvider).asData?.value != null) {
         _ringController.forward(from: 0);
       }
+      final statusData = ref.read(periodStatusProvider).asData;
+      if (statusData != null && statusData.value.$1 == PeriodStatus.late) {
+        _pulseController.repeat(reverse: true);
+      }
     });
+
+    _loadBannerDismissState();
   }
 
   @override
   void dispose() {
     _floatController.dispose();
     _ringController.dispose();
+    _pulseController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadBannerDismissState() async {
+    final prefs = await SharedPreferences.getInstance();
+    final ts = prefs.getInt('late_banner_dismissed_at');
+    if (ts != null && mounted) {
+      setState(() {
+        _bannerHiddenUntil = DateTime.fromMillisecondsSinceEpoch(ts).add(const Duration(hours: 24));
+      });
+    }
+  }
+
+  Future<void> _dismissBannerFor24Hours() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('late_banner_dismissed_at', DateTime.now().millisecondsSinceEpoch);
+    if (mounted) {
+      setState(() => _bannerHiddenUntil = DateTime.now().add(const Duration(hours: 24)));
+    }
   }
 
   void _changePreviewDay(int day) {
@@ -275,15 +312,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
       }
     });
 
+    ref.listen<AsyncValue<(PeriodStatus, int)>>(periodStatusProvider, (prev, next) {
+      final status = next.asData?.value.$1;
+      if (status == PeriodStatus.late) {
+        if (!_pulseController.isAnimating) _pulseController.repeat(reverse: true);
+      } else {
+        _pulseController.stop();
+        _pulseController.value = 1.0;
+      }
+    });
+
     final phaseResult = ref.watch(currentPhaseProvider).asData?.value;
-    final isPeriodActive = ref.watch(isPeriodActiveProvider).asData?.value ?? false;
+    final (periodStatus, daysLate) = ref.watch(periodStatusProvider).asData?.value ?? (PeriodStatus.upcoming, 0);
+    final isPeriodActive = periodStatus == PeriodStatus.active;
+    final isLate = periodStatus == PeriodStatus.late;
     final cycleLen = ref.watch(cycleLengthProvider).asData?.value;
     final periodLen = ref.watch(periodLengthProvider).asData?.value;
     final avgLenNullable = ref.watch(avgCycleLengthNullableProvider).asData?.value;
     final todayMood = ref.watch(todayMoodProvider);
     final todayLogs = ref.watch(todaySymptomLogsProvider).asData?.value ?? const <SymptomLog>[];
 
-    // Preview day takes priority; falls back to calculator result
     final displayDay = _previewDay ?? phaseResult?.dayOfCycle ?? 0;
     final phase = _previewDay != null
         ? _Phase.forDay(_previewDay!)
@@ -294,15 +342,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
     final ringCycleLen = phaseResult?.cycleLength ?? 28;
     final targetProgress = displayDay > 0 ? (displayDay / ringCycleLen).clamp(0.0, 1.0).toDouble() : 0.0;
 
-    final String periodLabel;
-    if (isPeriodActive) {
-      periodLabel = 'Period active 🩸';
-    } else if (phaseResult != null) {
-      final d = phaseResult.daysUntilNextPeriod;
-      periodLabel = d > 0 ? 'Period in ${d}d' : 'Period expected';
-    } else {
-      periodLabel = '';
-    }
+    final String periodLabel = switch (periodStatus) {
+      PeriodStatus.active => 'Period active 🩸',
+      PeriodStatus.late => '$daysLate day${daysLate == 1 ? '' : 's'} late',
+      PeriodStatus.expected => 'Period expected today',
+      PeriodStatus.upcoming => phaseResult != null ? 'Period in ${phaseResult.daysUntilNextPeriod}d' : '',
+    };
+
+    final now = DateTime.now();
+    final isBannerVisible = isLate && (_bannerHiddenUntil == null || now.isAfter(_bannerHiddenUntil!));
 
     final moodIdx = _selectedMoodIdx ?? (todayMood != null && todayMood >= 1 && todayMood <= 5 ? todayMood - 1 : null);
     final symptomsCount = _selectedSymptoms.isNotEmpty ? _selectedSymptoms.length : todayLogs.length;
@@ -346,7 +394,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                     targetProgress: targetProgress,
                     isPeriodActive: isPeriodActive,
                     periodLabel: periodLabel,
+                    isLate: isLate,
                   ),
+                  if (isBannerVisible) _buildLateBanner(daysLate),
                   const SizedBox(height: 16),
                   _buildQuickChips(
                     phase: phase,
@@ -425,16 +475,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
     required double targetProgress,
     required bool isPeriodActive,
     required String periodLabel,
+    required bool isLate,
   }) {
     return Column(
       children: [
         const SizedBox(height: 16),
 
-        // Floating ring with animation
         AnimatedBuilder(
-          animation: Listenable.merge([_floatAnim, _ringAnim]),
+          animation: Listenable.merge([_floatAnim, _ringAnim, _pulseAnim]),
           builder: (_, __) {
             final progress = targetProgress * _ringAnim.value;
+            final ringColor = isLate
+                ? Color.lerp(
+                    phase.color.withValues(alpha: 0.3),
+                    phase.color,
+                    _pulseAnim.value,
+                  )!
+                : phase.color;
             return Transform.translate(
               offset: Offset(0, _floatAnim.value),
               child: SizedBox(
@@ -443,12 +500,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    // Ring painter
                     CustomPaint(
                       size: const Size(310, 310),
                       painter: _CycleRingPainter(
                         progress: progress,
-                        phaseColor: phase.color,
+                        phaseColor: ringColor,
                         phaseBgColor: phase.bgColor,
                         isPeriodActive: isPeriodActive,
                       ),
@@ -738,6 +794,56 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
             ),
           );
         }),
+      ),
+    );
+  }
+
+  Widget _buildLateBanner(int daysLate) {
+    const color = Color(0xFFE05A7A);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color.withValues(alpha: 0.30)),
+        ),
+        child: Row(
+          children: [
+            const Text('🌙', style: TextStyle(fontSize: 20)),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Period is $daysLate day${daysLate == 1 ? '' : 's'} late',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Stress, illness, or cycle variation can cause delays.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.white.withValues(alpha: 0.6),
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            GestureDetector(
+              onTap: _dismissBannerFor24Hours,
+              child: Icon(Icons.close, size: 18, color: Colors.white.withValues(alpha: 0.4)),
+            ),
+          ],
+        ),
       ),
     );
   }

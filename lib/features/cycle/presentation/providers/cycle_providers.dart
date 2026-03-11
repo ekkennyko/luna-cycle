@@ -142,6 +142,8 @@ final currentCycleDayProvider = FutureProvider<int?>((ref) async {
   return DateTime.now().difference(last.date).inDays + 1;
 });
 
+enum PeriodStatus { active, expected, late, upcoming }
+
 final currentPhaseProvider = FutureProvider<PhaseResult?>((ref) async {
   final lastStart = await ref.watch(lastPeriodStartProvider.future);
   if (lastStart == null) return null;
@@ -155,6 +157,20 @@ final currentPhaseProvider = FutureProvider<PhaseResult?>((ref) async {
     cycleLength: cycleLen,
     today: DateTime.now().toUtc(),
   );
+});
+
+// (PeriodStatus, daysLate) — daysLate > 0 only when status is late.
+final periodStatusProvider = FutureProvider<(PeriodStatus, int)>((ref) async {
+  final isPeriodActive = await ref.watch(isPeriodActiveProvider.future);
+  if (isPeriodActive) return (PeriodStatus.active, 0);
+
+  final phaseResult = await ref.watch(currentPhaseProvider.future);
+  if (phaseResult == null) return (PeriodStatus.upcoming, 0);
+
+  final d = phaseResult.daysUntilNextPeriod;
+  if (d < 0) return (PeriodStatus.late, -d);
+  if (d == 0) return (PeriodStatus.expected, 0);
+  return (PeriodStatus.upcoming, 0);
 });
 
 // Phase name string for consumers that need a plain string (e.g. nav bar color).
