@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:luna/core/constants/app_constants.dart';
+import 'package:luna/features/cycle/presentation/providers/cycle_providers.dart';
 import 'package:luna/features/subscription/presentation/providers/subscription_providers.dart';
 import 'package:luna/shared/providers/core_providers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -109,6 +110,7 @@ class SettingsScreen extends ConsumerWidget {
       await ref.read(appDatabaseProvider).resetAllData();
       final prefs = await SharedPreferences.getInstance();
       await prefs.clear();
+      ref.read(debugDayOffsetProvider.notifier).reset();
       if (context.mounted) context.go('/onboarding');
     }
   }

@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:luna/features/cycle/presentation/providers/cycle_providers.dart';
+import 'package:luna/shared/providers/core_providers.dart';
 
 const _accent = Color(0xFFE05A7A);
 const _bg = Color(0xFF120A0A);
@@ -34,7 +35,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   int? get _periodLength {
     if (_periodStart == null || _periodEnd == null) return null;
     final diff = _periodEnd!.difference(_periodStart!).inDays;
-    return diff > 0 ? diff : null;
+    return diff >= 0 ? diff + 1 : null;
   }
 
   int? get _cycleLength {
@@ -87,6 +88,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   Future<void> _saveAndFinish() async {
     if (_saving || _periodStart == null) return;
     setState(() => _saving = true);
+
+    await ref.read(appDatabaseProvider).resetAllData();
 
     final notifier = ref.read(cycleNotifierProvider.notifier);
 
@@ -288,7 +291,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               final d = await _pickDate(
                 context,
                 initial: _periodEnd,
-                firstDate: _periodStart!.add(const Duration(days: 1)),
+                firstDate: _periodStart!,
               );
               if (d != null) setState(() => _periodEnd = d);
             },

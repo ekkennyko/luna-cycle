@@ -52,16 +52,29 @@ class CyclePhaseCalculator {
     required int periodLength,
     required int cycleLength,
     required DateTime today,
+    DateTime? periodEnd,
   }) {
-    final start = DateTime.utc(periodStart.year, periodStart.month, periodStart.day);
-    final now = DateTime.utc(today.year, today.month, today.day);
+    final s = periodStart.toLocal();
+    final t = today.toLocal();
+    final start = DateTime.utc(s.year, s.month, s.day);
+    final now = DateTime.utc(t.year, t.month, t.day);
 
     final dayOfCycle = now.difference(start).inDays + 1;
+
+    final int actualPeriodLength;
+    if (periodEnd != null) {
+      final e = periodEnd.toLocal();
+      final endNorm = DateTime.utc(e.year, e.month, e.day);
+      actualPeriodLength = endNorm.difference(start).inDays;
+    } else {
+      // Period is still active — menstrual phase extends through current day.
+      actualPeriodLength = dayOfCycle;
+    }
 
     final ovDay = cycleLength - 14;
 
     final CyclePhase phase;
-    if (dayOfCycle <= periodLength) {
+    if (dayOfCycle <= actualPeriodLength) {
       phase = CyclePhase.menstrual;
     } else if (dayOfCycle < ovDay - 2) {
       phase = CyclePhase.follicular;

@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -232,7 +233,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
       backgroundColor: Colors.transparent,
       builder: (_) => _PeriodSheet(
         onStart: (intensity) async {
-          final today = DateTime.now();
+          final today = ref.read(effectiveTodayProvider);
           await ref.read(cycleNotifierProvider.notifier).logPeriodStart(today, flowIntensity: intensity);
           if (mounted) setState(() => _previewDay = null);
           _ringController.forward(from: 0);
@@ -248,7 +249,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
       backgroundColor: Colors.transparent,
       builder: (_) => _EndPeriodSheet(
         onEnd: () async {
-          await ref.read(cycleNotifierProvider.notifier).endPeriod(DateTime.now());
+          await ref.read(cycleNotifierProvider.notifier).endPeriod(ref.read(effectiveTodayProvider));
           if (mounted) setState(() => _previewDay = null);
         },
       ),
@@ -344,7 +345,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
 
     final activePeriodDay = ref.watch(activePeriodDayProvider).asData?.value;
     final String periodLabel = switch (periodStatus) {
-      PeriodStatus.active => activePeriodDay != null ? 'Day $activePeriodDay of period' : 'Period active',
+      PeriodStatus.active => activePeriodDay != null && periodLen != null
+          ? 'Day $activePeriodDay of $periodLen'
+          : activePeriodDay != null
+              ? 'Day $activePeriodDay'
+              : 'Period active',
       PeriodStatus.late => '$daysLate day${daysLate == 1 ? '' : 's'} late',
       PeriodStatus.expected => 'Period expected today',
       PeriodStatus.upcoming => phaseResult != null ? 'Period in ${phaseResult.daysUntilNextPeriod} day${phaseResult.daysUntilNextPeriod == 1 ? '' : 's'}' : '',
@@ -352,6 +357,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
 
     final now = DateTime.now();
     final isBannerVisible = isLate && (_bannerHiddenUntil == null || now.isAfter(_bannerHiddenUntil!));
+    final isLongerThanUsual = isPeriodActive && activePeriodDay != null && periodLen != null && activePeriodDay > periodLen + 2;
 
     final moodIdx = _selectedMoodIdx ?? (todayMood != null && todayMood >= 1 && todayMood <= 5 ? todayMood - 1 : null);
     final symptomsCount = _selectedSymptoms.isNotEmpty ? _selectedSymptoms.length : todayLogs.length;
@@ -398,6 +404,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                     isLate: isLate,
                   ),
                   if (isBannerVisible) _buildLateBanner(daysLate),
+                  if (isLongerThanUsual) _buildLongerThanUsualHint(),
                   const SizedBox(height: 16),
                   _buildQuickChips(
                     phase: phase,
@@ -451,19 +458,60 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
               ),
             ],
           ),
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.06),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.08),
+          Row(
+            children: [
+              if (kDebugMode) ...[
+                GestureDetector(
+                  onTap: () {
+                    ref.read(debugDayOffsetProvider.notifier).increment();
+                  },
+                  onLongPress: () {
+                    ref.read(debugDayOffsetProvider.notifier).reset();
+                  },
+                  child: Consumer(
+                    builder: (_, ref, __) {
+                      final offset = ref.watch(debugDayOffsetProvider);
+                      return Container(
+                        height: 38,
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF9B72CF).withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: const Color(0xFF9B72CF).withValues(alpha: 0.35),
+                          ),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          offset == 0 ? '+1d' : '+${offset}d',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF9B72CF),
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ],
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.06),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.08),
+                  ),
+                ),
+                child: const Center(
+                  child: Text('🔔', style: TextStyle(fontSize: 16)),
+                ),
               ),
-            ),
-            child: const Center(
-              child: Text('🔔', style: TextStyle(fontSize: 16)),
-            ),
+            ],
           ),
         ],
       ),
@@ -795,6 +843,36 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
             ),
           );
         }),
+      ),
+    );
+  }
+
+  Widget _buildLongerThanUsualHint() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.04),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        ),
+        child: Row(
+          children: [
+            const Text('🌿', style: TextStyle(fontSize: 18)),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Your period is longer than usual.',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.white.withValues(alpha: 0.6),
+                  height: 1.4,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
