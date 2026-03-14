@@ -11,10 +11,6 @@ import 'package:luna/features/cycle/presentation/providers/cycle_providers.dart'
 import 'package:luna/shared/providers/core_providers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Phase model
-// ─────────────────────────────────────────────────────────────────────────────
-
 class _Phase {
   const _Phase({
     required this.name,
@@ -77,10 +73,6 @@ class _Phase {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Constants
-// ─────────────────────────────────────────────────────────────────────────────
-
 const _moods = ['😔', '😐', '🙂', '😊', '🤩'];
 const _moodLabels = ['Low', 'Okay', 'Good', 'Happy', 'Amazing'];
 
@@ -114,10 +106,6 @@ const _phaseDotColors = [
   Color(0xFF9B72CF),
 ];
 
-// ─────────────────────────────────────────────────────────────────────────────
-// HomeScreen
-// ─────────────────────────────────────────────────────────────────────────────
-
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
@@ -126,7 +114,6 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStateMixin {
-  // ── Animations ─────────────────────────────────────────────────────────────
   late final AnimationController _floatController;
   late final AnimationController _ringController;
   late final AnimationController _pulseController;
@@ -134,7 +121,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
   late final Animation<double> _ringAnim;
   late final Animation<double> _pulseAnim;
 
-  // ── Local UI state ─────────────────────────────────────────────────────────
+  double _ringFrom = 0.0;
+  double _ringTo = 0.0;
+
   int? _previewDay; // null = use real data
   int? _selectedMoodIdx; // 0–4 index; null = show today's DB mood
   final Set<String> _selectedSymptoms = {};
@@ -174,8 +163,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      if (ref.read(currentPhaseProvider).asData?.value != null) {
-        _ringController.forward(from: 0);
+      final result = ref.read(currentPhaseProvider).asData?.value;
+      if (result != null) {
+        final target = _progressFromPhase(result);
+        _animateRingTo(target);
       }
       final statusData = ref.read(periodStatusProvider).asData;
       if (statusData != null && statusData.value.$1 == PeriodStatus.late) {
@@ -212,12 +203,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
     }
   }
 
-  void _changePreviewDay(int day) {
-    setState(() => _previewDay = day);
+  double _progressFromPhase(PhaseResult result) {
+    return result.dayOfCycle > 0
+        ? (result.dayOfCycle / result.cycleLength).clamp(0.0, 1.0)
+        : 0.0;
+  }
+
+  void _animateRingTo(double target) {
+    _ringFrom = _ringFrom + (_ringTo - _ringFrom) * _ringAnim.value;
+    _ringTo = target;
     _ringController.forward(from: 0);
   }
 
-  // ── Bottom sheet helpers ───────────────────────────────────────────────────
+  void _changePreviewDay(int day) {
+    final cycleLen = ref.read(currentPhaseProvider).asData?.value?.cycleLength ?? 28;
+    final target = (day / cycleLen).clamp(0.0, 1.0);
+    setState(() => _previewDay = day);
+    _animateRingTo(target);
+  }
 
   void _openPeriodSheet({required bool isPeriodActive}) {
     if (isPeriodActive) {
@@ -237,7 +240,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
           final today = ref.read(effectiveTodayProvider);
           await ref.read(cycleNotifierProvider.notifier).logPeriodStart(today, flowIntensity: intensity);
           if (mounted) setState(() => _previewDay = null);
-          _ringController.forward(from: 0);
         },
       ),
     );
@@ -314,9 +316,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
   @override
   Widget build(BuildContext context) {
     ref.listen<AsyncValue<PhaseResult?>>(currentPhaseProvider, (prev, next) {
-      if (prev?.asData?.value == null && next.asData?.value != null && _previewDay == null) {
-        _ringController.forward(from: 0);
-      }
+      if (_previewDay != null) return;
+      final result = next.asData?.value;
+      if (result == null) return;
+      _animateRingTo(_progressFromPhase(result));
     });
 
     ref.listen<AsyncValue<(PeriodStatus, int)>>(periodStatusProvider, (prev, next) {
@@ -346,9 +349,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
             ? _Phase.forPhase(phaseResult.phase)
             : _Phase.menstrual;
 
-    final ringCycleLen = phaseResult?.cycleLength ?? 28;
-    final targetProgress = displayDay > 0 ? (displayDay / ringCycleLen).clamp(0.0, 1.0).toDouble() : 0.0;
-
     final lastStart = ref.watch(lastPeriodStartProvider);
     final isEmpty = lastStart.asData != null && lastStart.asData!.value == null;
 
@@ -375,7 +375,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
       backgroundColor: const Color(0xFF120A0A),
       body: Stack(
         children: [
-          // ── Ambient glow ──────────────────────────────────────────────────
           Positioned(
             top: 0,
             left: 0,
@@ -396,7 +395,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
             ),
           ),
 
-          // ── Main scrollable content ───────────────────────────────────────
           SafeArea(
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
@@ -407,7 +405,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                   _buildRingSection(
                     phase: phase,
                     displayDay: displayDay,
-                    targetProgress: targetProgress,
                     isPeriodActive: isPeriodActive,
                     periodLabel: periodLabel,
                     isLate: isLate,
@@ -532,7 +529,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
   Widget _buildRingSection({
     required _Phase phase,
     required int displayDay,
-    required double targetProgress,
     required bool isPeriodActive,
     required String periodLabel,
     required bool isLate,
@@ -545,7 +541,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
         AnimatedBuilder(
           animation: Listenable.merge([_floatAnim, _ringAnim, _pulseAnim]),
           builder: (_, __) {
-            final progress = targetProgress * _ringAnim.value;
+            final progress = _ringFrom + (_ringTo - _ringFrom) * _ringAnim.value;
             final ringColor = isLate
                 ? Color.lerp(
                     phase.color.withValues(alpha: 0.3),
@@ -994,10 +990,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Quick chip widget
-// ─────────────────────────────────────────────────────────────────────────────
-
 class _QuickChip extends StatelessWidget {
   const _QuickChip({
     required this.icon,
@@ -1060,10 +1052,6 @@ class _QuickChip extends StatelessWidget {
     );
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Cycle ring CustomPainter
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _CycleRingPainter extends CustomPainter {
   const _CycleRingPainter({
@@ -1189,10 +1177,6 @@ class _CycleRingPainter extends CustomPainter {
       old.progress != progress || old.phaseColor != phaseColor || old.phaseBgColor != phaseBgColor || old.isPeriodActive != isPeriodActive;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Dark sheet container (shared by all bottom sheets)
-// ─────────────────────────────────────────────────────────────────────────────
-
 class _SheetContainer extends StatelessWidget {
   const _SheetContainer({required this.title, required this.child});
 
@@ -1252,10 +1236,6 @@ class _SheetContainer extends StatelessWidget {
     );
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Period (start) sheet
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _PeriodSheet extends StatefulWidget {
   const _PeriodSheet({required this.onStart});
@@ -1387,10 +1367,6 @@ class _PeriodSheetState extends State<_PeriodSheet> {
     );
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// End period sheet
-// ─────────────────────────────────────────────────────────────────────────────
 
 enum _PickMode { yesterday, today, custom }
 
@@ -1662,10 +1638,6 @@ class _DateChip extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Mood sheet
-// ─────────────────────────────────────────────────────────────────────────────
-
 class _MoodSheet extends StatefulWidget {
   const _MoodSheet({
     required this.phase,
@@ -1746,10 +1718,6 @@ class _MoodSheetState extends State<_MoodSheet> {
     );
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Symptoms sheet
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _SymptomsSheet extends StatefulWidget {
   const _SymptomsSheet({

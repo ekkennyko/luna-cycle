@@ -10,10 +10,6 @@ import 'package:luna/shared/providers/core_providers.dart';
 const _accent = Color(0xFFE05A7A);
 const _bg = Color(0xFF120A0A);
 
-// ─────────────────────────────────────────────────────────────────────────────
-// OnboardingScreen
-// ─────────────────────────────────────────────────────────────────────────────
-
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
 
@@ -31,8 +27,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   DateTime? _prevStart;
   DateTime? _prevEnd;
   bool _periodOngoing = false;
-
-  // ── Computed values ────────────────────────────────────────────────────────
 
   int? get _periodLength {
     if (_periodStart == null || _periodEnd == null) return null;
@@ -280,8 +274,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     );
   }
 
-  // ── Step 0: Last period start + end ───────────────────────────────────────
-
   Widget _buildStep0() {
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(24, 4, 24, 16),
@@ -432,8 +424,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       ),
     );
   }
-
-  // ── Step 1: Previous period start (optional) ───────────────────────────────
 
   Widget _buildStep1() {
     final prevPl = _prevPeriodLength;
@@ -800,10 +790,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     );
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Helper widgets
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _PreviewRow extends StatelessWidget {
   const _PreviewRow({
