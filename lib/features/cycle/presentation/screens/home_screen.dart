@@ -348,6 +348,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
     final ringCycleLen = phaseResult?.cycleLength ?? 28;
     final targetProgress = displayDay > 0 ? (displayDay / ringCycleLen).clamp(0.0, 1.0).toDouble() : 0.0;
 
+    final lastStart = ref.watch(lastPeriodStartProvider);
+    final isEmpty = lastStart.asData != null && lastStart.asData!.value == null;
+
     final activePeriodDay = ref.watch(activePeriodDayProvider).asData?.value;
     final String periodLabel = switch (periodStatus) {
       PeriodStatus.active => activePeriodDay != null && periodLen != null
@@ -407,6 +410,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                     isPeriodActive: isPeriodActive,
                     periodLabel: periodLabel,
                     isLate: isLate,
+                    isEmpty: isEmpty,
                   ),
                   if (isBannerVisible) _buildLateBanner(daysLate),
                   if (isLongerThanUsual) _buildLongerThanUsualHint(),
@@ -416,6 +420,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                     isPeriodActive: isPeriodActive,
                     moodIdx: moodIdx,
                     symptomsCount: symptomsCount,
+                    isEmpty: isEmpty,
                   ),
                   _buildInsightCard(phase),
                   _buildMiniStats(
@@ -530,6 +535,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
     required bool isPeriodActive,
     required String periodLabel,
     required bool isLate,
+    required bool isEmpty,
   }) {
     return Column(
       children: [
@@ -568,61 +574,83 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                     Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
-                          'DAY',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.white.withValues(alpha: 0.5),
-                            letterSpacing: 2,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          displayDay > 0 ? '$displayDay' : '–',
-                          style: GoogleFonts.playfairDisplay(
-                            fontSize: 72,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                            height: 1,
-                            shadows: [
-                              Shadow(
-                                color: phase.color.withValues(alpha: 0.53),
-                                blurRadius: 30,
-                              ),
-                            ],
-                          ),
-                        ),
-                        Text(
-                          phase.name,
-                          style: TextStyle(
-                            fontSize: 17,
-                            color: phase.color,
-                            fontWeight: FontWeight.w500,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                        if (periodLabel.isNotEmpty) ...[
-                          const SizedBox(height: 4),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 3,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.05),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.06),
-                              ),
-                            ),
-                            child: Text(
-                              periodLabel,
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.white.withValues(alpha: 0.6),
-                              ),
+                        if (isEmpty) ...[
+                          const Text('🩸', style: TextStyle(fontSize: 32)),
+                          const SizedBox(height: 10),
+                          Text(
+                            'Tap to log',
+                            style: GoogleFonts.playfairDisplay(
+                              fontSize: 26,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                              height: 1,
                             ),
                           ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'your first period',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.white.withValues(alpha: 0.4),
+                            ),
+                          ),
+                        ] else ...[
+                          Text(
+                            'DAY',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.white.withValues(alpha: 0.5),
+                              letterSpacing: 2,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            displayDay > 0 ? '$displayDay' : '–',
+                            style: GoogleFonts.playfairDisplay(
+                              fontSize: 72,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                              height: 1,
+                              shadows: [
+                                Shadow(
+                                  color: phase.color.withValues(alpha: 0.53),
+                                  blurRadius: 30,
+                                ),
+                              ],
+                            ),
+                          ),
+                          Text(
+                            phase.name,
+                            style: TextStyle(
+                              fontSize: 17,
+                              color: phase.color,
+                              fontWeight: FontWeight.w500,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          if (periodLabel.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.05),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.06),
+                                ),
+                              ),
+                              child: Text(
+                                periodLabel,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.white.withValues(alpha: 0.6),
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
                       ],
                     ),
@@ -679,6 +707,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
     required bool isPeriodActive,
     required int? moodIdx,
     required int symptomsCount,
+    required bool isEmpty,
   }) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 0, 24, 0),
@@ -688,9 +717,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
           Expanded(
             child: _QuickChip(
               icon: '🩸',
-              label: isPeriodActive ? 'End Period' : 'Period',
-              active: isPeriodActive,
-              activeColor: phase.color,
+              label: isPeriodActive ? 'End Period' : (isEmpty ? 'Log period' : 'Period'),
+              active: isPeriodActive || isEmpty,
+              activeColor: isPeriodActive ? phase.color : const Color(0xFFE05A7A),
               onTap: () => _openPeriodSheet(isPeriodActive: isPeriodActive),
             ),
           ),

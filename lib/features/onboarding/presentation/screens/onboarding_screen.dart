@@ -114,6 +114,38 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     });
   }
 
+  Future<void> _startFresh() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1E1118),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        content: const Text(
+          'You can always log your first period later.\nLuna will start tracking from your next period.',
+          style: TextStyle(color: Colors.white70, fontSize: 14, height: 1.6),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('Cancel', style: TextStyle(color: Colors.white.withValues(alpha: 0.5))),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Start fresh', style: TextStyle(color: _accent)),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true || !mounted) return;
+    await ref.read(appDatabaseProvider).resetAllData();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('user_cycle_length', 28);
+    await prefs.setInt('user_period_length', 5);
+    await prefs.setBool('onboarding_complete', true);
+    if (!mounted) return;
+    context.go('/');
+  }
+
   Future<void> _completeOnboarding() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('onboarding_complete', true);
@@ -334,7 +366,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 16),
           // Privacy notice
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -359,6 +391,16 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   ),
                 ),
               ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Center(
+            child: TextButton(
+              onPressed: _startFresh,
+              child: const Text(
+                "I don't remember — start fresh",
+                style: TextStyle(fontSize: 13, color: Color(0x4DFFFFFF)),
+              ),
             ),
           ),
         ],
