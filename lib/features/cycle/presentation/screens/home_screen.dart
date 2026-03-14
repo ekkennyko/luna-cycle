@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
+import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -243,13 +244,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
   }
 
   void _openEndPeriodSheet() {
+    final periodStart = ref.read(lastPeriodStartProvider).asData?.value?.date;
+    final periodLength = ref.read(periodLengthProvider).asData?.value ?? 5;
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => _EndPeriodSheet(
-        onEnd: () async {
-          await ref.read(cycleNotifierProvider.notifier).endPeriod(ref.read(effectiveTodayProvider));
+        periodStart: periodStart,
+        periodLength: periodLength,
+        onEnd: (date) async {
+          await ref.read(cycleNotifierProvider.notifier).endPeriod(date);
           if (mounted) setState(() => _previewDay = null);
         },
       ),
@@ -1357,10 +1362,18 @@ class _PeriodSheetState extends State<_PeriodSheet> {
 // End period sheet
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _EndPeriodSheet extends StatefulWidget {
-  const _EndPeriodSheet({required this.onEnd});
+enum _PickMode { yesterday, today, custom }
 
-  final Future<void> Function() onEnd;
+class _EndPeriodSheet extends StatefulWidget {
+  const _EndPeriodSheet({
+    required this.onEnd,
+    required this.periodStart,
+    required this.periodLength,
+  });
+
+  final Future<void> Function(DateTime date) onEnd;
+  final DateTime? periodStart;
+  final int periodLength;
 
   @override
   State<_EndPeriodSheet> createState() => _EndPeriodSheetState();
@@ -1368,27 +1381,106 @@ class _EndPeriodSheet extends StatefulWidget {
 
 class _EndPeriodSheetState extends State<_EndPeriodSheet> {
   bool _saving = false;
+  late _PickMode _mode;
+  DateTime? _customDate;
+
+  @override
+  void initState() {
+    super.initState();
+    _mode = DateTime.now().hour >= 12 ? _PickMode.today : _PickMode.yesterday;
+  }
+
+  bool get _showPickDate {
+    final start = widget.periodStart;
+    if (start == null) return false;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final startNorm = DateTime(start.year, start.month, start.day);
+    return today.difference(startNorm).inDays > widget.periodLength + 2;
+  }
+
+  Future<void> _pickCustomDate(DateTime today) async {
+    final start = widget.periodStart;
+    final firstDate = start != null ? DateTime(start.year, start.month, start.day) : today.subtract(const Duration(days: 90));
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _customDate ?? today.subtract(const Duration(days: 3)),
+      firstDate: firstDate,
+      lastDate: today,
+      builder: (ctx, child) => Theme(
+        data: ThemeData.dark().copyWith(
+          colorScheme: const ColorScheme.dark(
+            primary: Color(0xFFE05A7A),
+            onPrimary: Colors.white,
+            surface: Color(0xFF1E1118),
+            onSurface: Colors.white,
+          ),
+          dialogTheme: const DialogThemeData(backgroundColor: Color(0xFF1E1118)),
+        ),
+        child: child!,
+      ),
+    );
+    if (picked != null) {
+      setState(() {
+        _customDate = picked;
+        _mode = _PickMode.custom;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+
+    final selectedDate = switch (_mode) {
+      _PickMode.yesterday => yesterday,
+      _PickMode.today => today,
+      _PickMode.custom => _customDate ?? today,
+    };
+
     return _SheetContainer(
       title: 'End Period?',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SizedBox(height: 8),
-          const Center(child: Text('🌙', style: TextStyle(fontSize: 40))),
-          const SizedBox(height: 12),
           Text(
-            'Mark your period as ended.\nThis will update your cycle data.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.white.withValues(alpha: 0.7),
-              height: 1.6,
-            ),
+            'When did your period end?',
+            style: TextStyle(fontSize: 14, color: Colors.white.withValues(alpha: 0.6)),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              _DateChip(
+                label: 'Yesterday',
+                dateLabel: DateFormat('MMM d').format(yesterday),
+                selected: _mode == _PickMode.yesterday,
+                onTap: () => setState(() => _mode = _PickMode.yesterday),
+              ),
+              const SizedBox(width: 10),
+              _DateChip(
+                label: 'Today',
+                dateLabel: DateFormat('MMM d').format(today),
+                selected: _mode == _PickMode.today,
+                onTap: () => setState(() => _mode = _PickMode.today),
+              ),
+            ],
+          ),
+          if (_showPickDate) ...[
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                _DateChip(
+                  label: 'Pick a date',
+                  dateLabel: _customDate != null ? DateFormat('MMM d').format(_customDate!) : 'Tap to select',
+                  selected: _mode == _PickMode.custom,
+                  onTap: () => _pickCustomDate(today),
+                ),
+              ],
+            ),
+          ],
+          const SizedBox(height: 20),
           Row(
             children: [
               // Cancel
@@ -1400,15 +1492,10 @@ class _EndPeriodSheetState extends State<_EndPeriodSheet> {
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.06),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.1),
-                      ),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                     ),
                     child: const Center(
-                      child: Text(
-                        'Cancel',
-                        style: TextStyle(color: Colors.white, fontSize: 14),
-                      ),
+                      child: Text('Cancel', style: TextStyle(color: Colors.white, fontSize: 14)),
                     ),
                   ),
                 ),
@@ -1423,7 +1510,7 @@ class _EndPeriodSheetState extends State<_EndPeriodSheet> {
                       : () async {
                           setState(() => _saving = true);
                           final nav = Navigator.of(context);
-                          await widget.onEnd();
+                          await widget.onEnd(selectedDate);
                           if (!mounted) return;
                           nav.pop();
                         },
@@ -1444,10 +1531,10 @@ class _EndPeriodSheetState extends State<_EndPeriodSheet> {
                         ),
                       ],
                     ),
-                    child: const Center(
+                    child: Center(
                       child: Text(
-                        '✓ End Period',
-                        style: TextStyle(
+                        _saving ? 'Saving…' : '✓ End Period',
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -1460,6 +1547,86 @@ class _EndPeriodSheetState extends State<_EndPeriodSheet> {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _DateChip extends StatelessWidget {
+  const _DateChip({
+    required this.label,
+    required this.dateLabel,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final String dateLabel;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    const accent = Color(0xFFE05A7A);
+
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+          decoration: BoxDecoration(
+            color: selected ? accent.withValues(alpha: 0.15) : Colors.white.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              width: 1.5,
+              color: selected ? accent.withValues(alpha: 0.6) : Colors.white.withValues(alpha: 0.08),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    width: 16,
+                    height: 16,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        width: 1.5,
+                        color: selected ? accent : Colors.white.withValues(alpha: 0.3),
+                      ),
+                      color: selected ? accent : Colors.transparent,
+                    ),
+                    child: selected ? const Icon(Icons.check, size: 10, color: Colors.white) : null,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: selected ? Colors.white : Colors.white.withValues(alpha: 0.55),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Padding(
+                padding: const EdgeInsets.only(left: 24),
+                child: Text(
+                  dateLabel,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: selected ? accent : Colors.white.withValues(alpha: 0.35),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
