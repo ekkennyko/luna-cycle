@@ -112,32 +112,7 @@ class CalendarScreen extends ConsumerStatefulWidget {
 class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   final _scrollController = ScrollController();
   DateTime? _selectedDay;
-
-  late final List<({int year, int month})> _months;
-  late final int _currentMonthIndex;
-
-  @override
-  void initState() {
-    super.initState();
-    final now = DateTime.now();
-    _months = List.generate(10, (i) {
-      final d = DateTime(now.year, now.month - 6 + i);
-      return (year: d.year, month: d.month);
-    });
-    _currentMonthIndex = 6;
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scrollToCurrentMonth();
-    });
-  }
-
-  void _scrollToCurrentMonth() {
-    const monthHeight = 332.0;
-    final offset = _currentMonthIndex * monthHeight;
-    if (_scrollController.hasClients) {
-      _scrollController.jumpTo(offset.clamp(0, _scrollController.position.maxScrollExtent));
-    }
-  }
+  bool _hasScrolled = false;
 
   @override
   void dispose() {
@@ -155,6 +130,40 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final periodLen = ref.watch(userPeriodLengthProvider).asData?.value ?? 5;
     final cycleLen = ref.watch(averageCycleLengthProvider).asData?.value ?? 28;
     final today = ref.watch(effectiveTodayProvider);
+
+    final now = DateTime.now();
+    final DateTime startMonth;
+    if (allStarts.isNotEmpty) {
+      final earliest = allStarts.first.date.toLocal();
+      startMonth = DateTime(earliest.year, earliest.month);
+    } else {
+      startMonth = DateTime(now.year, now.month);
+    }
+    final endMonth = DateTime(now.year, now.month + 13);
+
+    final months = <({int year, int month})>[];
+    var cursor = startMonth;
+    while (!cursor.isAfter(endMonth)) {
+      months.add((year: cursor.year, month: cursor.month));
+      cursor = DateTime(cursor.year, cursor.month + 1);
+    }
+
+    final currentMonthIndex = months.indexWhere(
+      (m) => m.year == now.year && m.month == now.month,
+    );
+
+    if (!_hasScrolled && currentMonthIndex >= 0) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!_hasScrolled && _scrollController.hasClients) {
+          const monthHeight = 332.0;
+          final offset = currentMonthIndex * monthHeight;
+          _scrollController.jumpTo(
+            offset.clamp(0, _scrollController.position.maxScrollExtent),
+          );
+          _hasScrolled = true;
+        }
+      });
+    }
 
     return Scaffold(
       backgroundColor: _bg,
@@ -235,9 +244,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   child: ListView.builder(
                     controller: _scrollController,
                     padding: const EdgeInsets.fromLTRB(24, 0, 24, 80),
-                    itemCount: _months.length,
+                    itemCount: months.length,
                     itemBuilder: (context, i) {
-                      final m = _months[i];
+                      final m = months[i];
                       return _MonthGrid(
                         year: m.year,
                         month: m.month,
