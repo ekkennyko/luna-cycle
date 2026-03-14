@@ -63,14 +63,6 @@ class _Phase {
         CyclePhase.ovulation => ovulation,
         CyclePhase.luteal => luteal,
       };
-
-  /// Used for phase preview dots only (assumes a default 28-day / 5-day cycle).
-  static _Phase forDay(int day) {
-    if (day <= 5) return menstrual;
-    if (day <= 13) return follicular;
-    if (day <= 17) return ovulation;
-    return luteal;
-  }
 }
 
 const _moods = ['😔', '😐', '🙂', '😊', '🤩'];
@@ -97,15 +89,6 @@ const _symptomNames = [
   'Acne',
 ];
 
-// Representative day for each phase (used by preview dots)
-const _phaseDotDays = [3, 10, 15, 22];
-const _phaseDotColors = [
-  Color(0xFFE05A7A),
-  Color(0xFFF4A261),
-  Color(0xFFA8DADC),
-  Color(0xFF9B72CF),
-];
-
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
@@ -124,7 +107,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
   double _ringFrom = 0.0;
   double _ringTo = 0.0;
 
-  int? _previewDay; // null = use real data
   int? _selectedMoodIdx; // 0–4 index; null = show today's DB mood
   final Set<String> _selectedSymptoms = {};
   DateTime? _bannerHiddenUntil;
@@ -204,22 +186,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
   }
 
   double _progressFromPhase(PhaseResult result) {
-    return result.dayOfCycle > 0
-        ? (result.dayOfCycle / result.cycleLength).clamp(0.0, 1.0)
-        : 0.0;
+    return result.dayOfCycle > 0 ? (result.dayOfCycle / result.cycleLength).clamp(0.0, 1.0) : 0.0;
   }
 
   void _animateRingTo(double target) {
     _ringFrom = _ringFrom + (_ringTo - _ringFrom) * _ringAnim.value;
     _ringTo = target;
     _ringController.forward(from: 0);
-  }
-
-  void _changePreviewDay(int day) {
-    final cycleLen = ref.read(currentPhaseProvider).asData?.value?.cycleLength ?? 28;
-    final target = (day / cycleLen).clamp(0.0, 1.0);
-    setState(() => _previewDay = day);
-    _animateRingTo(target);
   }
 
   void _openPeriodSheet({required bool isPeriodActive}) {
@@ -239,7 +212,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
         onStart: (intensity) async {
           final today = ref.read(effectiveTodayProvider);
           await ref.read(cycleNotifierProvider.notifier).logPeriodStart(today, flowIntensity: intensity);
-          if (mounted) setState(() => _previewDay = null);
         },
       ),
     );
@@ -258,7 +230,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
         periodLength: periodLength,
         onEnd: (date) async {
           await ref.read(cycleNotifierProvider.notifier).endPeriod(date);
-          if (mounted) setState(() => _previewDay = null);
         },
       ),
     );
@@ -316,7 +287,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
   @override
   Widget build(BuildContext context) {
     ref.listen<AsyncValue<PhaseResult?>>(currentPhaseProvider, (prev, next) {
-      if (_previewDay != null) return;
       final result = next.asData?.value;
       if (result == null) return;
       _animateRingTo(_progressFromPhase(result));
@@ -342,12 +312,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
     final todayMood = ref.watch(todayMoodProvider);
     final todayLogs = ref.watch(todaySymptomLogsProvider).asData?.value ?? const <SymptomLog>[];
 
-    final displayDay = _previewDay ?? phaseResult?.dayOfCycle ?? 0;
-    final phase = _previewDay != null
-        ? _Phase.forDay(_previewDay!)
-        : phaseResult != null
-            ? _Phase.forPhase(phaseResult.phase)
-            : _Phase.menstrual;
+    final displayDay = phaseResult?.dayOfCycle ?? 0;
+    final phase = phaseResult != null ? _Phase.forPhase(phaseResult.phase) : _Phase.menstrual;
 
     final lastStart = ref.watch(lastPeriodStartProvider);
     final isEmpty = lastStart.asData != null && lastStart.asData!.value == null;
@@ -394,7 +360,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
               ),
             ),
           ),
-
           SafeArea(
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
@@ -537,7 +502,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
     return Column(
       children: [
         const SizedBox(height: 16),
-
         AnimatedBuilder(
           animation: Listenable.merge([_floatAnim, _ringAnim, _pulseAnim]),
           builder: (_, __) {
@@ -656,44 +620,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
               ),
             );
           },
-        ),
-
-        // Phase selector dots
-        const SizedBox(height: 16),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(4, (i) {
-            final dotDay = _phaseDotDays[i];
-            final dotColor = _phaseDotColors[i];
-            final isActive = displayDay == dotDay;
-
-            return GestureDetector(
-              onTap: () => _changePreviewDay(dotDay),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  curve: const Cubic(0.34, 1.56, 0.64, 1),
-                  width: isActive ? 28 : 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: isActive ? dotColor : Colors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ),
-              ),
-            );
-          }),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          'TAP TO PREVIEW PHASES',
-          style: TextStyle(
-            fontSize: 10,
-            color: Colors.white.withValues(alpha: 0.3),
-            letterSpacing: 1,
-          ),
-          textAlign: TextAlign.center,
         ),
       ],
     );
