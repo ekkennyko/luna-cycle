@@ -29,6 +29,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   DateTime? _periodStart;
   DateTime? _periodEnd;
   DateTime? _prevStart;
+  bool _periodOngoing = false;
 
   // ── Computed values ────────────────────────────────────────────────────────
 
@@ -281,22 +282,59 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             },
           ),
           const SizedBox(height: 16),
-          _DatePickerField(
-            label: 'When did it end?',
-            date: _periodEnd,
-            optional: true,
-            hint: _periodLength != null ? '$_periodLength day period — got it!' : null,
-            onTap: () async {
-              if (_periodStart == null) return;
-              final d = await _pickDate(
-                context,
-                initial: _periodEnd,
-                firstDate: _periodStart!,
-              );
-              if (d != null) setState(() => _periodEnd = d);
-            },
+          AnimatedSize(
+            duration: const Duration(milliseconds: 260),
+            curve: Curves.easeOut,
+            child: _periodOngoing
+                ? const SizedBox.shrink()
+                : _DatePickerField(
+                    label: 'When did it end?',
+                    date: _periodEnd,
+                    optional: true,
+                    hint: _periodLength != null ? '$_periodLength day period — got it!' : null,
+                    onTap: () async {
+                      if (_periodStart == null) return;
+                      final d = await _pickDate(
+                        context,
+                        initial: _periodEnd,
+                        firstDate: _periodStart!,
+                      );
+                      if (d != null) setState(() => _periodEnd = d);
+                    },
+                  ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
+          GestureDetector(
+            onTap: () => setState(() {
+              _periodOngoing = !_periodOngoing;
+              if (_periodOngoing) _periodEnd = null;
+            }),
+            behavior: HitTestBehavior.opaque,
+            child: Row(
+              children: [
+                Switch(
+                  value: _periodOngoing,
+                  onChanged: (v) => setState(() {
+                    _periodOngoing = v;
+                    if (v) _periodEnd = null;
+                  }),
+                  activeThumbColor: _accent,
+                  activeTrackColor: _accent.withValues(alpha: 0.28),
+                  inactiveThumbColor: Colors.white.withValues(alpha: 0.35),
+                  inactiveTrackColor: Colors.white.withValues(alpha: 0.08),
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  'Still ongoing',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: _periodOngoing ? Colors.white : Colors.white.withValues(alpha: 0.45),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 4),
           // Privacy notice
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
