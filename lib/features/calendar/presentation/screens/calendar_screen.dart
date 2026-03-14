@@ -54,19 +54,19 @@ final predictedPeriodsProvider = FutureProvider<List<({DateTime start, DateTime 
   (ref) async {
     final lastStart = await ref.watch(lastPeriodStartProvider.future);
     if (lastStart == null) return [];
-    final avgCycle = await ref.watch(averageCycleLengthProvider.future);
+    final predictedCycleLen = await ref.watch(averageCycleLengthProvider.future);
     final periodLen = await ref.watch(userPeriodLengthProvider.future);
     final now = DateTime.now();
     final endOfCalendar = DateTime(now.year, now.month + 14, 0);
 
     final predictions = <({DateTime start, DateTime end})>[];
-    var nextStart = lastStart.date.add(Duration(days: avgCycle));
+    var nextStart = lastStart.date.add(Duration(days: predictedCycleLen));
     while (nextStart.isBefore(endOfCalendar)) {
       predictions.add((
         start: nextStart,
         end: nextStart.add(Duration(days: periodLen - 1)),
       ));
-      nextStart = nextStart.add(Duration(days: avgCycle));
+      nextStart = nextStart.add(Duration(days: predictedCycleLen));
     }
     return predictions;
   },

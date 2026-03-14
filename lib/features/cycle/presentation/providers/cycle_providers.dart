@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:luna/core/constants/app_constants.dart';
 import 'package:luna/core/database/app_database.dart';
 import 'package:luna/features/cycle/domain/cycle_phase_calculator.dart';
+import 'package:luna/features/cycle/domain/cycle_predictor.dart';
 import 'package:luna/features/cycle/domain/repositories/i_cycle_repository.dart';
 import 'package:luna/shared/providers/core_providers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -79,16 +80,21 @@ final allPeriodStartsProvider = FutureProvider<List<CycleEntry>>((ref) async {
   return ref.read(cycleRepositoryProvider).getAllPeriodStarts();
 });
 
-// Average cycle length across all recorded cycles. Falls back to the app default
-// when fewer than two period starts exist.
-final averageCycleLengthProvider = FutureProvider<int>((ref) async {
+// All completed cycle lengths in chronological order (oldest → newest).
+final cycleLengthsProvider = FutureProvider<List<int>>((ref) async {
   final starts = await ref.watch(allPeriodStartsProvider.future);
-  if (starts.length < 2) return AppConstants.defaultCycleLength;
-  int totalDays = 0;
-  for (int i = 1; i < starts.length; i++) {
-    totalDays += starts[i].date.difference(starts[i - 1].date).inDays;
-  }
-  return totalDays ~/ (starts.length - 1);
+  if (starts.length < 2) return [];
+  return [
+    for (int i = 1; i < starts.length; i++) starts[i].date.difference(starts[i - 1].date).inDays,
+  ];
+});
+
+// Predicted cycle length using weighted average with outlier trimming.
+// Falls back to the app default when no completed cycles exist.
+final averageCycleLengthProvider = FutureProvider<int>((ref) async {
+  final lengths = await ref.watch(cycleLengthsProvider.future);
+  if (lengths.isEmpty) return AppConstants.defaultCycleLength;
+  return CyclePredictor.predictNextCycleLength(lengths);
 });
 
 // Duration of the last completed cycle in days. Null when fewer than two cycles exist.
@@ -115,15 +121,11 @@ final periodLengthProvider = FutureProvider<int?>((ref) async {
   return await ref.watch(userPeriodLengthProvider.future);
 });
 
-// Average cycle length across all completed cycles. Null when fewer than two cycles exist.
+// Predicted cycle length, or null when fewer than two cycles exist.
 final avgCycleLengthNullableProvider = FutureProvider<int?>((ref) async {
-  final starts = await ref.watch(allPeriodStartsProvider.future);
-  if (starts.length < 2) return null;
-  int total = 0;
-  for (int i = 1; i < starts.length; i++) {
-    total += starts[i].date.difference(starts[i - 1].date).inDays;
-  }
-  return total ~/ (starts.length - 1);
+  final lengths = await ref.watch(cycleLengthsProvider.future);
+  if (lengths.isEmpty) return null;
+  return CyclePredictor.predictNextCycleLength(lengths);
 });
 
 // Predicted start date of the next period based on the average cycle length.
