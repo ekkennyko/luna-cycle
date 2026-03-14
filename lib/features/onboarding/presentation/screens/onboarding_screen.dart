@@ -499,7 +499,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 final maxDate = _periodStart?.subtract(const Duration(days: 1));
                 final d = await _pickDate(
                   context,
-                  initial: _prevEnd,
+                  initial: _prevEnd ?? _prevStart!,
                   firstDate: _prevStart!,
                   lastDate: maxDate,
                 );

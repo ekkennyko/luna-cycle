@@ -251,6 +251,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => _EndPeriodSheet(
+        effectiveToday: ref.read(effectiveTodayProvider),
         periodStart: periodStart,
         periodLength: periodLength,
         onEnd: (date) async {
@@ -1395,11 +1396,13 @@ enum _PickMode { yesterday, today, custom }
 
 class _EndPeriodSheet extends StatefulWidget {
   const _EndPeriodSheet({
+    required this.effectiveToday,
     required this.onEnd,
     required this.periodStart,
     required this.periodLength,
   });
 
+  final DateTime effectiveToday;
   final Future<void> Function(DateTime date) onEnd;
   final DateTime? periodStart;
   final int periodLength;
@@ -1422,8 +1425,7 @@ class _EndPeriodSheetState extends State<_EndPeriodSheet> {
   bool get _showPickDate {
     final start = widget.periodStart;
     if (start == null) return false;
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
+    final today = widget.effectiveToday;
     final startNorm = DateTime(start.year, start.month, start.day);
     return today.difference(startNorm).inDays >= widget.periodLength + 2;
   }
@@ -1459,8 +1461,7 @@ class _EndPeriodSheetState extends State<_EndPeriodSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
+    final today = widget.effectiveToday;
     final yesterday = today.subtract(const Duration(days: 1));
 
     final selectedDate = switch (_mode) {
