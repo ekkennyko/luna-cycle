@@ -5,6 +5,7 @@ import 'package:luna/features/cycle/presentation/providers/cycle_providers.dart'
 import 'package:luna/features/cycle/presentation/screens/home_screen.dart';
 import 'package:luna/features/cycle/presentation/screens/log_screen.dart';
 import 'package:luna/features/analytics/presentation/screens/analytics_screen.dart';
+import 'package:luna/features/calendar/presentation/screens/calendar_screen.dart';
 import 'package:luna/features/onboarding/presentation/screens/onboarding_screen.dart';
 import 'package:luna/features/settings/presentation/screens/settings_screen.dart';
 import 'package:luna/features/subscription/presentation/screens/paywall_screen.dart';
@@ -29,6 +30,12 @@ GoRouter createRouter(String initialLocation) => GoRouter(
               path: '/',
               pageBuilder: (context, state) => const NoTransitionPage(
                 child: HomeScreen(),
+              ),
+            ),
+            GoRoute(
+              path: '/calendar',
+              pageBuilder: (context, state) => const NoTransitionPage(
+                child: CalendarScreen(),
               ),
             ),
             GoRoute(
@@ -83,11 +90,13 @@ class _MainShell extends ConsumerWidget {
     final phaseColor = _phaseColor(ref.watch(currentCyclePhaseProvider).asData?.value);
 
     int selectedIndex = 0;
-    if (location.startsWith('/analytics')) selectedIndex = 1;
-    if (location.startsWith('/settings')) selectedIndex = 2;
+    if (location.startsWith('/calendar')) selectedIndex = 1;
+    if (location.startsWith('/analytics')) selectedIndex = 2;
+    if (location.startsWith('/settings')) selectedIndex = 3;
 
     const navItems = [
       (icon: '◯', label: 'Cycle', route: '/'),
+      (icon: '▦', label: 'Calendar', route: '/calendar'),
       (icon: '⌇', label: 'Analytics', route: '/analytics'),
       (icon: '⊹', label: 'Settings', route: '/settings'),
     ];
