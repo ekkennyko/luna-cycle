@@ -1396,7 +1396,7 @@ class _EndPeriodSheetState extends State<_EndPeriodSheet> {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final startNorm = DateTime(start.year, start.month, start.day);
-    return today.difference(startNorm).inDays > widget.periodLength + 2;
+    return today.difference(startNorm).inDays >= widget.periodLength + 2;
   }
 
   Future<void> _pickCustomDate(DateTime today) async {
