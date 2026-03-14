@@ -245,7 +245,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
 
   void _openEndPeriodSheet() {
     final periodStart = ref.read(lastPeriodStartProvider).asData?.value?.date;
-    final periodLength = ref.read(periodLengthProvider).asData?.value ?? 5;
+    final periodLength = ref.read(averagePeriodLengthProvider).asData?.value ?? 5;
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -334,7 +334,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
     final isPeriodActive = periodStatus == PeriodStatus.active;
     final isLate = periodStatus == PeriodStatus.late;
     final cycleLen = ref.watch(cycleLengthProvider).asData?.value;
-    final periodLen = ref.watch(periodLengthProvider).asData?.value;
+    final periodLen = ref.watch(averagePeriodLengthProvider).asData?.value;
     final avgLenNullable = ref.watch(avgCycleLengthNullableProvider).asData?.value;
     final todayMood = ref.watch(todayMoodProvider);
     final todayLogs = ref.watch(todaySymptomLogsProvider).asData?.value ?? const <SymptomLog>[];

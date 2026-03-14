@@ -89,6 +89,33 @@ final cycleLengthsProvider = FutureProvider<List<int>>((ref) async {
   ];
 });
 
+// All completed period lengths in chronological order (oldest → newest).
+final completedPeriodLengthsProvider = FutureProvider<List<int>>((ref) async {
+  ref.watch(cycleEntriesProvider);
+  final entries = await ref.read(cycleRepositoryProvider).getAllEntries();
+  final starts = entries.where((e) => e.type == 'period_start').toList()..sort((a, b) => a.date.compareTo(b.date));
+  final ends = entries.where((e) => e.type == 'period_end').toList()..sort((a, b) => a.date.compareTo(b.date));
+
+  final lengths = <int>[];
+  for (final s in starts) {
+    for (final e in ends) {
+      if (!e.date.isBefore(s.date)) {
+        lengths.add(e.date.difference(s.date).inDays + 1);
+        break;
+      }
+    }
+  }
+  return lengths;
+});
+
+// Predicted period length using weighted average.
+// Falls back to userPeriodLengthProvider when no completed periods exist.
+final averagePeriodLengthProvider = FutureProvider<int>((ref) async {
+  final lengths = await ref.watch(completedPeriodLengthsProvider.future);
+  if (lengths.isEmpty) return await ref.watch(userPeriodLengthProvider.future);
+  return CyclePredictor.predictNextCycleLength(lengths);
+});
+
 // Predicted cycle length using weighted average with outlier trimming.
 // Falls back to the app default when no completed cycles exist.
 final averageCycleLengthProvider = FutureProvider<int>((ref) async {
