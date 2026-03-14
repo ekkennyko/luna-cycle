@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:luna/core/router/app_router.dart';
@@ -10,7 +12,9 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final prefs = await SharedPreferences.getInstance();
   final onboardingDone = prefs.getBool('onboarding_complete') ?? false;
-  await initRevenueCat();
+  if (Platform.isAndroid || Platform.isIOS) {
+    await initRevenueCat();
+  }
   runApp(ProviderScope(child: LunaApp(showOnboarding: !onboardingDone)));
 }
 
