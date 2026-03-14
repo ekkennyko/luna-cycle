@@ -50,16 +50,25 @@ final periodRangesProvider = FutureProvider<List<({DateTime start, DateTime end}
   return ranges;
 });
 
-/// Predicted next period range.
-final predictedPeriodProvider = FutureProvider<({DateTime start, DateTime end})?>(
+final predictedPeriodsProvider = FutureProvider<List<({DateTime start, DateTime end})>>(
   (ref) async {
-    final nextStart = await ref.watch(nextPeriodDateProvider.future);
-    if (nextStart == null) return null;
+    final lastStart = await ref.watch(lastPeriodStartProvider.future);
+    if (lastStart == null) return [];
+    final avgCycle = await ref.watch(averageCycleLengthProvider.future);
     final periodLen = await ref.watch(userPeriodLengthProvider.future);
-    return (
-      start: nextStart,
-      end: nextStart.add(Duration(days: periodLen - 1)),
-    );
+    final now = DateTime.now();
+    final endOfCalendar = DateTime(now.year, now.month + 14, 0);
+
+    final predictions = <({DateTime start, DateTime end})>[];
+    var nextStart = lastStart.date.add(Duration(days: avgCycle));
+    while (nextStart.isBefore(endOfCalendar)) {
+      predictions.add((
+        start: nextStart,
+        end: nextStart.add(Duration(days: periodLen - 1)),
+      ));
+      nextStart = nextStart.add(Duration(days: avgCycle));
+    }
+    return predictions;
   },
 );
 
@@ -123,7 +132,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   @override
   Widget build(BuildContext context) {
     final ranges = ref.watch(periodRangesProvider).asData?.value ?? [];
-    final predicted = ref.watch(predictedPeriodProvider).asData?.value;
+    final predicted = ref.watch(predictedPeriodsProvider).asData?.value ?? [];
     final moods = ref.watch(allMoodsProvider);
     final symptomLogs = ref.watch(allSymptomLogsProvider).asData?.value ?? {};
     final allStarts = ref.watch(allPeriodStartsProvider).asData?.value ?? [];
@@ -315,7 +324,7 @@ class _MonthGrid extends StatelessWidget {
   final int month;
   final DateTime today;
   final List<({DateTime start, DateTime end})> ranges;
-  final ({DateTime start, DateTime end})? predicted;
+  final List<({DateTime start, DateTime end})> predicted;
   final List<CycleEntry> allStarts;
   final Map<String, int> moods;
   final Map<String, List<String>> symptomLogs;
@@ -427,7 +436,7 @@ class _DayCell extends StatelessWidget {
   final DateTime date;
   final DateTime today;
   final List<({DateTime start, DateTime end})> ranges;
-  final ({DateTime start, DateTime end})? predicted;
+  final List<({DateTime start, DateTime end})> predicted;
   final List<CycleEntry> allStarts;
   final Map<String, int> moods;
   final Map<String, List<String>> symptomLogs;
@@ -444,7 +453,7 @@ class _DayCell extends StatelessWidget {
 
     final periodPos = _getPeriodPosition(dateNorm, ranges);
     final isPeriod = periodPos != null;
-    final predPos = (!isPeriod && predicted != null) ? _getPredictedPosition(dateNorm, predicted!) : null;
+    final predPos = !isPeriod ? _getPredictedPosition(dateNorm, predicted) : null;
     final isPredicted = predPos != null;
     final phase = _getPhaseForDay(dateNorm, allStarts, cycleLen, periodLen);
     final key = _dateKey(dateNorm);
@@ -594,11 +603,16 @@ _RangePos? _getPeriodPosition(
   return null;
 }
 
-_RangePos? _getPredictedPosition(DateTime date, ({DateTime start, DateTime end}) pred) {
-  final s = DateTime(pred.start.toLocal().year, pred.start.toLocal().month, pred.start.toLocal().day);
-  final e = DateTime(pred.end.toLocal().year, pred.end.toLocal().month, pred.end.toLocal().day);
-  if (!date.isBefore(s) && !date.isAfter(e)) {
-    return _RangePos(isFirst: date == s, isLast: date == e);
+_RangePos? _getPredictedPosition(
+  DateTime date,
+  List<({DateTime start, DateTime end})> predictions,
+) {
+  for (final pred in predictions) {
+    final s = DateTime(pred.start.toLocal().year, pred.start.toLocal().month, pred.start.toLocal().day);
+    final e = DateTime(pred.end.toLocal().year, pred.end.toLocal().month, pred.end.toLocal().day);
+    if (!date.isBefore(s) && !date.isAfter(e)) {
+      return _RangePos(isFirst: date == s, isLast: date == e);
+    }
   }
   return null;
 }
@@ -649,7 +663,7 @@ class _DayDetailSheet extends StatelessWidget {
 
   final DateTime date;
   final List<({DateTime start, DateTime end})> ranges;
-  final ({DateTime start, DateTime end})? predicted;
+  final List<({DateTime start, DateTime end})> predicted;
   final List<CycleEntry> allStarts;
   final Map<String, int> moods;
   final Map<String, List<String>> symptomLogs;
@@ -661,7 +675,7 @@ class _DayDetailSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final dateNorm = DateTime(date.year, date.month, date.day);
     final isPeriod = _getPeriodPosition(dateNorm, ranges) != null;
-    final isPredicted = !isPeriod && predicted != null && _getPredictedPosition(dateNorm, predicted!) != null;
+    final isPredicted = !isPeriod && _getPredictedPosition(dateNorm, predicted) != null;
     final phase = _getPhaseForDay(dateNorm, allStarts, cycleLen, periodLen);
     final key = _dateKey(dateNorm);
     final mood = moods[key];
