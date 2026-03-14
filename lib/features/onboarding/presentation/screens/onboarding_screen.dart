@@ -29,6 +29,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   DateTime? _periodStart;
   DateTime? _periodEnd;
   DateTime? _prevStart;
+  DateTime? _prevEnd;
   bool _periodOngoing = false;
 
   // ── Computed values ────────────────────────────────────────────────────────
@@ -43,6 +44,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     if (_prevStart == null || _periodStart == null) return null;
     final diff = _periodStart!.difference(_prevStart!).inDays;
     return diff > 0 ? diff : null;
+  }
+
+  int? get _prevPeriodLength {
+    if (_prevStart == null || _prevEnd == null) return null;
+    final diff = _prevEnd!.difference(_prevStart!).inDays;
+    return diff >= 0 ? diff + 1 : null;
   }
 
   bool get _canProceed => _step == 0 ? _periodStart != null : true;
@@ -96,6 +103,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
     if (_prevStart != null) {
       await notifier.logPeriodStart(_prevStart!, flowIntensity: 2);
+      if (_prevEnd != null) {
+        await notifier.endPeriod(_prevEnd!);
+      }
     }
     await notifier.logPeriodStart(_periodStart!, flowIntensity: 2);
 
@@ -411,14 +421,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   // ── Step 1: Previous period start (optional) ───────────────────────────────
 
   Widget _buildStep1() {
-    final pl = _periodLength;
+    final prevPl = _prevPeriodLength;
     final cl = _cycleLength;
 
     final String periodLenStr;
-    if (pl != null) {
-      periodLenStr = '$pl days';
-    } else if (_periodStart != null && _periodEnd == null) {
-      periodLenStr = 'Ongoing';
+    if (prevPl != null) {
+      periodLenStr = '$prevPl days';
+    } else if (_prevStart != null && _prevEnd == null) {
+      periodLenStr = '—';
     } else {
       periodLenStr = '—';
     }
@@ -468,9 +478,35 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 initial: _prevStart ?? last,
                 lastDate: last,
               );
-              if (d != null) setState(() => _prevStart = d);
+              if (d != null) {
+                setState(() {
+                  _prevStart = d;
+                  if (_prevEnd != null && !_prevEnd!.isAfter(d)) {
+                    _prevEnd = null;
+                  }
+                });
+              }
             },
           ),
+          if (_prevStart != null) ...[
+            const SizedBox(height: 16),
+            _DatePickerField(
+              label: 'Previous period — end date',
+              date: _prevEnd,
+              optional: true,
+              hint: prevPl != null ? '$prevPl day period — got it!' : null,
+              onTap: () async {
+                final maxDate = _periodStart?.subtract(const Duration(days: 1));
+                final d = await _pickDate(
+                  context,
+                  initial: _prevEnd,
+                  firstDate: _prevStart!,
+                  lastDate: maxDate,
+                );
+                if (d != null) setState(() => _prevEnd = d);
+              },
+            ),
+          ],
           const SizedBox(height: 16),
           // Preview card
           Container(
