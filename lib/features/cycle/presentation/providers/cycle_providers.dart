@@ -265,8 +265,8 @@ final todayMoodProvider = Provider<int?>((ref) {
         loading: () => <CycleEntry>[],
         error: (_, __) => <CycleEntry>[],
       );
-  final now = DateTime.now();
-  final todayUtc = DateTime(now.year, now.month, now.day).toUtc();
+  final today = ref.watch(effectiveTodayProvider);
+  final todayUtc = DateTime(today.year, today.month, today.day).toUtc();
   final nextUtc = todayUtc.add(const Duration(days: 1));
   for (final e in entries) {
     if (!e.date.isBefore(todayUtc) && e.date.isBefore(nextUtc)) {
@@ -277,5 +277,6 @@ final todayMoodProvider = Provider<int?>((ref) {
 });
 
 final todaySymptomLogsProvider = StreamProvider<List<SymptomLog>>((ref) {
-  return ref.read(symptomRepositoryProvider).watchLogsForDate(DateTime.now());
+  final today = ref.watch(effectiveTodayProvider);
+  return ref.read(symptomRepositoryProvider).watchLogsForDate(today);
 });

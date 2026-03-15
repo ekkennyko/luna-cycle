@@ -107,8 +107,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
   double _ringFrom = 0.0;
   double _ringTo = 0.0;
 
-  int? _selectedMoodIdx; // 0–4 index; null = show today's DB mood
-  final Set<String> _selectedSymptoms = {};
   DateTime? _bannerHiddenUntil;
 
   @override
@@ -236,43 +234,44 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
   }
 
   void _openMoodSheet(_Phase phase) {
+    final todayMood = ref.read(todayMoodProvider);
+    final currentIdx = (todayMood != null && todayMood >= 1 && todayMood <= 5) ? todayMood - 1 : null;
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => _MoodSheet(
         phase: phase,
-        currentMoodIdx: _selectedMoodIdx,
+        currentMoodIdx: currentIdx,
         onSelect: (idx) async {
-          if (mounted) setState(() => _selectedMoodIdx = idx);
-          await ref.read(cycleNotifierProvider.notifier).saveMood(DateTime.now(), idx + 1);
+          final today = ref.read(effectiveTodayProvider);
+          await ref.read(cycleNotifierProvider.notifier).saveMood(today, idx + 1);
         },
       ),
     );
   }
 
-  void _openSymptomsSheet(_Phase phase) {
+  Future<void> _openSymptomsSheet(_Phase phase) async {
+    final logs = ref.read(todaySymptomLogsProvider).asData?.value ?? [];
+    final allSymptoms = await ref.read(activeSymptomsProvider.future);
+    final nameById = {for (final s in allSymptoms) s.id: s.name};
+    final currentNames = logs.map((l) => nameById[l.symptomId]).whereType<String>().toSet();
+
+    if (!mounted) return;
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => _SymptomsSheet(
         phase: phase,
-        initialSelected: Set.from(_selectedSymptoms),
+        initialSelected: currentNames,
         onSave: (selected) async {
-          if (mounted) {
-            setState(() {
-              _selectedSymptoms
-                ..clear()
-                ..addAll(selected);
-            });
-          }
           final repo = ref.read(symptomRepositoryProvider);
-          final today = DateTime.now();
+          final today = ref.read(effectiveTodayProvider);
           await repo.deleteLogsForDate(today);
-          final allSymptoms = await ref.read(activeSymptomsProvider.future);
+          final syms = await ref.read(activeSymptomsProvider.future);
           final day = DateTime(today.year, today.month, today.day).toUtc();
-          for (final sym in allSymptoms) {
+          for (final sym in syms) {
             if (selected.contains(sym.name)) {
               await repo.saveLog(
                 SymptomLogsCompanion.insert(date: day, symptomId: sym.id),
@@ -334,8 +333,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
     final isBannerVisible = isLate && (_bannerHiddenUntil == null || now.isAfter(_bannerHiddenUntil!));
     final isLongerThanUsual = isPeriodActive && activePeriodDay != null && periodLen != null && activePeriodDay > periodLen + 2;
 
-    final moodIdx = _selectedMoodIdx ?? (todayMood != null && todayMood >= 1 && todayMood <= 5 ? todayMood - 1 : null);
-    final symptomsCount = _selectedSymptoms.isNotEmpty ? _selectedSymptoms.length : todayLogs.length;
+    final moodIdx = (todayMood != null && todayMood >= 1 && todayMood <= 5) ? todayMood - 1 : null;
+    final symptomsCount = todayLogs.length;
 
     return Scaffold(
       backgroundColor: const Color(0xFF120A0A),
