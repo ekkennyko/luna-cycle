@@ -9,18 +9,13 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 1;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
         onCreate: (m) async {
           await m.createAll();
           await _seedDefaultSymptoms();
-        },
-        onUpgrade: (m, from, to) async {
-          if (from < 2) {
-            await m.addColumn(cycleEntries, cycleEntries.mood);
-          }
         },
       );
 
@@ -41,6 +36,8 @@ class AppDatabase extends _$AppDatabase {
       (name: 'Breast tenderness', iconCode: 0xe3f6, category: 'body', sort: 12),
       (name: 'Bloating', iconCode: 0xe3f7, category: 'body', sort: 13),
       (name: 'Back pain', iconCode: 0xe3f8, category: 'body', sort: 14),
+      (name: 'Spotting', iconCode: 0xe3f9, category: 'body', sort: 15),
+      (name: 'Mood swings', iconCode: 0xe5b6, category: 'mood', sort: 4),
       (name: 'High energy', iconCode: 0xe556, category: 'energy', sort: 20),
       (name: 'Fatigue', iconCode: 0xe557, category: 'energy', sort: 21),
       (name: 'Insomnia', iconCode: 0xe558, category: 'energy', sort: 22),
