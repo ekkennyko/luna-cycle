@@ -1051,8 +1051,6 @@ class _CycleRingPainter extends CustomPainter {
       old.progress != progress || old.phaseColor != phaseColor || old.phaseBgColor != phaseBgColor || old.isPeriodActive != isPeriodActive;
 }
 
-
-
 class _PeriodSheet extends StatefulWidget {
   const _PeriodSheet({required this.onStart});
 

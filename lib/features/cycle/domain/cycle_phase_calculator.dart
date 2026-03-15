@@ -113,5 +113,4 @@ class CyclePhaseCalculator {
         CyclePhase.ovulation => 'Ovulation',
         CyclePhase.luteal => 'Luteal',
       };
-
 }
