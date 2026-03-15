@@ -39,18 +39,4 @@ class AppColors {
   // Dark theme surfaces
   static const surfaceDark = Color(0xFF1E1418);
   static const surfaceVariantDark = Color(0xFF2D1F24);
-
-  // Sheet / dialog surfaces
-  static const sheetSurface = Color(0xFF1E1118);
-  static const sheetSurfaceEnd = Color(0xFF150D12);
-
-  // Nav bar
-  static const navBarBg = Color(0xF2120A0A);
-  static const navBarBorder = Color(0x0FFFFFFF);
-
-  // Phase background tints (low alpha for calendar / cards)
-  static const phaseMenstrualBg = Color(0x1FE05A7A);
-  static const phaseFolicularBg = Color(0x1AF4A261);
-  static const phaseOvulationBg = Color(0x1AA8DADC);
-  static const phaseLutealBg = Color(0x1A9B72CF);
 }

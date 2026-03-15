@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:luna/core/theme/app_colors.dart';
 import 'package:luna/features/cycle/presentation/providers/cycle_providers.dart';
 import 'package:luna/features/cycle/presentation/screens/home_screen.dart';
 import 'package:luna/features/cycle/presentation/screens/log_screen.dart';
@@ -70,17 +69,19 @@ GoRouter createRouter(String initialLocation) => GoRouter(
       ],
     );
 
+// ── Shell with dark bottom nav ─────────────────────────────────────────────
+
 class _MainShell extends ConsumerWidget {
   const _MainShell({required this.child});
 
   final Widget child;
 
   static Color _phaseColor(String? phase) => switch (phase) {
-        'menstrual' => AppColors.phaseMenstrual,
-        'follicular' => AppColors.phaseFolicular,
-        'ovulation' => AppColors.phaseOvulation,
-        'luteal' => AppColors.phaseLuteal,
-        _ => AppColors.phaseMenstrual,
+        'menstrual' => const Color(0xFFE05A7A),
+        'follicular' => const Color(0xFFF4A261),
+        'ovulation' => const Color(0xFFA8DADC),
+        'luteal' => const Color(0xFF9B72CF),
+        _ => const Color(0xFFE05A7A),
       };
 
   @override
@@ -101,12 +102,12 @@ class _MainShell extends ConsumerWidget {
     ];
 
     return Scaffold(
-      backgroundColor: AppColors.appBackground,
+      backgroundColor: const Color(0xFF120A0A),
       body: child,
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
-          color: AppColors.navBarBg,
-          border: Border(top: BorderSide(color: AppColors.navBarBorder)),
+          color: Color(0xF2120A0A),
+          border: Border(top: BorderSide(color: Color(0x0FFFFFFF))),
         ),
         child: SafeArea(
           top: false,

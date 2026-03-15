@@ -2,15 +2,114 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:luna/core/constants/app_constants.dart';
 import 'package:luna/core/database/app_database.dart';
-import 'package:luna/core/theme/app_colors.dart';
 import 'package:luna/features/cycle/domain/cycle_phase_calculator.dart';
 import 'package:luna/features/cycle/presentation/providers/cycle_providers.dart';
-import 'package:luna/shared/data/mood_data.dart';
-import 'package:luna/shared/data/phase_data.dart';
-import 'package:luna/shared/widgets/ambient_glow.dart';
-import 'package:luna/shared/widgets/sheet_container.dart';
+import 'package:luna/shared/providers/core_providers.dart';
+
+const _bg = Color(0xFF120A0A);
+const _accent = Color(0xFFE05A7A);
+
+const _phaseColors = {
+  CyclePhase.menstrual: Color(0xFFE05A7A),
+  CyclePhase.follicular: Color(0xFFF4A261),
+  CyclePhase.ovulation: Color(0xFFA8DADC),
+  CyclePhase.luteal: Color(0xFF9B72CF),
+};
+
+const _phaseBgs = {
+  CyclePhase.menstrual: Color(0x26E05A7A),
+  CyclePhase.follicular: Color(0x1AF4A261),
+  CyclePhase.ovulation: Color(0x1AA8DADC),
+  CyclePhase.luteal: Color(0x1A9B72CF),
+};
+
+const _moodEmojis = ['😔', '😐', '🙂', '😊', '🤩'];
+const _moodLabels = ['Low', 'Okay', 'Good', 'Happy', 'Amazing'];
+
+/// All period ranges: [{start, end}] derived from DB entries.
+final periodRangesProvider = FutureProvider<List<({DateTime start, DateTime end})>>((ref) async {
+  ref.watch(cycleEntriesProvider);
+  final entries = await ref.read(cycleRepositoryProvider).getAllEntries();
+  final starts = entries.where((e) => e.type == 'period_start').toList()..sort((a, b) => a.date.compareTo(b.date));
+  final ends = entries.where((e) => e.type == 'period_end').toList()..sort((a, b) => a.date.compareTo(b.date));
+
+  final ranges = <({DateTime start, DateTime end})>[];
+  for (final s in starts) {
+    DateTime? endDate;
+    for (final e in ends) {
+      if (!e.date.isBefore(s.date)) {
+        endDate = e.date;
+        break;
+      }
+    }
+    if (endDate != null) {
+      ranges.add((start: s.date, end: endDate));
+    }
+  }
+  return ranges;
+});
+
+final predictedPeriodsProvider = FutureProvider<List<({DateTime start, DateTime end})>>(
+  (ref) async {
+    final lastStart = await ref.watch(lastPeriodStartProvider.future);
+    if (lastStart == null) return [];
+    final predictedCycleLen = await ref.watch(averageCycleLengthProvider.future);
+    final periodLen = await ref.watch(averagePeriodLengthProvider.future);
+    final now = DateTime.now();
+    final endOfCalendar = DateTime(now.year, now.month + 14, 0);
+
+    final predictions = <({DateTime start, DateTime end})>[];
+    var nextStart = lastStart.date.add(Duration(days: predictedCycleLen));
+    while (nextStart.isBefore(endOfCalendar)) {
+      predictions.add((
+        start: nextStart,
+        end: nextStart.add(Duration(days: periodLen - 1)),
+      ));
+      nextStart = nextStart.add(Duration(days: predictedCycleLen));
+    }
+    return predictions;
+  },
+);
+
+// All mood entries as Map of dateKey to int.
+final allMoodsProvider = Provider<Map<String, int>>((ref) {
+  final entries = ref.watch(cycleEntriesProvider).when(
+        data: (v) => v,
+        loading: () => <CycleEntry>[],
+        error: (_, __) => <CycleEntry>[],
+      );
+  final map = <String, int>{};
+  for (final e in entries) {
+    if (e.mood != null) {
+      map[_dateKey(e.date)] = e.mood!;
+    }
+  }
+  return map;
+});
+
+// All symptom logs as Map of dateKey to symptom name list.
+final allSymptomLogsProvider = FutureProvider<Map<String, List<String>>>((ref) async {
+  ref.watch(cycleEntriesProvider);
+  final from = DateTime.now().subtract(const Duration(days: 365));
+  final to = DateTime.now().add(const Duration(days: 1));
+  final logs = await ref.read(symptomRepositoryProvider).getLogsBetween(from, to);
+  final symptoms = await ref.read(symptomRepositoryProvider).getAllSymptoms();
+  final nameMap = {for (final s in symptoms) s.id: s.name};
+  final map = <String, List<String>>{};
+  for (final log in logs) {
+    final key = _dateKey(log.date);
+    map.putIfAbsent(key, () => []);
+    final name = nameMap[log.symptomId];
+    if (name != null) map[key]!.add(name);
+  }
+  return map;
+});
+
+String _dateKey(DateTime d) {
+  final local = d.toLocal();
+  return '${local.year}-${local.month}-${local.day}';
+}
 
 class CalendarScreen extends ConsumerStatefulWidget {
   const CalendarScreen({super.key});
@@ -76,10 +175,25 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.appBackground,
+      backgroundColor: _bg,
       body: Stack(
         children: [
-          const AmbientGlow(),
+          // Ambient glow
+          Positioned(
+            top: -60,
+            left: 0,
+            right: 0,
+            height: 300,
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: RadialGradient(
+                  center: Alignment.topCenter,
+                  radius: 0.8,
+                  colors: [Color(0x18E05A7A), Colors.transparent],
+                ),
+              ),
+            ),
+          ),
 
           SafeArea(
             child: Column(
@@ -103,7 +217,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                         'CYCLE HISTORY',
                         style: TextStyle(
                           fontSize: 11,
-                          color: AppColors.phaseMenstrual,
+                          color: _accent,
                           letterSpacing: 2,
                           fontWeight: FontWeight.w500,
                         ),
@@ -113,21 +227,21 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 ),
 
                 // Legend
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(24, 12, 24, 0),
                   child: Wrap(
                     spacing: 16,
                     runSpacing: 6,
                     children: [
-                      const _LegendItem(color: AppColors.phaseMenstrual, label: 'Period'),
+                      _LegendItem(color: _accent, label: 'Period'),
                       _LegendItem(
-                        color: AppColors.phaseMenstrual.withValues(alpha: 0.25),
+                        color: Color(0x40E05A7A),
                         label: 'Predicted',
                         dashed: true,
                       ),
-                      const _LegendItem(color: AppColors.phaseFolicularBg, label: 'Follicular'),
-                      const _LegendItem(color: AppColors.phaseOvulationBg, label: 'Ovulation'),
-                      const _LegendItem(color: AppColors.phaseLutealBg, label: 'Luteal'),
+                      _LegendItem(color: Color(0x1AF4A261), label: 'Follicular'),
+                      _LegendItem(color: Color(0x1AA8DADC), label: 'Ovulation'),
+                      _LegendItem(color: Color(0x1A9B72CF), label: 'Luteal'),
                     ],
                   ),
                 ),
@@ -342,7 +456,7 @@ class _DayCell extends StatelessWidget {
     final predPos = !isPeriod ? _getPredictedPosition(dateNorm, predicted) : null;
     final isPredicted = predPos != null;
     final phase = _getPhaseForDay(dateNorm, allStarts, cycleLen, periodLen, ranges);
-    final key = dateKey(dateNorm);
+    final key = _dateKey(dateNorm);
     final hasMood = moods.containsKey(key);
     final hasSymptoms = symptomLogs.containsKey(key);
     final hasData = hasMood || hasSymptoms;
@@ -363,7 +477,7 @@ class _DayCell extends StatelessWidget {
                 right: 1,
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    color: PhaseStyle.bgColorFor(phase),
+                    color: _phaseBgs[phase],
                     borderRadius: BorderRadius.circular(6),
                   ),
                 ),
@@ -378,7 +492,7 @@ class _DayCell extends StatelessWidget {
                 right: periodPos.isLast ? _cellInset(context) : 0,
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    color: AppColors.phaseMenstrual,
+                    color: _accent,
                     borderRadius: _rangeBorderRadius(periodPos),
                   ),
                 ),
@@ -393,9 +507,9 @@ class _DayCell extends StatelessWidget {
                 right: predPos.isLast ? _cellInset(context) : 0,
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    color: AppColors.phaseMenstrual.withValues(alpha: 0.25),
+                    color: const Color(0x40E05A7A),
                     border: Border.all(
-                      color: AppColors.phaseMenstrual.withValues(alpha: 0.6),
+                      color: const Color(0x99E05A7A),
                       strokeAlign: BorderSide.strokeAlignInside,
                     ),
                     borderRadius: _rangeBorderRadius(predPos),
@@ -538,7 +652,7 @@ CyclePhase? _getPhaseForDay(
     }
   }
 
-  final ovDay = cycleLength - AppConstants.lutealPhaseLength;
+  final ovDay = cycleLength - 14;
   if (dayOfCycle <= effectivePeriodLen) return CyclePhase.menstrual;
   if (dayOfCycle < ovDay - 2) return CyclePhase.follicular;
   if (dayOfCycle <= ovDay + 2) return CyclePhase.ovulation;
@@ -574,7 +688,7 @@ class _DayDetailSheet extends StatelessWidget {
     final isPeriod = _getPeriodPosition(dateNorm, ranges) != null;
     final isPredicted = !isPeriod && _getPredictedPosition(dateNorm, predicted) != null;
     final phase = _getPhaseForDay(dateNorm, allStarts, cycleLen, periodLen, ranges);
-    final key = dateKey(dateNorm);
+    final key = _dateKey(dateNorm);
     final mood = moods[key];
     final symptoms = symptomLogs[key];
     final hasAnyData = isPeriod || mood != null || symptoms != null;
@@ -584,20 +698,28 @@ class _DayDetailSheet extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [AppColors.sheetSurface, AppColors.sheetSurfaceEnd],
+          colors: [Color(0xFF1E1118), Color(0xFF150D12)],
         ),
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         border: Border(
-          top: BorderSide(color: AppColors.navBarBorder),
-          left: BorderSide(color: AppColors.navBarBorder),
-          right: BorderSide(color: AppColors.navBarBorder),
+          top: BorderSide(color: Color(0x0FFFFFFF)),
+          left: BorderSide(color: Color(0x0FFFFFFF)),
+          right: BorderSide(color: Color(0x0FFFFFFF)),
         ),
       ),
       padding: const EdgeInsets.fromLTRB(24, 20, 24, 40),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const DragHandle(),
+          // Drag handle
+          Container(
+            width: 36,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
           const SizedBox(height: 20),
 
           // Date header row
@@ -622,19 +744,19 @@ class _DayDetailSheet extends StatelessWidget {
                         '${CyclePhaseCalculator.phaseName(phase)} phase',
                         style: TextStyle(
                           fontSize: 12,
-                          color: PhaseStyle.colorFor(phase),
+                          color: _phaseColors[phase],
                           letterSpacing: 1,
                         ),
                       ),
                     ),
                   if (isPredicted)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 2),
+                    const Padding(
+                      padding: EdgeInsets.only(top: 2),
                       child: Text(
                         'Predicted period',
                         style: TextStyle(
                           fontSize: 12,
-                          color: AppColors.phaseMenstrual.withValues(alpha: 0.6),
+                          color: Color(0x99E05A7A),
                         ),
                       ),
                     ),
@@ -644,15 +766,15 @@ class _DayDetailSheet extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
-                    color: AppColors.phaseMenstrual.withValues(alpha: 0.2),
-                    border: Border.all(color: AppColors.phaseMenstrual.withValues(alpha: 0.4)),
+                    color: const Color(0x33E05A7A),
+                    border: Border.all(color: const Color(0x66E05A7A)),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: const Text(
                     '🩸 Period',
                     style: TextStyle(
                       fontSize: 12,
-                      color: AppColors.phaseMenstrual,
+                      color: _accent,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -687,7 +809,7 @@ class _DayDetailSheet extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Text(moodEmojis[mood - 1], style: const TextStyle(fontSize: 28)),
+                  Text(_moodEmojis[mood - 1], style: const TextStyle(fontSize: 28)),
                   const SizedBox(width: 12),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -702,7 +824,7 @@ class _DayDetailSheet extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        moodLabels[mood - 1],
+                        _moodLabels[mood - 1],
                         style: TextStyle(
                           fontSize: 13,
                           color: Colors.white.withValues(alpha: 0.7),
@@ -745,13 +867,13 @@ class _DayDetailSheet extends StatelessWidget {
                           (s) => Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                             decoration: BoxDecoration(
-                              color: AppColors.phaseMenstrual.withValues(alpha: 0.15),
-                              border: Border.all(color: AppColors.phaseMenstrual.withValues(alpha: 0.3)),
+                              color: const Color(0x26E05A7A),
+                              border: Border.all(color: const Color(0x4DE05A7A)),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
                               s,
-                              style: const TextStyle(fontSize: 12, color: AppColors.phaseMenstrual),
+                              style: const TextStyle(fontSize: 12, color: _accent),
                             ),
                           ),
                         )
@@ -788,7 +910,7 @@ class _LegendItem extends StatelessWidget {
           decoration: BoxDecoration(
             color: dashed ? Colors.transparent : color,
             borderRadius: BorderRadius.circular(3),
-            border: dashed ? Border.all(color: AppColors.phaseMenstrual.withValues(alpha: 0.6)) : null,
+            border: dashed ? Border.all(color: const Color(0x99E05A7A)) : null,
           ),
         ),
         const SizedBox(width: 5),

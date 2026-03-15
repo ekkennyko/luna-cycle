@@ -1,5 +1,3 @@
-import 'package:luna/core/constants/app_constants.dart';
-
 enum CyclePhase { menstrual, follicular, ovulation, luteal }
 
 class DateRange {
@@ -73,7 +71,7 @@ class CyclePhaseCalculator {
       actualPeriodLength = dayOfCycle;
     }
 
-    final ovDay = cycleLength - AppConstants.lutealPhaseLength;
+    final ovDay = cycleLength - 14;
 
     final CyclePhase phase;
     if (dayOfCycle <= actualPeriodLength) {
@@ -112,5 +110,12 @@ class CyclePhaseCalculator {
         CyclePhase.follicular => 'Follicular',
         CyclePhase.ovulation => 'Ovulation',
         CyclePhase.luteal => 'Luteal',
+      };
+
+  static String phaseTip(CyclePhase phase) => switch (phase) {
+        CyclePhase.menstrual => 'Your body is releasing. Rest, use warmth, and be gentle with yourself.',
+        CyclePhase.follicular => 'Estrogen is rising — your energy and creativity are building.',
+        CyclePhase.ovulation => 'Peak energy and confidence! Ideal for social events and exercise.',
+        CyclePhase.luteal => 'Progesterone peaks then drops. Prioritize sleep and self-care.',
       };
 }

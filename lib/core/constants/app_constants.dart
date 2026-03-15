@@ -21,9 +21,6 @@ class AppConstants {
   /// Minimum cycles required for a statistically meaningful prediction.
   static const int minCyclesForPrediction = 3;
 
-  /// Standard luteal phase length used for ovulation estimation.
-  static const int lutealPhaseLength = 14;
-
   static const String backupFileExtension = '.luna';
   static const String backupMimeType = 'application/octet-stream';
 }

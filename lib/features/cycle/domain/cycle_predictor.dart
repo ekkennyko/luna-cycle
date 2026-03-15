@@ -1,7 +1,5 @@
 import 'dart:math';
 
-import 'package:luna/core/constants/app_constants.dart';
-
 class CyclePredictor {
   CyclePredictor._();
 
@@ -9,7 +7,7 @@ class CyclePredictor {
   /// Uses simple average for ≤2 cycles, weighted average for 3-6,
   /// and trimmed weighted average for 7+.
   static int predictNextCycleLength(List<int> cycleLengths) {
-    if (cycleLengths.isEmpty) return AppConstants.defaultCycleLength;
+    if (cycleLengths.isEmpty) return 28;
 
     if (cycleLengths.length <= 2) {
       return (cycleLengths.reduce((a, b) => a + b) / cycleLengths.length).round();
@@ -44,7 +42,7 @@ class CyclePredictor {
       };
 
   static List<int> _trimOutliers(List<int> cycles) {
-    final filtered = cycles.where((c) => c >= AppConstants.minCycleLength && c <= AppConstants.maxCycleLength).toList();
+    final filtered = cycles.where((c) => c >= 21 && c <= 35).toList();
     if (filtered.length < 3) return filtered;
 
     final mean = filtered.reduce((a, b) => a + b) / filtered.length;
