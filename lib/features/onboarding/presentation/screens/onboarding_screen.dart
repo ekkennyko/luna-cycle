@@ -3,12 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:luna/core/constants/app_constants.dart';
+import 'package:luna/core/constants/pref_keys.dart';
+import 'package:luna/core/theme/app_colors.dart';
 import 'package:luna/features/cycle/presentation/providers/cycle_providers.dart';
 import 'package:luna/shared/providers/core_providers.dart';
+import 'package:luna/shared/widgets/ambient_glow.dart';
+import 'package:luna/shared/widgets/dark_date_picker.dart';
+import 'package:luna/shared/widgets/gradient_button.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-const _accent = Color(0xFFE05A7A);
-const _bg = Color(0xFF120A0A);
+const _accent = AppColors.phaseMenstrual;
 
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
@@ -53,27 +58,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     DateTime? initial,
     DateTime? firstDate,
     DateTime? lastDate,
-  }) {
-    final now = DateTime.now();
-    return showDatePicker(
-      context: context,
-      initialDate: initial ?? now.subtract(const Duration(days: 1)),
-      firstDate: firstDate ?? now.subtract(const Duration(days: 365 * 2)),
-      lastDate: lastDate ?? now,
-      builder: (ctx, child) => Theme(
-        data: ThemeData.dark().copyWith(
-          colorScheme: const ColorScheme.dark(
-            primary: _accent,
-            onPrimary: Colors.white,
-            surface: Color(0xFF1E1118),
-            onSurface: Colors.white,
-          ),
-          dialogTheme: const DialogThemeData(backgroundColor: Color(0xFF1E1118)),
-        ),
-        child: child!,
-      ),
-    );
-  }
+  }) =>
+      showDarkDatePicker(context, initial: initial, firstDate: firstDate, lastDate: lastDate);
 
   void _handleNext() {
     if (_step < 1) {
@@ -108,8 +94,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     }
 
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('user_cycle_length', _cycleLength ?? 28);
-    await prefs.setInt('user_period_length', _periodLength ?? 5);
+    await prefs.setInt(PrefKeys.userCycleLength, _cycleLength ?? AppConstants.defaultCycleLength);
+    await prefs.setInt(PrefKeys.userPeriodLength, _periodLength ?? AppConstants.defaultPeriodLength);
 
     if (!mounted) return;
     setState(() {
@@ -122,7 +108,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1118),
+        backgroundColor: AppColors.sheetSurface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         content: const Text(
           'You can always log your first period later.\nLuna will start tracking from your next period.',
@@ -143,16 +129,16 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     if (confirm != true || !mounted) return;
     await ref.read(appDatabaseProvider).resetAllData();
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('user_cycle_length', 28);
-    await prefs.setInt('user_period_length', 5);
-    await prefs.setBool('onboarding_complete', true);
+    await prefs.setInt(PrefKeys.userCycleLength, AppConstants.defaultCycleLength);
+    await prefs.setInt(PrefKeys.userPeriodLength, AppConstants.defaultPeriodLength);
+    await prefs.setBool(PrefKeys.onboardingComplete, true);
     if (!mounted) return;
     context.go('/');
   }
 
   Future<void> _completeOnboarding() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('onboarding_complete', true);
+    await prefs.setBool(PrefKeys.onboardingComplete, true);
     if (!mounted) return;
     context.go('/');
   }
@@ -162,25 +148,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     if (_done) return _buildCompletionScreen();
 
     return Scaffold(
-      backgroundColor: _bg,
+      backgroundColor: AppColors.appBackground,
       body: Stack(
         children: [
-          // Ambient glow
-          Positioned(
-            top: -60,
-            left: 0,
-            right: 0,
-            height: 300,
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: RadialGradient(
-                  center: Alignment.topCenter,
-                  radius: 0.8,
-                  colors: [Color(0x18E05A7A), Colors.transparent],
-                ),
-              ),
-            ),
-          ),
+          const AmbientGlow(),
           SafeArea(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -595,7 +566,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _GradientButton(
+          GradientButton(
             label: label,
             enabled: _canProceed && !_saving,
             onTap: (_canProceed && !_saving) ? _handleNext : null,
@@ -654,24 +625,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     ];
 
     return Scaffold(
-      backgroundColor: _bg,
+      backgroundColor: AppColors.appBackground,
       body: Stack(
         children: [
-          Positioned(
-            top: -60,
-            left: 0,
-            right: 0,
-            height: 300,
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: RadialGradient(
-                  center: Alignment.topCenter,
-                  radius: 0.8,
-                  colors: [Color(0x18E05A7A), Colors.transparent],
-                ),
-              ),
-            ),
-          ),
+          const AmbientGlow(),
           SafeArea(
             child: Column(
               children: [
@@ -776,7 +733,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
-                  child: _GradientButton(
+                  child: GradientButton(
                     label: 'Start tracking →',
                     enabled: true,
                     onTap: _completeOnboarding,
@@ -937,56 +894,3 @@ class _DatePickerField extends StatelessWidget {
   }
 }
 
-class _GradientButton extends StatelessWidget {
-  const _GradientButton({
-    required this.label,
-    required this.enabled,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool enabled;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          gradient: enabled
-              ? const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFFE05A7A), Color(0xCCE05A7A)],
-                )
-              : null,
-          color: enabled ? null : Colors.white.withValues(alpha: 0.06),
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: enabled
-              ? [
-                  BoxShadow(
-                    color: _accent.withValues(alpha: 0.4),
-                    blurRadius: 24,
-                    offset: const Offset(0, 8),
-                  ),
-                ]
-              : null,
-        ),
-        child: Center(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: enabled ? Colors.white : Colors.white.withValues(alpha: 0.3),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}

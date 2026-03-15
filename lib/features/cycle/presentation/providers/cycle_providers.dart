@@ -1,6 +1,8 @@
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:luna/core/constants/app_constants.dart';
+import 'package:luna/core/constants/entry_types.dart';
+import 'package:luna/core/constants/pref_keys.dart';
 import 'package:luna/core/database/app_database.dart';
 import 'package:luna/features/cycle/domain/cycle_phase_calculator.dart';
 import 'package:luna/features/cycle/domain/cycle_predictor.dart';
@@ -50,7 +52,7 @@ final lastPeriodEndProvider = FutureProvider<CycleEntry?>((ref) async {
 // Period length saved during onboarding or settings. Falls back to the app default.
 final userPeriodLengthProvider = FutureProvider<int>((ref) async {
   final prefs = await SharedPreferences.getInstance();
-  return prefs.getInt('user_period_length') ?? AppConstants.defaultPeriodLength;
+  return prefs.getInt(PrefKeys.userPeriodLength) ?? AppConstants.defaultPeriodLength;
 });
 
 // Whether the current period is still ongoing.
@@ -93,8 +95,8 @@ final cycleLengthsProvider = FutureProvider<List<int>>((ref) async {
 final completedPeriodLengthsProvider = FutureProvider<List<int>>((ref) async {
   ref.watch(cycleEntriesProvider);
   final entries = await ref.read(cycleRepositoryProvider).getAllEntries();
-  final starts = entries.where((e) => e.type == 'period_start').toList()..sort((a, b) => a.date.compareTo(b.date));
-  final ends = entries.where((e) => e.type == 'period_end').toList()..sort((a, b) => a.date.compareTo(b.date));
+  final starts = entries.where((e) => e.type == EntryTypes.periodStart).toList()..sort((a, b) => a.date.compareTo(b.date));
+  final ends = entries.where((e) => e.type == EntryTypes.periodEnd).toList()..sort((a, b) => a.date.compareTo(b.date));
 
   final lengths = <int>[];
   for (final s in starts) {
@@ -224,7 +226,7 @@ class CycleNotifier extends AsyncNotifier<void> {
     if (existing != null) {
       await _repo.saveEntry(
         existing.toCompanion(true).copyWith(
-              type: const Value('period_start'),
+              type: const Value(EntryTypes.periodStart),
               flowIntensity: Value(flowIntensity),
             ),
       );
@@ -232,7 +234,7 @@ class CycleNotifier extends AsyncNotifier<void> {
       await _repo.saveEntry(
         CycleEntriesCompanion.insert(
           date: day,
-          type: 'period_start',
+          type: EntryTypes.periodStart,
           flowIntensity: Value(flowIntensity),
         ),
       );
@@ -245,10 +247,10 @@ class CycleNotifier extends AsyncNotifier<void> {
     final day = DateTime(date.year, date.month, date.day).toUtc();
     final existing = await _repo.getEntryForDate(date);
     if (existing != null) {
-      await _repo.updateEntryType(existing.id, 'period_end');
+      await _repo.updateEntryType(existing.id, EntryTypes.periodEnd);
     } else {
       await _repo.saveEntry(
-        CycleEntriesCompanion.insert(date: day, type: 'period_end'),
+        CycleEntriesCompanion.insert(date: day, type: EntryTypes.periodEnd),
       );
     }
   }
@@ -279,4 +281,88 @@ final todayMoodProvider = Provider<int?>((ref) {
 final todaySymptomLogsProvider = StreamProvider<List<SymptomLog>>((ref) {
   final today = ref.watch(effectiveTodayProvider);
   return ref.read(symptomRepositoryProvider).watchLogsForDate(today);
+});
+
+String dateKey(DateTime d) {
+  final local = d.toLocal();
+  return '${local.year}-${local.month}-${local.day}';
+}
+
+/// All period ranges: [{start, end}] derived from DB entries.
+final periodRangesProvider = FutureProvider<List<({DateTime start, DateTime end})>>((ref) async {
+  ref.watch(cycleEntriesProvider);
+  final entries = await ref.read(cycleRepositoryProvider).getAllEntries();
+  final starts = entries.where((e) => e.type == EntryTypes.periodStart).toList()..sort((a, b) => a.date.compareTo(b.date));
+  final ends = entries.where((e) => e.type == EntryTypes.periodEnd).toList()..sort((a, b) => a.date.compareTo(b.date));
+
+  final ranges = <({DateTime start, DateTime end})>[];
+  for (final s in starts) {
+    DateTime? endDate;
+    for (final e in ends) {
+      if (!e.date.isBefore(s.date)) {
+        endDate = e.date;
+        break;
+      }
+    }
+    if (endDate != null) {
+      ranges.add((start: s.date, end: endDate));
+    }
+  }
+  return ranges;
+});
+
+final predictedPeriodsProvider = FutureProvider<List<({DateTime start, DateTime end})>>(
+  (ref) async {
+    final lastStart = await ref.watch(lastPeriodStartProvider.future);
+    if (lastStart == null) return [];
+    final predictedCycleLen = await ref.watch(averageCycleLengthProvider.future);
+    final periodLen = await ref.watch(averagePeriodLengthProvider.future);
+    final now = DateTime.now();
+    final endOfCalendar = DateTime(now.year, now.month + 14, 0);
+
+    final predictions = <({DateTime start, DateTime end})>[];
+    var nextStart = lastStart.date.add(Duration(days: predictedCycleLen));
+    while (nextStart.isBefore(endOfCalendar)) {
+      predictions.add((
+        start: nextStart,
+        end: nextStart.add(Duration(days: periodLen - 1)),
+      ));
+      nextStart = nextStart.add(Duration(days: predictedCycleLen));
+    }
+    return predictions;
+  },
+);
+
+/// All mood entries as Map of dateKey to int.
+final allMoodsProvider = Provider<Map<String, int>>((ref) {
+  final entries = ref.watch(cycleEntriesProvider).when(
+        data: (v) => v,
+        loading: () => <CycleEntry>[],
+        error: (_, __) => <CycleEntry>[],
+      );
+  final map = <String, int>{};
+  for (final e in entries) {
+    if (e.mood != null) {
+      map[dateKey(e.date)] = e.mood!;
+    }
+  }
+  return map;
+});
+
+/// All symptom logs as Map of dateKey to symptom name list.
+final allSymptomLogsProvider = FutureProvider<Map<String, List<String>>>((ref) async {
+  ref.watch(cycleEntriesProvider);
+  final from = DateTime.now().subtract(const Duration(days: 365));
+  final to = DateTime.now().add(const Duration(days: 1));
+  final logs = await ref.read(symptomRepositoryProvider).getLogsBetween(from, to);
+  final symptoms = await ref.read(symptomRepositoryProvider).getAllSymptoms();
+  final nameMap = {for (final s in symptoms) s.id: s.name};
+  final map = <String, List<String>>{};
+  for (final log in logs) {
+    final key = dateKey(log.date);
+    map.putIfAbsent(key, () => []);
+    final name = nameMap[log.symptomId];
+    if (name != null) map[key]!.add(name);
+  }
+  return map;
 });
