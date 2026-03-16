@@ -23,4 +23,16 @@ class AppConstants {
 
   static const String backupFileExtension = '.luna';
   static const String backupMimeType = 'application/octet-stream';
+
+  static const Duration quickAnim = Duration(milliseconds: 200);
+}
+
+class AppRadius {
+  AppRadius._();
+
+  static const double card = 14;
+  static const double container = 16;
+  static const double button = 18;
+  static const double pill = 20;
+  static const double sheet = 24;
 }

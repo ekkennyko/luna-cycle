@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:luna/core/constants/app_constants.dart';
 import 'package:luna/core/theme/app_colors.dart';
 import 'package:luna/features/subscription/presentation/providers/subscription_providers.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
@@ -147,7 +148,7 @@ class _PackageButton extends StatelessWidget {
         onPressed: loading ? null : () => onTap(package!),
         style: OutlinedButton.styleFrom(
           minimumSize: const Size.fromHeight(52),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
           side: const BorderSide(color: AppColors.primary),
         ),
         child: child,

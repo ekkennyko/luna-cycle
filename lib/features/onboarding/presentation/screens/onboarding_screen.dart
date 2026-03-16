@@ -6,9 +6,12 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:luna/features/cycle/presentation/providers/cycle_providers.dart';
 import 'package:luna/shared/providers/core_providers.dart';
+import 'package:luna/core/constants/app_constants.dart';
+import 'package:luna/core/constants/prefs_keys.dart';
+import 'package:luna/core/theme/app_colors.dart';
 
-const _accent = Color(0xFFE05A7A);
-const _bg = Color(0xFF120A0A);
+const _accent = AppColors.phaseMenstrual;
+const _bg = AppColors.appBackground;
 
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
@@ -108,8 +111,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     }
 
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('user_cycle_length', _cycleLength ?? 28);
-    await prefs.setInt('user_period_length', _periodLength ?? 5);
+    await prefs.setInt(PrefsKeys.userCycleLength, _cycleLength ?? 28);
+    await prefs.setInt(PrefsKeys.userPeriodLength, _periodLength ?? 5);
 
     if (!mounted) return;
     setState(() {
@@ -123,7 +126,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1E1118),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill)),
         content: const Text(
           'You can always log your first period later.\nLuna will start tracking from your next period.',
           style: TextStyle(color: Colors.white70, fontSize: 14, height: 1.6),
@@ -131,7 +134,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Cancel', style: TextStyle(color: Colors.white.withValues(alpha: 0.5))),
+            child: const Text('Cancel', style: TextStyle(color: AppColors.darkSecondaryText)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -143,16 +146,16 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     if (confirm != true || !mounted) return;
     await ref.read(appDatabaseProvider).resetAllData();
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('user_cycle_length', 28);
-    await prefs.setInt('user_period_length', 5);
-    await prefs.setBool('onboarding_complete', true);
+    await prefs.setInt(PrefsKeys.userCycleLength, 28);
+    await prefs.setInt(PrefsKeys.userPeriodLength, 5);
+    await prefs.setBool(PrefsKeys.onboardingComplete, true);
     if (!mounted) return;
     context.go('/');
   }
 
   Future<void> _completeOnboarding() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('onboarding_complete', true);
+    await prefs.setBool(PrefsKeys.onboardingComplete, true);
     if (!mounted) return;
     context.go('/');
   }
@@ -349,7 +352,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             child: _periodEnd == null
                 ? AnimatedOpacity(
                     opacity: 1.0,
-                    duration: const Duration(milliseconds: 200),
+                    duration: AppConstants.quickAnim,
                     child: GestureDetector(
                       onTap: () => setState(() {
                         _periodOngoing = !_periodOngoing;
@@ -389,7 +392,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.03),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(AppRadius.card),
               border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
             ),
             child: Row(
@@ -518,8 +521,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.03),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
+              borderRadius: BorderRadius.circular(AppRadius.container),
+              border: Border.all(color: AppColors.darkCardBorder),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -555,22 +558,22 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
             decoration: BoxDecoration(
               color: _accent.withValues(alpha: 0.07),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(AppRadius.card),
               border: Border.all(color: _accent.withValues(alpha: 0.15)),
             ),
-            child: Column(
+            child: const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   '💡 Did you know?',
                   style: TextStyle(fontSize: 12, color: _accent, fontWeight: FontWeight.w600),
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: 4),
                 Text(
                   'Only 13% of people have exactly 28-day cycles. Real data gives you real predictions.',
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.white.withValues(alpha: 0.5),
+                    color: AppColors.darkSecondaryText,
                     height: 1.5,
                   ),
                 ),
@@ -617,9 +620,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               if (isLastStep)
                 TextButton(
                   onPressed: _saving ? null : _saveAndFinish,
-                  child: Text(
+                  child: const Text(
                     'Skip →',
-                    style: TextStyle(fontSize: 13, color: Colors.white.withValues(alpha: 0.3)),
+                    style: TextStyle(fontSize: 13, color: AppColors.darkHint),
                   ),
                 )
               else
@@ -711,11 +714,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 12),
-                        Text(
+                        const Text(
                           'Luna is ready to track your cycle.\nYour data stays private on your device.',
                           style: TextStyle(
                             fontSize: 14,
-                            color: Colors.white.withValues(alpha: 0.5),
+                            color: AppColors.darkSecondaryText,
                             height: 1.7,
                           ),
                           textAlign: TextAlign.center,
@@ -726,9 +729,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                           width: double.infinity,
                           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.04),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
+                            color: AppColors.darkCardBg,
+                            borderRadius: BorderRadius.circular(AppRadius.pill),
+                            border: Border.all(color: AppColors.darkCardBorder),
                           ),
                           child: Column(
                             children: List.generate(rows.length, (i) {
@@ -743,9 +746,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                                       children: [
                                         Text(
                                           row.$1,
-                                          style: TextStyle(
+                                          style: const TextStyle(
                                             fontSize: 13,
-                                            color: Colors.white.withValues(alpha: 0.5),
+                                            color: AppColors.darkSecondaryText,
                                           ),
                                         ),
                                         Text(
@@ -760,9 +763,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                                     ),
                                   ),
                                   if (i < rows.length - 1)
-                                    Divider(
+                                    const Divider(
                                       height: 1,
-                                      color: Colors.white.withValues(alpha: 0.04),
+                                      color: AppColors.darkCardBg,
                                     ),
                                 ],
                               );
@@ -831,7 +834,7 @@ class _PreviewRow extends StatelessWidget {
             ],
           ),
         ),
-        if (hasDivider) Divider(height: 1, color: Colors.white.withValues(alpha: 0.04)),
+        if (hasDivider) const Divider(height: 1, color: AppColors.darkCardBg),
       ],
     );
   }
@@ -878,11 +881,11 @@ class _DatePickerField extends StatelessWidget {
         GestureDetector(
           onTap: onTap,
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
+            duration: AppConstants.quickAnim,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
               color: hasDate ? _accent.withValues(alpha: 0.12) : Colors.white.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadius.container),
               border: Border.all(
                 color: hasDate ? _accent.withValues(alpha: 0.31) : Colors.white.withValues(alpha: 0.1),
               ),
@@ -958,14 +961,14 @@ class _GradientButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
           gradient: enabled
-              ? const LinearGradient(
+              ? LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [Color(0xFFE05A7A), Color(0xCCE05A7A)],
+                  colors: [_accent, _accent.withValues(alpha: 0.8)],
                 )
               : null,
           color: enabled ? null : Colors.white.withValues(alpha: 0.06),
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(AppRadius.button),
           boxShadow: enabled
               ? [
                   BoxShadow(
@@ -982,7 +985,7 @@ class _GradientButton extends StatelessWidget {
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w600,
-              color: enabled ? Colors.white : Colors.white.withValues(alpha: 0.3),
+              color: enabled ? Colors.white : AppColors.darkHint,
             ),
           ),
         ),

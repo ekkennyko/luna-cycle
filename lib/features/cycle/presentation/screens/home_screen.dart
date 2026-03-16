@@ -9,6 +9,9 @@ import 'package:luna/core/database/app_database.dart';
 import 'package:luna/features/cycle/domain/cycle_phase_calculator.dart';
 import 'package:luna/features/cycle/presentation/providers/cycle_providers.dart';
 import 'package:luna/shared/providers/core_providers.dart';
+import 'package:luna/core/constants/app_constants.dart';
+import 'package:luna/core/constants/prefs_keys.dart';
+import 'package:luna/core/theme/app_colors.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class _Phase {
@@ -27,32 +30,32 @@ class _Phase {
   // ignore: constant_identifier_names
   static const menstrual = _Phase(
     name: 'Menstrual',
-    color: Color(0xFFE05A7A),
-    bgColor: Color(0x1FE05A7A), // 0.12 alpha
+    color: AppColors.phaseMenstrual,
+    bgColor: AppColors.phaseMenstrualBg,
     tip: 'Your body is releasing. Rest, use warmth, and be gentle with yourself. Iron-rich foods like spinach and lentils can help replenish.',
   );
 
   // ignore: constant_identifier_names
   static const follicular = _Phase(
     name: 'Follicular',
-    color: Color(0xFFF4A261),
-    bgColor: Color(0x1AF4A261), // 0.10 alpha
+    color: AppColors.phaseFolicular,
+    bgColor: AppColors.phaseFolicularBg,
     tip: 'Estrogen is rising — your energy and creativity are building. Great time to start new projects and try challenging workouts.',
   );
 
   // ignore: constant_identifier_names
   static const ovulation = _Phase(
     name: 'Ovulation',
-    color: Color(0xFFA8DADC),
-    bgColor: Color(0x1AA8DADC),
+    color: AppColors.phaseOvulation,
+    bgColor: AppColors.phaseOvulationBg,
     tip: "Peak energy and confidence! You're magnetic right now. Ideal for social events, big presentations, and high-intensity exercise.",
   );
 
   // ignore: constant_identifier_names
   static const luteal = _Phase(
     name: 'Luteal',
-    color: Color(0xFF9B72CF),
-    bgColor: Color(0x1A9B72CF),
+    color: AppColors.phaseLuteal,
+    bgColor: AppColors.phaseLutealBg,
     tip: 'Progesterone peaks then drops. Prioritize sleep, magnesium-rich foods, and reduce caffeine. Self-care is not optional.',
   );
 
@@ -167,7 +170,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
 
   Future<void> _loadBannerDismissState() async {
     final prefs = await SharedPreferences.getInstance();
-    final ts = prefs.getInt('late_banner_dismissed_at');
+    final ts = prefs.getInt(PrefsKeys.lateBannerDismissedAt);
     if (ts != null && mounted) {
       setState(() {
         _bannerHiddenUntil = DateTime.fromMillisecondsSinceEpoch(ts).add(const Duration(hours: 24));
@@ -177,7 +180,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
 
   Future<void> _dismissBannerFor24Hours() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('late_banner_dismissed_at', DateTime.now().millisecondsSinceEpoch);
+    await prefs.setInt(PrefsKeys.lateBannerDismissedAt, DateTime.now().millisecondsSinceEpoch);
     if (mounted) {
       setState(() => _bannerHiddenUntil = DateTime.now().add(const Duration(hours: 24)));
     }
@@ -337,7 +340,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
     final symptomsCount = todayLogs.length;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF120A0A),
+      backgroundColor: AppColors.appBackground,
       body: Stack(
         children: [
           Positioned(
@@ -447,10 +450,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                         height: 38,
                         padding: const EdgeInsets.symmetric(horizontal: 10),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF9B72CF).withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(14),
+                          color: AppColors.phaseLuteal.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(AppRadius.card),
                           border: Border.all(
-                            color: const Color(0xFF9B72CF).withValues(alpha: 0.35),
+                            color: AppColors.phaseLuteal.withValues(alpha: 0.35),
                           ),
                         ),
                         alignment: Alignment.center,
@@ -459,7 +462,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                           style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: Color(0xFF9B72CF),
+                            color: AppColors.phaseLuteal,
                             letterSpacing: 0.5,
                           ),
                         ),
@@ -474,7 +477,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                 height: 38,
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.06),
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(AppRadius.card),
                   border: Border.all(
                     color: Colors.white.withValues(alpha: 0.08),
                   ),
@@ -555,11 +558,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                             ),
                           ),
                         ] else ...[
-                          Text(
+                          const Text(
                             'DAY',
                             style: TextStyle(
                               fontSize: 14,
-                              color: Colors.white.withValues(alpha: 0.5),
+                              color: AppColors.darkSecondaryText,
                               letterSpacing: 2,
                             ),
                           ),
@@ -597,7 +600,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                               ),
                               decoration: BoxDecoration(
                                 color: Colors.white.withValues(alpha: 0.05),
-                                borderRadius: BorderRadius.circular(20),
+                                borderRadius: BorderRadius.circular(AppRadius.pill),
                                 border: Border.all(
                                   color: Colors.white.withValues(alpha: 0.06),
                                 ),
@@ -641,7 +644,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
               icon: '🩸',
               label: isPeriodActive ? 'End Period' : (isEmpty ? 'Log period' : 'Period'),
               active: isPeriodActive || isEmpty,
-              activeColor: isPeriodActive ? phase.color : const Color(0xFFE05A7A),
+              activeColor: isPeriodActive ? phase.color : AppColors.phaseMenstrual,
               onTap: () => _openPeriodSheet(isPeriodActive: isPeriodActive),
             ),
           ),
@@ -691,7 +694,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
             end: Alignment.bottomRight,
             colors: [phase.bgColor, Colors.white.withValues(alpha: 0.02)],
           ),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppRadius.pill),
           border: Border.all(color: phase.color.withValues(alpha: 0.25)),
         ),
         child: Column(
@@ -767,10 +770,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.04),
-                  borderRadius: BorderRadius.circular(14),
+                  color: AppColors.darkCardBg,
+                  borderRadius: BorderRadius.circular(AppRadius.card),
                   border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.07),
+                    color: AppColors.darkCardBorder,
                   ),
                 ),
                 child: Column(
@@ -809,8 +812,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.04),
-          borderRadius: BorderRadius.circular(16),
+          color: AppColors.darkCardBg,
+          borderRadius: BorderRadius.circular(AppRadius.container),
           border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
         ),
         child: Row(
@@ -834,7 +837,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
   }
 
   Widget _buildLateBanner(int daysLate) {
-    const color = Color(0xFFE05A7A);
+    const color = AppColors.phaseMenstrual;
     final body =
         daysLate >= 7 ? 'Your period is $daysLate days late. This is normal — cycles vary.' : 'Did your period start? Log it to keep predictions accurate.';
 
@@ -844,7 +847,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
         padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.10),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.container),
           border: Border.all(color: const Color(0x30E05A7A)),
         ),
         child: Column(
@@ -877,7 +880,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFFE05A7A),
+                          color: AppColors.phaseMenstrual,
                         ),
                       ),
                     ),
@@ -936,7 +939,7 @@ class _QuickChip extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+        duration: AppConstants.quickAnim,
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
         decoration: BoxDecoration(
           gradient: active
@@ -950,7 +953,7 @@ class _QuickChip extends StatelessWidget {
                 )
               : null,
           color: active ? null : Colors.white.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.container),
           border: Border.all(
             color: active ? color.withValues(alpha: 0.50) : Colors.white.withValues(alpha: 0.08),
           ),
@@ -1117,7 +1120,7 @@ class _SheetContainer extends StatelessWidget {
           end: Alignment.bottomCenter,
           colors: [Color(0xFF1E1118), Color(0xFF150D12)],
         ),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
         border: Border(
           top: BorderSide(color: Color(0x0FFFFFFF)),
           left: BorderSide(color: Color(0x0FFFFFFF)),
@@ -1140,7 +1143,7 @@ class _SheetContainer extends StatelessWidget {
               width: 36,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.3),
+                color: AppColors.darkHint,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -1183,11 +1186,11 @@ class _PeriodSheetState extends State<_PeriodSheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Flow intensity label
-          Text(
+          const Text(
             'FLOW INTENSITY',
             style: TextStyle(
               fontSize: 12,
-              color: Colors.white.withValues(alpha: 0.5),
+              color: AppColors.darkSecondaryText,
               letterSpacing: 1,
             ),
           ),
@@ -1207,7 +1210,7 @@ class _PeriodSheetState extends State<_PeriodSheet> {
                   child: GestureDetector(
                     onTap: () => setState(() => _intensity = i),
                     child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
+                      duration: AppConstants.quickAnim,
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       decoration: BoxDecoration(
                         color: selected ? color.withValues(alpha: 0.4) : Colors.white.withValues(alpha: 0.05),
@@ -1264,12 +1267,12 @@ class _PeriodSheetState extends State<_PeriodSheet> {
                 gradient: const LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [Color(0xFFE05A7A), Color(0xFFB5179E)],
+                  colors: [AppColors.phaseMenstrual, Color(0xFFB5179E)],
                 ),
-                borderRadius: BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(AppRadius.button),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFFE05A7A).withValues(alpha: 0.4),
+                    color: AppColors.phaseMenstrual.withValues(alpha: 0.4),
                     blurRadius: 24,
                     offset: const Offset(0, 8),
                   ),
@@ -1342,7 +1345,7 @@ class _EndPeriodSheetState extends State<_EndPeriodSheet> {
       builder: (ctx, child) => Theme(
         data: ThemeData.dark().copyWith(
           colorScheme: const ColorScheme.dark(
-            primary: Color(0xFFE05A7A),
+            primary: AppColors.phaseMenstrual,
             onPrimary: Colors.white,
             surface: Color(0xFF1E1118),
             onSurface: Colors.white,
@@ -1422,7 +1425,7 @@ class _EndPeriodSheetState extends State<_EndPeriodSheet> {
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.06),
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(AppRadius.container),
                       border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                     ),
                     child: const Center(
@@ -1451,12 +1454,12 @@ class _EndPeriodSheetState extends State<_EndPeriodSheet> {
                       gradient: const LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: [Color(0xFF9B72CF), Color(0xFF7C3AED)],
+                        colors: [AppColors.phaseLuteal, Color(0xFF7C3AED)],
                       ),
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(AppRadius.container),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF9B72CF).withValues(alpha: 0.4),
+                          color: AppColors.phaseLuteal.withValues(alpha: 0.4),
                           blurRadius: 24,
                           offset: const Offset(0, 8),
                         ),
@@ -1498,17 +1501,17 @@ class _DateChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const accent = Color(0xFFE05A7A);
+    const accent = AppColors.phaseMenstrual;
 
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
+          duration: AppConstants.quickAnim,
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
           decoration: BoxDecoration(
             color: selected ? accent.withValues(alpha: 0.15) : Colors.white.withValues(alpha: 0.05),
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(AppRadius.card),
             border: Border.all(
               width: 1.5,
               color: selected ? accent.withValues(alpha: 0.6) : Colors.white.withValues(alpha: 0.08),
@@ -1520,14 +1523,14 @@ class _DateChip extends StatelessWidget {
               Row(
                 children: [
                   AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
+                    duration: AppConstants.quickAnim,
                     width: 16,
                     height: 16,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(
                         width: 1.5,
-                        color: selected ? accent : Colors.white.withValues(alpha: 0.3),
+                        color: selected ? accent : AppColors.darkHint,
                       ),
                       color: selected ? accent : Colors.transparent,
                     ),
@@ -1605,12 +1608,12 @@ class _MoodSheetState extends State<_MoodSheet> {
               nav.pop();
             },
             child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
+              duration: AppConstants.quickAnim,
               curve: const Cubic(0.34, 1.56, 0.64, 1),
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
               decoration: BoxDecoration(
                 color: selected ? Colors.white.withValues(alpha: 0.1) : Colors.transparent,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppRadius.container),
                 border: Border.all(
                   color: selected ? Colors.white.withValues(alpha: 0.2) : Colors.transparent,
                 ),
@@ -1619,7 +1622,7 @@ class _MoodSheetState extends State<_MoodSheet> {
                 children: [
                   AnimatedScale(
                     scale: selected ? 1.1 : 1.0,
-                    duration: const Duration(milliseconds: 200),
+                    duration: AppConstants.quickAnim,
                     child: Text(
                       _moods[i],
                       style: const TextStyle(fontSize: 30),
@@ -1628,9 +1631,9 @@ class _MoodSheetState extends State<_MoodSheet> {
                   const SizedBox(height: 6),
                   Text(
                     _moodLabels[i].toUpperCase(),
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 9,
-                      color: Colors.white.withValues(alpha: 0.5),
+                      color: AppColors.darkSecondaryText,
                       letterSpacing: 0.5,
                     ),
                   ),
@@ -1698,7 +1701,7 @@ class _SymptomsSheetState extends State<_SymptomsSheet> {
                   ),
                   decoration: BoxDecoration(
                     color: active ? phase.color.withValues(alpha: 0.3) : Colors.white.withValues(alpha: 0.05),
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
                     border: Border.all(
                       color: active ? phase.color.withValues(alpha: 0.7) : Colors.white.withValues(alpha: 0.1),
                     ),
@@ -1737,7 +1740,7 @@ class _SymptomsSheetState extends State<_SymptomsSheet> {
                   end: Alignment.bottomRight,
                   colors: [phase.color, phase.color.withValues(alpha: 0.8)],
                 ),
-                borderRadius: BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(AppRadius.button),
                 boxShadow: [
                   BoxShadow(
                     color: phase.color.withValues(alpha: 0.4),

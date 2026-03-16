@@ -39,4 +39,16 @@ class AppColors {
   // Dark theme surfaces
   static const surfaceDark = Color(0xFF1E1418);
   static const surfaceVariantDark = Color(0xFF2D1F24);
+
+  // Phase background colors (dark theme)
+  static const phaseMenstrualBg = Color(0x1FE05A7A);
+  static const phaseFolicularBg = Color(0x1AF4A261);
+  static const phaseOvulationBg = Color(0x1AA8DADC);
+  static const phaseLutealBg = Color(0x1A9B72CF);
+
+  // Dark overlay tints (white at common opacities)
+  static const darkCardBg = Color(0x0AFFFFFF);
+  static const darkCardBorder = Color(0x12FFFFFF);
+  static const darkHint = Color(0x4DFFFFFF);
+  static const darkSecondaryText = Color(0x80FFFFFF);
 }

@@ -6,6 +6,7 @@ import 'package:luna/features/cycle/domain/cycle_phase_calculator.dart';
 import 'package:luna/features/cycle/domain/cycle_predictor.dart';
 import 'package:luna/features/cycle/domain/repositories/i_cycle_repository.dart';
 import 'package:luna/shared/providers/core_providers.dart';
+import 'package:luna/core/constants/prefs_keys.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // Debug time offset in days (0 = today). Only used in debug builds.
@@ -50,7 +51,7 @@ final lastPeriodEndProvider = FutureProvider<CycleEntry?>((ref) async {
 // Period length saved during onboarding or settings. Falls back to the app default.
 final userPeriodLengthProvider = FutureProvider<int>((ref) async {
   final prefs = await SharedPreferences.getInstance();
-  return prefs.getInt('user_period_length') ?? AppConstants.defaultPeriodLength;
+  return prefs.getInt(PrefsKeys.userPeriodLength) ?? AppConstants.defaultPeriodLength;
 });
 
 // Whether the current period is still ongoing.

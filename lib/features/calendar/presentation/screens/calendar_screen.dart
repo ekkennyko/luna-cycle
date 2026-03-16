@@ -3,25 +3,27 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:luna/core/database/app_database.dart';
+import 'package:luna/core/constants/app_constants.dart';
+import 'package:luna/core/theme/app_colors.dart';
 import 'package:luna/features/cycle/domain/cycle_phase_calculator.dart';
 import 'package:luna/features/cycle/presentation/providers/cycle_providers.dart';
 import 'package:luna/shared/providers/core_providers.dart';
 
-const _bg = Color(0xFF120A0A);
-const _accent = Color(0xFFE05A7A);
+const _bg = AppColors.appBackground;
+const _accent = AppColors.phaseMenstrual;
 
 const _phaseColors = {
-  CyclePhase.menstrual: Color(0xFFE05A7A),
-  CyclePhase.follicular: Color(0xFFF4A261),
-  CyclePhase.ovulation: Color(0xFFA8DADC),
-  CyclePhase.luteal: Color(0xFF9B72CF),
+  CyclePhase.menstrual: AppColors.phaseMenstrual,
+  CyclePhase.follicular: AppColors.phaseFolicular,
+  CyclePhase.ovulation: AppColors.phaseOvulation,
+  CyclePhase.luteal: AppColors.phaseLuteal,
 };
 
 const _phaseBgs = {
-  CyclePhase.menstrual: Color(0x26E05A7A),
-  CyclePhase.follicular: Color(0x1AF4A261),
-  CyclePhase.ovulation: Color(0x1AA8DADC),
-  CyclePhase.luteal: Color(0x1A9B72CF),
+  CyclePhase.menstrual: AppColors.phaseMenstrualBg,
+  CyclePhase.follicular: AppColors.phaseFolicularBg,
+  CyclePhase.ovulation: AppColors.phaseOvulationBg,
+  CyclePhase.luteal: AppColors.phaseLutealBg,
 };
 
 const _moodEmojis = ['😔', '😐', '🙂', '😊', '🤩'];
@@ -700,7 +702,7 @@ class _DayDetailSheet extends StatelessWidget {
           end: Alignment.bottomCenter,
           colors: [Color(0xFF1E1118), Color(0xFF150D12)],
         ),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
         border: Border(
           top: BorderSide(color: Color(0x0FFFFFFF)),
           left: BorderSide(color: Color(0x0FFFFFFF)),
@@ -716,7 +718,7 @@ class _DayDetailSheet extends StatelessWidget {
             width: 36,
             height: 4,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.3),
+              color: AppColors.darkHint,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -768,7 +770,7 @@ class _DayDetailSheet extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: const Color(0x33E05A7A),
                     border: Border.all(color: const Color(0x66E05A7A)),
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                   child: const Text(
                     '🩸 Period',
@@ -803,9 +805,9 @@ class _DayDetailSheet extends StatelessWidget {
               margin: const EdgeInsets.only(bottom: 14),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.04),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
+                color: AppColors.darkCardBg,
+                borderRadius: BorderRadius.circular(AppRadius.card),
+                border: Border.all(color: AppColors.darkCardBorder),
               ),
               child: Row(
                 children: [
@@ -814,11 +816,11 @@ class _DayDetailSheet extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
+                      const Text(
                         'MOOD',
                         style: TextStyle(
                           fontSize: 11,
-                          color: Colors.white.withValues(alpha: 0.3),
+                          color: AppColors.darkHint,
                           letterSpacing: 1,
                         ),
                       ),
@@ -843,18 +845,18 @@ class _DayDetailSheet extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.04),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
+                color: AppColors.darkCardBg,
+                borderRadius: BorderRadius.circular(AppRadius.card),
+                border: Border.all(color: AppColors.darkCardBorder),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  const Text(
                     'SYMPTOMS',
                     style: TextStyle(
                       fontSize: 11,
-                      color: Colors.white.withValues(alpha: 0.3),
+                      color: AppColors.darkHint,
                       letterSpacing: 1,
                     ),
                   ),
@@ -869,7 +871,7 @@ class _DayDetailSheet extends StatelessWidget {
                             decoration: BoxDecoration(
                               color: const Color(0x26E05A7A),
                               border: Border.all(color: const Color(0x4DE05A7A)),
-                              borderRadius: BorderRadius.circular(20),
+                              borderRadius: BorderRadius.circular(AppRadius.pill),
                             ),
                             child: Text(
                               s,
