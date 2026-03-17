@@ -9,6 +9,7 @@ import 'package:luna/shared/providers/core_providers.dart';
 import 'package:luna/core/constants/app_constants.dart';
 import 'package:luna/core/constants/prefs_keys.dart';
 import 'package:luna/core/theme/app_colors.dart';
+import 'package:luna/core/theme/date_picker_theme.dart';
 import 'package:luna/shared/widgets/gradient_button.dart';
 
 const _accent = AppColors.phaseMenstrual;
@@ -65,15 +66,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       firstDate: firstDate ?? now.subtract(const Duration(days: 365 * 2)),
       lastDate: lastDate ?? now,
       builder: (ctx, child) => Theme(
-        data: ThemeData.dark().copyWith(
-          colorScheme: const ColorScheme.dark(
-            primary: _accent,
-            onPrimary: Colors.white,
-            surface: Color(0xFF1E1118),
-            onSurface: Colors.white,
-          ),
-          dialogTheme: const DialogThemeData(backgroundColor: Color(0xFF1E1118)),
-        ),
+        data: appDatePickerTheme(_accent),
         child: child!,
       ),
     );

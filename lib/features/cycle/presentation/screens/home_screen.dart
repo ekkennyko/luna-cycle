@@ -12,6 +12,7 @@ import 'package:luna/shared/providers/core_providers.dart';
 import 'package:luna/core/constants/app_constants.dart';
 import 'package:luna/core/constants/prefs_keys.dart';
 import 'package:luna/core/theme/app_colors.dart';
+import 'package:luna/core/theme/date_picker_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:luna/shared/widgets/common_sheet.dart';
 import 'package:luna/shared/widgets/gradient_button.dart';
@@ -1296,15 +1297,7 @@ class _EndPeriodSheetState extends State<_EndPeriodSheet> {
       firstDate: firstDate,
       lastDate: today,
       builder: (ctx, child) => Theme(
-        data: ThemeData.dark().copyWith(
-          colorScheme: const ColorScheme.dark(
-            primary: AppColors.phaseMenstrual,
-            onPrimary: Colors.white,
-            surface: Color(0xFF1E1118),
-            onSurface: Colors.white,
-          ),
-          dialogTheme: const DialogThemeData(backgroundColor: Color(0xFF1E1118)),
-        ),
+        data: appDatePickerTheme(AppColors.phaseMenstrual),
         child: child!,
       ),
     );
