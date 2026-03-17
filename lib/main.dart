@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:luna/core/router/app_router.dart';
 import 'package:luna/core/theme/app_theme.dart';
+import 'package:luna/l10n/app_localizations.dart';
 import 'package:luna/features/subscription/presentation/providers/subscription_providers.dart';
 import 'package:luna/shared/providers/core_providers.dart';
 import 'package:luna/core/constants/prefs_keys.dart';
@@ -36,6 +37,8 @@ class LunaApp extends ConsumerWidget {
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: ThemeMode.system,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       routerConfig: createRouter(showOnboarding ? '/onboarding' : '/'),
     );
   }

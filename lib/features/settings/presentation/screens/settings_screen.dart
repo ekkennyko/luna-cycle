@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:luna/core/constants/app_constants.dart';
-import 'package:luna/core/constants/strings/settings_strings.dart';
+import 'package:luna/l10n/app_localizations.dart';
 import 'package:luna/features/cycle/presentation/providers/cycle_providers.dart';
 import 'package:luna/features/subscription/presentation/providers/subscription_providers.dart';
 import 'package:luna/shared/providers/core_providers.dart';
@@ -14,6 +14,7 @@ class SettingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final isPremiumAsync = ref.watch(isPremiumProvider);
     final isPremium = isPremiumAsync.when(
       data: (v) => v,
@@ -22,63 +23,63 @@ class SettingsScreen extends ConsumerWidget {
     );
 
     return Scaffold(
-      appBar: AppBar(title: const Text(SettingsStrings.settings)),
+      appBar: AppBar(title: Text(l10n.settingsTitle)),
       body: ListView(
         children: [
           if (!isPremium)
             _SettingsTile(
               icon: Icons.star_outline,
-              title: SettingsStrings.upgradeToPremium,
-              subtitle: SettingsStrings.upgradeSubtitle,
+              title: l10n.settingsUpgradeToPremium,
+              subtitle: l10n.settingsUpgradeSubtitle,
               color: Colors.amber,
               onTap: () => context.push('/paywall'),
             ),
-          const _SectionHeader(SettingsStrings.privacy),
+          _SectionHeader(l10n.settingsPrivacy),
           _SettingsTile(
             icon: Icons.lock_outline,
-            title: SettingsStrings.appLock,
-            subtitle: SettingsStrings.biometricsPin,
+            title: l10n.settingsAppLock,
+            subtitle: l10n.settingsBiometricsPin,
             onTap: () {},
           ),
-          const _SectionHeader(SettingsStrings.data),
+          _SectionHeader(l10n.settingsData),
           _SettingsTile(
             icon: Icons.backup_outlined,
-            title: SettingsStrings.createBackup,
-            subtitle: SettingsStrings.encryptedFile,
+            title: l10n.settingsCreateBackup,
+            subtitle: l10n.settingsEncryptedFile,
             isPremium: !isPremium,
             onTap: isPremium ? () {} : () => context.push('/paywall'),
           ),
           _SettingsTile(
             icon: Icons.restore_outlined,
-            title: SettingsStrings.restoreFromBackup,
+            title: l10n.settingsRestoreFromBackup,
             isPremium: !isPremium,
             onTap: isPremium ? () {} : () => context.push('/paywall'),
           ),
-          const _SectionHeader(SettingsStrings.cycle),
+          _SectionHeader(l10n.settingsCycle),
           _SettingsTile(
             icon: Icons.tune_outlined,
-            title: SettingsStrings.cycleSettings,
-            subtitle: SettingsStrings.cycleLengthSubtitle,
+            title: l10n.settingsCycleSettings,
+            subtitle: l10n.settingsCycleLengthSubtitle,
             onTap: () {},
           ),
-          const _SectionHeader(SettingsStrings.about),
+          _SectionHeader(l10n.settingsAbout),
           _SettingsTile(
             icon: Icons.info_outline,
             title: AppConstants.appName,
-            subtitle: 'Version ${AppConstants.appVersion}',
+            subtitle: l10n.settingsVersion(AppConstants.appVersion),
             onTap: () {},
           ),
           _SettingsTile(
             icon: Icons.privacy_tip_outlined,
-            title: SettingsStrings.privacyPolicy,
+            title: l10n.settingsPrivacyPolicy,
             onTap: () {},
           ),
           if (kDebugMode) ...[
-            const _SectionHeader(SettingsStrings.debug),
+            _SectionHeader(l10n.settingsDebug),
             _SettingsTile(
               icon: Icons.delete_forever_outlined,
-              title: SettingsStrings.resetProfile,
-              subtitle: SettingsStrings.deleteAllData,
+              title: l10n.settingsResetProfile,
+              subtitle: l10n.settingsDeleteAllData,
               color: Colors.red,
               onTap: () => _confirmReset(context, ref),
             ),
@@ -89,20 +90,21 @@ class SettingsScreen extends ConsumerWidget {
   }
 
   Future<void> _confirmReset(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text(SettingsStrings.resetProfileQuestion),
-        content: const Text(SettingsStrings.resetDialogBody),
+        title: Text(l10n.settingsResetProfileQuestion),
+        content: Text(l10n.settingsResetDialogBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text(SettingsStrings.cancel),
+            child: Text(l10n.settingsCancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text(SettingsStrings.reset),
+            child: Text(l10n.settingsReset),
           ),
         ],
       ),
@@ -177,9 +179,9 @@ class _PremiumBadge extends StatelessWidget {
         color: Colors.amber.shade100,
         borderRadius: BorderRadius.circular(8),
       ),
-      child: const Text(
-        SettingsStrings.premium,
-        style: TextStyle(
+      child: Text(
+        AppLocalizations.of(context)!.settingsPremium,
+        style: const TextStyle(
           fontSize: 11,
           color: Colors.amber,
           fontWeight: FontWeight.w700,

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:luna/core/constants/strings/log_strings.dart';
 import 'package:luna/core/theme/app_colors.dart';
+import 'package:luna/l10n/app_localizations.dart';
 import 'package:luna/features/cycle/presentation/providers/cycle_providers.dart';
 
 class LogScreen extends ConsumerStatefulWidget {
@@ -21,6 +22,7 @@ class _LogScreenState extends ConsumerState<LogScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final formatted = DateFormat('MMMM d, yyyy').format(widget.date);
 
     return Scaffold(
@@ -33,11 +35,11 @@ class _LogScreenState extends ConsumerState<LogScreen> {
           padding: const EdgeInsets.all(20),
           children: [
             _SectionCard(
-              title: LogStrings.period,
+              title: l10n.logPeriod,
               child: Column(
                 children: [
                   SwitchListTile(
-                    title: const Text(LogStrings.firstDayOngoing),
+                    title: Text(l10n.logFirstDayOngoing),
                     value: _isPeriod,
                     activeThumbColor: AppColors.primary,
                     onChanged: (v) => setState(() => _isPeriod = v),
@@ -50,7 +52,7 @@ class _LogScreenState extends ConsumerState<LogScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            LogStrings.flowIntensity,
+                            l10n.logFlowIntensity,
                             style: Theme.of(context).textTheme.labelLarge,
                           ),
                           const SizedBox(height: 8),
@@ -68,7 +70,7 @@ class _LogScreenState extends ConsumerState<LogScreen> {
             const SizedBox(height: 24),
             FilledButton(
               onPressed: _save,
-              child: const Text(LogStrings.save),
+              child: Text(l10n.logSave),
             ),
           ],
         ),

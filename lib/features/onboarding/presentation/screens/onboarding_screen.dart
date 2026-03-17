@@ -8,7 +8,7 @@ import 'package:luna/features/cycle/presentation/providers/cycle_providers.dart'
 import 'package:luna/shared/providers/core_providers.dart';
 import 'package:luna/core/constants/app_constants.dart';
 import 'package:luna/core/constants/prefs_keys.dart';
-import 'package:luna/core/constants/strings/onboarding_strings.dart';
+import 'package:luna/l10n/app_localizations.dart';
 import 'package:luna/core/theme/app_colors.dart';
 import 'package:luna/core/theme/date_picker_theme.dart';
 import 'package:luna/shared/widgets/gradient_button.dart';
@@ -118,23 +118,24 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Future<void> _startFresh() async {
+    final l10n = AppLocalizations.of(context)!;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1E1118),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill)),
-        content: const Text(
-          OnboardingStrings.startFreshDialogBody,
-          style: TextStyle(color: Colors.white70, fontSize: 14, height: 1.6),
+        content: Text(
+          l10n.onboardingStartFreshDialogBody,
+          style: const TextStyle(color: Colors.white70, fontSize: 14, height: 1.6),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text(OnboardingStrings.cancel, style: TextStyle(color: AppColors.darkSecondaryText)),
+            child: Text(l10n.onboardingCancel, style: const TextStyle(color: AppColors.darkSecondaryText)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text(OnboardingStrings.startFresh, style: TextStyle(color: _accent)),
+            child: Text(l10n.onboardingStartFresh, style: const TextStyle(color: _accent)),
           ),
         ],
       ),
@@ -215,6 +216,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Widget _buildLogoBar() {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
       child: Row(
@@ -231,7 +233,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           ),
           const SizedBox(width: 10),
           Text(
-            OnboardingStrings.appTitle,
+            l10n.onboardingAppTitle,
             style: AppTextStyles.titleMedium(),
           ),
         ],
@@ -270,18 +272,19 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Widget _buildStep0() {
+    final l10n = AppLocalizations.of(context)!;
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(24, 4, 24, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            OnboardingStrings.step0Title,
+            l10n.onboardingStep0Title,
             style: AppTextStyles.displaySmall,
           ),
           const SizedBox(height: 8),
           Text(
-            OnboardingStrings.step0Subtitle,
+            l10n.onboardingStep0Subtitle,
             style: TextStyle(
               fontSize: 13,
               color: Colors.white.withValues(alpha: 0.45),
@@ -290,7 +293,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           ),
           const SizedBox(height: 28),
           _DatePickerField(
-            label: OnboardingStrings.whenDidItStart,
+            label: l10n.onboardingWhenDidItStart,
             date: _periodStart,
             onTap: () async {
               final d = await _pickDate(context, initial: _periodStart);
@@ -312,10 +315,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             child: _periodOngoing
                 ? const SizedBox.shrink()
                 : _DatePickerField(
-                    label: OnboardingStrings.whenDidItEnd,
+                    label: l10n.onboardingWhenDidItEnd,
                     date: _periodEnd,
                     optional: true,
-                    hint: _periodLength != null ? '$_periodLength day period — got it!' : null,
+                    hint: _periodLength != null ? l10n.onboardingDayPeriod(_periodLength!) : null,
                     onTap: () async {
                       if (_periodStart == null) return;
                       final d = await _pickDate(
@@ -361,7 +364,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            OnboardingStrings.stillOngoing,
+                            l10n.onboardingStillOngoing,
                             style: TextStyle(
                               fontSize: 14,
                               color: _periodOngoing ? Colors.white : Colors.white.withValues(alpha: 0.45),
@@ -389,7 +392,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    OnboardingStrings.privacyNotice,
+                    l10n.onboardingPrivacyNotice,
                     style: TextStyle(
                       fontSize: 12,
                       color: Colors.white.withValues(alpha: 0.35),
@@ -404,9 +407,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           Center(
             child: TextButton(
               onPressed: _startFresh,
-              child: const Text(
-                OnboardingStrings.startFreshLink,
-                style: TextStyle(fontSize: 13, color: Color(0x4DFFFFFF)),
+              child: Text(
+                l10n.onboardingStartFreshLink,
+                style: const TextStyle(fontSize: 13, color: Color(0x4DFFFFFF)),
               ),
             ),
           ),
@@ -416,12 +419,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Widget _buildStep1() {
+    final l10n = AppLocalizations.of(context)!;
     final prevPl = _prevPeriodLength;
     final cl = _cycleLength;
 
     final String periodLenStr;
     if (prevPl != null) {
-      periodLenStr = '$prevPl days';
+      periodLenStr = l10n.onboardingDays(prevPl);
     } else if (_prevStart != null && _prevEnd == null) {
       periodLenStr = '—';
     } else {
@@ -430,11 +434,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
     final String cycleLenStr;
     if (cl != null) {
-      cycleLenStr = '$cl days';
+      cycleLenStr = l10n.onboardingDays(cl);
     } else if (_prevStart != null) {
       cycleLenStr = '...';
     } else {
-      cycleLenStr = OnboardingStrings.addDateAbove;
+      cycleLenStr = l10n.onboardingAddDateAbove;
     }
 
     return SingleChildScrollView(
@@ -443,12 +447,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            OnboardingStrings.step1Title,
+            l10n.onboardingStep1Title,
             style: AppTextStyles.displaySmall,
           ),
           const SizedBox(height: 8),
           Text(
-            OnboardingStrings.step1Subtitle,
+            l10n.onboardingStep1Subtitle,
             style: TextStyle(
               fontSize: 13,
               color: Colors.white.withValues(alpha: 0.45),
@@ -457,10 +461,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           ),
           const SizedBox(height: 28),
           _DatePickerField(
-            label: OnboardingStrings.prevPeriodStart,
+            label: l10n.onboardingPrevPeriodStart,
             date: _prevStart,
             optional: true,
-            hint: cl != null ? '$cl day cycle — calculated from your data ✓' : null,
+            hint: cl != null ? l10n.onboardingDayCycleCalculated(cl) : null,
             onTap: () async {
               final last = _periodStart?.subtract(const Duration(days: 1));
               final d = await _pickDate(
@@ -481,10 +485,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           if (_prevStart != null) ...[
             const SizedBox(height: 16),
             _DatePickerField(
-              label: OnboardingStrings.prevPeriodEnd,
+              label: l10n.onboardingPrevPeriodEnd,
               date: _prevEnd,
               optional: true,
-              hint: prevPl != null ? '$prevPl day period — got it!' : null,
+              hint: prevPl != null ? l10n.onboardingDayPeriod(prevPl) : null,
               onTap: () async {
                 final maxDate = _periodStart?.subtract(const Duration(days: 1));
                 final d = await _pickDate(
@@ -510,21 +514,21 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 SectionLabel(
-                  text: OnboardingStrings.preview,
+                  text: l10n.onboardingPreview,
                   color: Colors.white.withValues(alpha: 0.4),
                   fontWeight: FontWeight.w500,
                 ),
                 const SizedBox(height: 12),
                 _PreviewRow(
-                  label: OnboardingStrings.periodLength,
+                  label: l10n.onboardingPeriodLength,
                   value: periodLenStr,
                   isPlaceholder: periodLenStr == '—',
                   hasDivider: true,
                 ),
                 _PreviewRow(
-                  label: OnboardingStrings.cycleLength,
+                  label: l10n.onboardingCycleLength,
                   value: cycleLenStr,
-                  isPlaceholder: cycleLenStr == '—' || cycleLenStr == OnboardingStrings.addDateAbove,
+                  isPlaceholder: cycleLenStr == '—' || cycleLenStr == l10n.onboardingAddDateAbove,
                   hasDivider: false,
                 ),
               ],
@@ -539,17 +543,17 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               borderRadius: BorderRadius.circular(AppRadius.card),
               border: Border.all(color: _accent.withValues(alpha: 0.15)),
             ),
-            child: const Column(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  OnboardingStrings.didYouKnow,
-                  style: TextStyle(fontSize: 12, color: _accent, fontWeight: FontWeight.w600),
+                  l10n.onboardingDidYouKnow,
+                  style: const TextStyle(fontSize: 12, color: _accent, fontWeight: FontWeight.w600),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
-                  OnboardingStrings.didYouKnowBody,
-                  style: TextStyle(
+                  l10n.onboardingDidYouKnowBody,
+                  style: const TextStyle(
                     fontSize: 12,
                     color: AppColors.darkSecondaryText,
                     height: 1.5,
@@ -564,12 +568,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Widget _buildBottomButtons() {
+    final l10n = AppLocalizations.of(context)!;
     final isLastStep = _step == 1;
     final label = _saving
-        ? OnboardingStrings.saving
+        ? l10n.onboardingSaving
         : isLastStep
-            ? OnboardingStrings.getStarted
-            : OnboardingStrings.continueButton;
+            ? l10n.onboardingGetStarted
+            : l10n.onboardingContinue;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
@@ -590,7 +595,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 TextButton(
                   onPressed: _saving ? null : _handleBack,
                   child: Text(
-                    OnboardingStrings.back,
+                    l10n.onboardingBack,
                     style: TextStyle(fontSize: 13, color: Colors.white.withValues(alpha: 0.4)),
                   ),
                 )
@@ -599,9 +604,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               if (isLastStep)
                 TextButton(
                   onPressed: _saving ? null : _saveAndFinish,
-                  child: const Text(
-                    OnboardingStrings.skip,
-                    style: TextStyle(fontSize: 13, color: AppColors.darkHint),
+                  child: Text(
+                    l10n.onboardingSkip,
+                    style: const TextStyle(fontSize: 13, color: AppColors.darkHint),
                   ),
                 )
               else
@@ -614,25 +619,26 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Widget _buildCompletionScreen() {
+    final l10n = AppLocalizations.of(context)!;
     final dateStr = _periodStart != null ? DateFormat('MMM d, y').format(_periodStart!) : '—';
 
     final String periodLenStr;
     final pl = _periodLength;
     if (pl != null) {
-      periodLenStr = '$pl days';
+      periodLenStr = l10n.onboardingDays(pl);
     } else if (_periodStart != null && _periodEnd == null) {
-      periodLenStr = OnboardingStrings.stillOngoing;
+      periodLenStr = l10n.onboardingStillOngoing;
     } else {
       periodLenStr = '—';
     }
 
     final cl = _cycleLength;
-    final cycleLenStr = cl != null ? '$cl days' : '—';
+    final cycleLenStr = cl != null ? l10n.onboardingDays(cl) : '—';
 
     final rows = [
-      (OnboardingStrings.lastPeriodStarted, dateStr),
-      (OnboardingStrings.periodLength, periodLenStr),
-      (OnboardingStrings.cycleLength, cycleLenStr),
+      (l10n.onboardingLastPeriodStarted, dateStr),
+      (l10n.onboardingPeriodLength, periodLenStr),
+      (l10n.onboardingCycleLength, cycleLenStr),
     ];
 
     return Scaffold(
@@ -684,14 +690,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         ),
                         const SizedBox(height: 24),
                         Text(
-                          OnboardingStrings.allSet,
+                          l10n.onboardingAllSet,
                           style: AppTextStyles.displayLarge(),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 12),
-                        const Text(
-                          OnboardingStrings.completionSubtitle,
-                          style: TextStyle(
+                        Text(
+                          l10n.onboardingCompletionSubtitle,
+                          style: const TextStyle(
                             fontSize: 14,
                             color: AppColors.darkSecondaryText,
                             height: 1.7,
@@ -755,7 +761,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
                   child: GradientButton(
-                    label: OnboardingStrings.startTracking,
+                    label: l10n.onboardingStartTracking,
                     color: _accent,
                     enabled: true,
                     onTap: _completeOnboarding,
@@ -833,6 +839,7 @@ class _DatePickerField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final hasDate = date != null;
     final showHint = hasDate && hint != null;
 
@@ -848,7 +855,7 @@ class _DatePickerField extends StatelessWidget {
             ),
             if (optional)
               Text(
-                OnboardingStrings.optional,
+                l10n.onboardingOptional,
                 style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.19)),
               ),
           ],
@@ -870,7 +877,7 @@ class _DatePickerField extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    date != null ? DateFormat('MMMM d, y').format(date!) : OnboardingStrings.tapToSelect,
+                    date != null ? DateFormat('MMMM d, y').format(date!) : l10n.onboardingTapToSelect,
                     style: TextStyle(
                       fontSize: 14,
                       color: hasDate ? Colors.white : Colors.white.withValues(alpha: 0.25),

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:luna/core/constants/app_constants.dart';
 import 'package:luna/core/constants/strings/paywall_strings.dart';
 import 'package:luna/core/theme/app_colors.dart';
+import 'package:luna/l10n/app_localizations.dart';
 import 'package:luna/features/subscription/presentation/providers/subscription_providers.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 
@@ -24,7 +25,7 @@ class PaywallScreen extends ConsumerWidget {
       body: offeringsAsync.when(
         data: (offerings) => _PaywallContent(offerings: offerings),
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Failed to load: $e')),
+        error: (e, _) => Center(child: Text(AppLocalizations.of(context)!.paywallFailed(e.toString()))),
       ),
     );
   }
@@ -45,6 +46,7 @@ class _PaywallContent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final current = offerings.current;
     final notifier = ref.read(subscriptionNotifierProvider.notifier);
     final subState = ref.watch(subscriptionNotifierProvider);
@@ -55,12 +57,12 @@ class _PaywallContent extends ConsumerWidget {
         child: Column(
           children: [
             Text(
-              PaywallStrings.lunaPremium,
+              l10n.paywallLunaPremium,
               style: Theme.of(context).textTheme.displayLarge?.copyWith(color: AppColors.primary),
             ),
             const SizedBox(height: 8),
             Text(
-              PaywallStrings.subtitle,
+              l10n.paywallSubtitle,
               style: Theme.of(context).textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),
@@ -86,15 +88,15 @@ class _PaywallContent extends ConsumerWidget {
             const Spacer(),
             if (current != null) ...[
               _PackageButton(
-                label: PaywallStrings.yearly,
-                sublabel: PaywallStrings.save44,
+                label: l10n.paywallYearly,
+                sublabel: l10n.paywallSave44,
                 package: current.annual,
                 onTap: (p) => notifier.purchase(p),
                 loading: subState.isLoading,
               ),
               const SizedBox(height: 10),
               _PackageButton(
-                label: PaywallStrings.monthly,
+                label: l10n.paywallMonthly,
                 package: current.monthly,
                 onTap: (p) => notifier.purchase(p),
                 loading: subState.isLoading,
@@ -103,7 +105,7 @@ class _PaywallContent extends ConsumerWidget {
             ],
             TextButton(
               onPressed: () => notifier.restorePurchases(),
-              child: const Text(PaywallStrings.restorePurchases),
+              child: Text(l10n.paywallRestorePurchases),
             ),
           ],
         ),

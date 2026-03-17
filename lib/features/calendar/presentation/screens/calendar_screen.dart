@@ -5,8 +5,8 @@ import 'package:intl/intl.dart';
 import 'package:luna/core/database/app_database.dart';
 import 'package:luna/core/constants/app_constants.dart';
 import 'package:luna/core/constants/mood_data.dart';
-import 'package:luna/core/constants/strings/calendar_strings.dart';
 import 'package:luna/core/theme/app_colors.dart';
+import 'package:luna/l10n/app_localizations.dart';
 import 'package:luna/features/cycle/domain/cycle_phase_calculator.dart';
 import 'package:luna/features/cycle/presentation/providers/cycle_providers.dart';
 import 'package:luna/shared/providers/core_providers.dart';
@@ -119,6 +119,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final ranges = ref.watch(periodRangesProvider).asData?.value ?? [];
     final predicted = ref.watch(predictedPeriodsProvider).asData?.value ?? [];
     final moods = ref.watch(allMoodsProvider);
@@ -194,13 +195,13 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        CalendarStrings.calendar,
+                        l10n.calendarTitle,
                         style: AppTextStyles.displayMedium(
                           color: Colors.white.withValues(alpha: 0.9),
                         ),
                       ),
-                      const SectionLabel(
-                        text: CalendarStrings.cycleHistory,
+                      SectionLabel(
+                        text: l10n.calendarCycleHistory,
                         color: _accent,
                         letterSpacing: 2,
                         fontWeight: FontWeight.w500,
@@ -210,21 +211,21 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 ),
 
                 // Legend
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(24, 12, 24, 0),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
                   child: Wrap(
                     spacing: 16,
                     runSpacing: 6,
                     children: [
-                      _LegendItem(color: _accent, label: CalendarStrings.legendPeriod),
+                      _LegendItem(color: _accent, label: l10n.calendarLegendPeriod),
                       _LegendItem(
-                        color: Color(0x40E05A7A),
-                        label: CalendarStrings.legendPredicted,
+                        color: const Color(0x40E05A7A),
+                        label: l10n.calendarLegendPredicted,
                         dashed: true,
                       ),
-                      _LegendItem(color: Color(0x1AF4A261), label: CalendarStrings.legendFollicular),
-                      _LegendItem(color: Color(0x1AA8DADC), label: CalendarStrings.legendOvulation),
-                      _LegendItem(color: Color(0x1A9B72CF), label: CalendarStrings.legendLuteal),
+                      _LegendItem(color: const Color(0x1AF4A261), label: l10n.calendarLegendFollicular),
+                      _LegendItem(color: const Color(0x1AA8DADC), label: l10n.calendarLegendOvulation),
+                      _LegendItem(color: const Color(0x1A9B72CF), label: l10n.calendarLegendLuteal),
                     ],
                   ),
                 ),
@@ -662,6 +663,7 @@ class _DayDetailSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final dateNorm = DateTime(date.year, date.month, date.day);
     final isPeriod = _getPeriodPosition(dateNorm, ranges) != null;
     final isPredicted = !isPeriod && _getPredictedPosition(dateNorm, predicted) != null;
@@ -694,7 +696,7 @@ class _DayDetailSheet extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.only(top: 2),
                       child: Text(
-                        '${CyclePhaseCalculator.phaseName(phase)}${CalendarStrings.phaseSuffix}',
+                        '${CyclePhaseCalculator.phaseName(phase)}${l10n.calendarPhaseSuffix}',
                         style: TextStyle(
                           fontSize: 12,
                           color: _phaseColors[phase],
@@ -703,11 +705,11 @@ class _DayDetailSheet extends StatelessWidget {
                       ),
                     ),
                   if (isPredicted)
-                    const Padding(
-                      padding: EdgeInsets.only(top: 2),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
                       child: Text(
-                        CalendarStrings.predictedPeriod,
-                        style: TextStyle(
+                        l10n.calendarPredictedPeriod,
+                        style: const TextStyle(
                           fontSize: 12,
                           color: Color(0x99E05A7A),
                         ),
@@ -723,9 +725,9 @@ class _DayDetailSheet extends StatelessWidget {
                     border: Border.all(color: const Color(0x66E05A7A)),
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
-                  child: const Text(
-                    CalendarStrings.periodBadge,
-                    style: TextStyle(
+                  child: Text(
+                    l10n.calendarPeriodBadge,
+                    style: const TextStyle(
                       fontSize: 12,
                       color: _accent,
                       fontWeight: FontWeight.w600,
@@ -742,7 +744,7 @@ class _DayDetailSheet extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 20),
               child: Text(
-                CalendarStrings.nothingLogged,
+                l10n.calendarNothingLogged,
                 style: TextStyle(
                   fontSize: 13,
                   color: Colors.white.withValues(alpha: 0.2),
@@ -763,8 +765,8 @@ class _DayDetailSheet extends StatelessWidget {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const SectionLabel(
-                          text: CalendarStrings.moodLabel,
+                        SectionLabel(
+                          text: l10n.calendarMoodLabel,
                           color: AppColors.darkHint,
                         ),
                         const SizedBox(height: 2),
@@ -791,8 +793,8 @@ class _DayDetailSheet extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SectionLabel(
-                      text: CalendarStrings.symptomsLabel,
+                    SectionLabel(
+                      text: l10n.calendarSymptomsLabel,
                       color: AppColors.darkHint,
                     ),
                     const SizedBox(height: 10),

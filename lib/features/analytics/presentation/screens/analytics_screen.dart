@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:luna/core/constants/strings/analytics_strings.dart';
+import 'package:luna/l10n/app_localizations.dart';
 import 'package:luna/features/subscription/presentation/providers/subscription_providers.dart';
 
 class AnalyticsScreen extends ConsumerWidget {
@@ -9,10 +9,11 @@ class AnalyticsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final isPremiumAsync = ref.watch(isPremiumProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text(AnalyticsStrings.analytics)),
+      appBar: AppBar(title: Text(l10n.analyticsTitle)),
       body: isPremiumAsync.when(
         data: (isPremium) {
           if (!isPremium) {
@@ -34,6 +35,7 @@ class _PremiumGate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -43,20 +45,20 @@ class _PremiumGate extends StatelessWidget {
             const Icon(Icons.bar_chart, size: 64, color: Colors.grey),
             const SizedBox(height: 16),
             Text(
-              AnalyticsStrings.premiumTitle,
+              l10n.analyticsPremiumTitle,
               style: Theme.of(context).textTheme.headlineMedium,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
-              AnalyticsStrings.premiumBody,
+              l10n.analyticsPremiumBody,
               style: Theme.of(context).textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
             FilledButton(
               onPressed: onUpgrade,
-              child: const Text(AnalyticsStrings.tryPremium),
+              child: Text(l10n.analyticsTryPremium),
             ),
           ],
         ),
@@ -70,6 +72,6 @@ class _AnalyticsContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(child: Text(AnalyticsStrings.comingSoon));
+    return Center(child: Text(AppLocalizations.of(context)!.analyticsComingSoon));
   }
 }
