@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:luna/core/theme/app_text_styles.dart';
 import 'package:luna/core/database/app_database.dart';
 import 'package:luna/features/cycle/domain/cycle_phase_calculator.dart';
 import 'package:luna/features/cycle/presentation/providers/cycle_providers.dart';
@@ -416,9 +416,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
             children: [
               Text(
                 'Luna',
-                style: GoogleFonts.playfairDisplay(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w600,
+                style: AppTextStyles.displayLarge(
                   color: Colors.white.withValues(alpha: 0.9),
                   letterSpacing: -0.5,
                   height: 1.1,
@@ -544,10 +542,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                           const SizedBox(height: 10),
                           Text(
                             'Tap to log',
-                            style: GoogleFonts.playfairDisplay(
-                              fontSize: 26,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
+                            style: AppTextStyles.displayMedium(
                               height: 1,
                             ),
                           ),
@@ -571,11 +566,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                           const SizedBox(height: 2),
                           Text(
                             displayDay > 0 ? '$displayDay' : '–',
-                            style: GoogleFonts.playfairDisplay(
-                              fontSize: 72,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                              height: 1,
+                            style: AppTextStyles.heroNumber.copyWith(
                               shadows: [
                                 Shadow(
                                   color: phase.color.withValues(alpha: 0.53),
@@ -782,11 +773,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                   children: [
                     Text(
                       value,
-                      style: GoogleFonts.playfairDisplay(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
+                      style: AppTextStyles.titleSmall(fontWeight: FontWeight.w700),
                     ),
                     const SizedBox(height: 2),
                     Text(
@@ -1130,11 +1117,7 @@ class _SheetContainer extends StatelessWidget {
           const SizedBox(height: 20),
           Text(
             title,
-            style: GoogleFonts.playfairDisplay(
-              fontSize: 17,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-            ),
+            style: AppTextStyles.titleSmall(),
           ),
           const SizedBox(height: 20),
           child,

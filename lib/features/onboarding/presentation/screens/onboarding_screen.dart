@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:luna/core/theme/app_text_styles.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:luna/features/cycle/presentation/providers/cycle_providers.dart';
@@ -230,11 +230,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           const SizedBox(width: 10),
           Text(
             'Luna',
-            style: GoogleFonts.playfairDisplay(
-              fontSize: 18,
-              color: Colors.white.withValues(alpha: 0.9),
-              fontWeight: FontWeight.w600,
-            ),
+            style: AppTextStyles.titleMedium(),
           ),
         ],
       ),
@@ -279,12 +275,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         children: [
           Text(
             'Tell us about your\nlast period',
-            style: GoogleFonts.playfairDisplay(
-              fontSize: 24,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-              height: 1.2,
-            ),
+            style: AppTextStyles.displaySmall,
           ),
           const SizedBox(height: 8),
           Text(
@@ -451,12 +442,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         children: [
           Text(
             'One more for accuracy',
-            style: GoogleFonts.playfairDisplay(
-              fontSize: 24,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-              height: 1.2,
-            ),
+            style: AppTextStyles.displaySmall,
           ),
           const SizedBox(height: 8),
           Text(
@@ -701,11 +687,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         const SizedBox(height: 24),
                         Text(
                           "You're all set!",
-                          style: GoogleFonts.playfairDisplay(
-                            fontSize: 28,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
+                          style: AppTextStyles.displayLarge(),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 12),

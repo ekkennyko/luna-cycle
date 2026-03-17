@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:luna/core/theme/app_text_styles.dart';
 import 'package:intl/intl.dart';
 import 'package:luna/core/database/app_database.dart';
 import 'package:luna/core/constants/app_constants.dart';
@@ -208,9 +208,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                     children: [
                       Text(
                         'Calendar',
-                        style: GoogleFonts.playfairDisplay(
-                          fontSize: 26,
-                          fontWeight: FontWeight.w600,
+                        style: AppTextStyles.displayMedium(
                           color: Colors.white.withValues(alpha: 0.9),
                         ),
                       ),
@@ -357,12 +355,7 @@ class _MonthGrid extends StatelessWidget {
           // Month header
           Text(
             monthName,
-            style: GoogleFonts.playfairDisplay(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Colors.white.withValues(alpha: 0.8),
-              letterSpacing: 0.5,
-            ),
+            style: AppTextStyles.monthLabel,
           ),
           const SizedBox(height: 16),
 
@@ -711,11 +704,7 @@ class _DayDetailSheet extends StatelessWidget {
                 children: [
                   Text(
                     DateFormat('MMMM d').format(date),
-                    style: GoogleFonts.playfairDisplay(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
+                    style: AppTextStyles.titleLarge,
                   ),
                   if (phase != null)
                     Padding(
