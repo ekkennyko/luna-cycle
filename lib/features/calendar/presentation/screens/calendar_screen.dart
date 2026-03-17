@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:luna/core/database/app_database.dart';
 import 'package:luna/core/constants/app_constants.dart';
+import 'package:luna/core/constants/mood_data.dart';
 import 'package:luna/core/theme/app_colors.dart';
 import 'package:luna/features/cycle/domain/cycle_phase_calculator.dart';
 import 'package:luna/features/cycle/presentation/providers/cycle_providers.dart';
@@ -26,9 +27,6 @@ const _phaseBgs = {
   CyclePhase.ovulation: AppColors.phaseOvulationBg,
   CyclePhase.luteal: AppColors.phaseLutealBg,
 };
-
-const _moodEmojis = ['😔', '😐', '🙂', '😊', '🤩'];
-const _moodLabels = ['Low', 'Okay', 'Good', 'Happy', 'Amazing'];
 
 /// All period ranges: [{start, end}] derived from DB entries.
 final periodRangesProvider = FutureProvider<List<({DateTime start, DateTime end})>>((ref) async {
@@ -791,7 +789,7 @@ class _DayDetailSheet extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Text(_moodEmojis[mood - 1], style: const TextStyle(fontSize: 28)),
+                  Text(moodEmojis[mood - 1], style: const TextStyle(fontSize: 28)),
                   const SizedBox(width: 12),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -806,7 +804,7 @@ class _DayDetailSheet extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        _moodLabels[mood - 1],
+                        moodLabels[mood - 1],
                         style: TextStyle(
                           fontSize: 13,
                           color: Colors.white.withValues(alpha: 0.7),

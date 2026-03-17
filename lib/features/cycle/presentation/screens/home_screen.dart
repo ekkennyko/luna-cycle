@@ -10,6 +10,7 @@ import 'package:luna/features/cycle/domain/cycle_phase_calculator.dart';
 import 'package:luna/features/cycle/presentation/providers/cycle_providers.dart';
 import 'package:luna/shared/providers/core_providers.dart';
 import 'package:luna/core/constants/app_constants.dart';
+import 'package:luna/core/constants/mood_data.dart';
 import 'package:luna/core/extensions/date_time_ext.dart';
 import 'package:luna/core/constants/prefs_keys.dart';
 import 'package:luna/core/theme/app_colors.dart';
@@ -71,9 +72,6 @@ class _Phase {
         CyclePhase.luteal => luteal,
       };
 }
-
-const _moods = ['😔', '😐', '🙂', '😊', '🤩'];
-const _moodLabels = ['Low', 'Okay', 'Good', 'Happy', 'Amazing'];
 
 const _intensityLabels = ['Light', 'Medium', 'Heavy', 'Very Heavy'];
 const _intensityColors = [
@@ -656,8 +654,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
           // Mood
           Expanded(
             child: _QuickChip(
-              icon: moodIdx != null ? _moods[moodIdx] : '💭',
-              label: moodIdx != null ? _moodLabels[moodIdx] : 'Mood',
+              icon: moodIdx != null ? moodEmojis[moodIdx] : '💭',
+              label: moodIdx != null ? moodLabels[moodIdx] : 'Mood',
               onTap: () => _openMoodSheet(phase),
             ),
           ),
@@ -1549,13 +1547,13 @@ class _MoodSheetState extends State<_MoodSheet> {
                     scale: selected ? 1.1 : 1.0,
                     duration: AppConstants.quickAnim,
                     child: Text(
-                      _moods[i],
+                      moodEmojis[i],
                       style: const TextStyle(fontSize: 30),
                     ),
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    _moodLabels[i].toUpperCase(),
+                    moodLabels[i].toUpperCase(),
                     style: const TextStyle(
                       fontSize: 9,
                       color: AppColors.darkSecondaryText,
