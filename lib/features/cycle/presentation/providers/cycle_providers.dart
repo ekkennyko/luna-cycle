@@ -91,23 +91,28 @@ final cycleLengthsProvider = FutureProvider<List<int>>((ref) async {
   ];
 });
 
-// All completed period lengths in chronological order (oldest → newest).
-final completedPeriodLengthsProvider = FutureProvider<List<int>>((ref) async {
-  ref.watch(cycleEntriesProvider);
-  final entries = await ref.read(cycleRepositoryProvider).getAllEntries();
+/// Pairs each period_start with its nearest period_end (end >= start).
+List<({DateTime start, DateTime end})> matchPeriodRanges(List<CycleEntry> entries) {
   final starts = entries.where((e) => e.type == 'period_start').toList()..sort((a, b) => a.date.compareTo(b.date));
   final ends = entries.where((e) => e.type == 'period_end').toList()..sort((a, b) => a.date.compareTo(b.date));
 
-  final lengths = <int>[];
+  final ranges = <({DateTime start, DateTime end})>[];
   for (final s in starts) {
     for (final e in ends) {
       if (!e.date.isBefore(s.date)) {
-        lengths.add(e.date.difference(s.date).inDays + 1);
+        ranges.add((start: s.date, end: e.date));
         break;
       }
     }
   }
-  return lengths;
+  return ranges;
+}
+
+// All completed period lengths in chronological order (oldest → newest).
+final completedPeriodLengthsProvider = FutureProvider<List<int>>((ref) async {
+  ref.watch(cycleEntriesProvider);
+  final entries = await ref.read(cycleRepositoryProvider).getAllEntries();
+  return matchPeriodRanges(entries).map((r) => r.end.difference(r.start).inDays + 1).toList();
 });
 
 // Predicted period length using weighted average.

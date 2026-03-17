@@ -34,23 +34,7 @@ const _phaseBgs = {
 final periodRangesProvider = FutureProvider<List<({DateTime start, DateTime end})>>((ref) async {
   ref.watch(cycleEntriesProvider);
   final entries = await ref.read(cycleRepositoryProvider).getAllEntries();
-  final starts = entries.where((e) => e.type == 'period_start').toList()..sort((a, b) => a.date.compareTo(b.date));
-  final ends = entries.where((e) => e.type == 'period_end').toList()..sort((a, b) => a.date.compareTo(b.date));
-
-  final ranges = <({DateTime start, DateTime end})>[];
-  for (final s in starts) {
-    DateTime? endDate;
-    for (final e in ends) {
-      if (!e.date.isBefore(s.date)) {
-        endDate = e.date;
-        break;
-      }
-    }
-    if (endDate != null) {
-      ranges.add((start: s.date, end: endDate));
-    }
-  }
-  return ranges;
+  return matchPeriodRanges(entries);
 });
 
 final predictedPeriodsProvider = FutureProvider<List<({DateTime start, DateTime end})>>(
