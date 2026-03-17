@@ -17,7 +17,9 @@ import 'package:luna/core/theme/app_colors.dart';
 import 'package:luna/core/theme/date_picker_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:luna/shared/widgets/common_sheet.dart';
+import 'package:luna/shared/widgets/app_card.dart';
 import 'package:luna/shared/widgets/gradient_button.dart';
+import 'package:luna/shared/widgets/section_label.dart';
 
 class _Phase {
   const _Phase({
@@ -422,14 +424,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                   height: 1.1,
                 ),
               ),
-              Text(
-                'CYCLE TRACKER',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: phase.color,
-                  letterSpacing: 2,
-                  fontWeight: FontWeight.w500,
-                ),
+              SectionLabel(
+                text: 'CYCLE TRACKER',
+                color: phase.color,
+                letterSpacing: 2,
+                fontWeight: FontWeight.w500,
               ),
             ],
           ),
@@ -710,14 +709,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                   ),
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  '${phase.name.toUpperCase()} PHASE',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: phase.color,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 1,
-                  ),
+                SectionLabel(
+                  text: '${phase.name.toUpperCase()} PHASE',
+                  color: phase.color,
+                  fontWeight: FontWeight.w600,
                 ),
               ],
             ),
@@ -760,15 +755,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                 left: i == 0 ? 0 : 5,
                 right: i == stats.length - 1 ? 0 : 5,
               ),
-              child: Container(
+              child: AppCard(
                 padding: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  color: AppColors.darkCardBg,
-                  borderRadius: BorderRadius.circular(AppRadius.card),
-                  border: Border.all(
-                    color: AppColors.darkCardBorder,
-                  ),
-                ),
                 child: Column(
                   children: [
                     Text(

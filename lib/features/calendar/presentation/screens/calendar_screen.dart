@@ -9,7 +9,9 @@ import 'package:luna/core/theme/app_colors.dart';
 import 'package:luna/features/cycle/domain/cycle_phase_calculator.dart';
 import 'package:luna/features/cycle/presentation/providers/cycle_providers.dart';
 import 'package:luna/shared/providers/core_providers.dart';
+import 'package:luna/shared/widgets/app_card.dart';
 import 'package:luna/shared/widgets/common_sheet.dart';
+import 'package:luna/shared/widgets/section_label.dart';
 
 const _bg = AppColors.appBackground;
 const _accent = AppColors.phaseMenstrual;
@@ -212,14 +214,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                           color: Colors.white.withValues(alpha: 0.9),
                         ),
                       ),
-                      const Text(
-                        'CYCLE HISTORY',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: _accent,
-                          letterSpacing: 2,
-                          fontWeight: FontWeight.w500,
-                        ),
+                      const SectionLabel(
+                        text: 'CYCLE HISTORY',
+                        color: _accent,
+                        letterSpacing: 2,
+                        fontWeight: FontWeight.w500,
                       ),
                     ],
                   ),
@@ -768,87 +767,72 @@ class _DayDetailSheet extends StatelessWidget {
 
           // Mood card
           if (mood != null) ...[
-            Container(
-              margin: const EdgeInsets.only(bottom: 14),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: AppColors.darkCardBg,
-                borderRadius: BorderRadius.circular(AppRadius.card),
-                border: Border.all(color: AppColors.darkCardBorder),
-              ),
-              child: Row(
-                children: [
-                  Text(moodEmojis[mood - 1], style: const TextStyle(fontSize: 28)),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'MOOD',
-                        style: TextStyle(
-                          fontSize: 11,
+            Padding(
+              padding: const EdgeInsets.only(bottom: 14),
+              child: AppCard(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Row(
+                  children: [
+                    Text(moodEmojis[mood - 1], style: const TextStyle(fontSize: 28)),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SectionLabel(
+                          text: 'MOOD',
                           color: AppColors.darkHint,
-                          letterSpacing: 1,
                         ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        moodLabels[mood - 1],
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.white.withValues(alpha: 0.7),
+                        const SizedBox(height: 2),
+                        Text(
+                          moodLabels[mood - 1],
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.white.withValues(alpha: 0.7),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
 
           // Symptoms card
           if (symptoms != null && symptoms.isNotEmpty)
-            Container(
+            SizedBox(
               width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.darkCardBg,
-                borderRadius: BorderRadius.circular(AppRadius.card),
-                border: Border.all(color: AppColors.darkCardBorder),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'SYMPTOMS',
-                    style: TextStyle(
-                      fontSize: 11,
+              child: AppCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SectionLabel(
+                      text: 'SYMPTOMS',
                       color: AppColors.darkHint,
-                      letterSpacing: 1,
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: symptoms
-                        .map(
-                          (s) => Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                            decoration: BoxDecoration(
-                              color: const Color(0x26E05A7A),
-                              border: Border.all(color: const Color(0x4DE05A7A)),
-                              borderRadius: BorderRadius.circular(AppRadius.pill),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: symptoms
+                          .map(
+                            (s) => Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: const Color(0x26E05A7A),
+                                border: Border.all(color: const Color(0x4DE05A7A)),
+                                borderRadius: BorderRadius.circular(AppRadius.pill),
+                              ),
+                              child: Text(
+                                s,
+                                style: const TextStyle(fontSize: 12, color: _accent),
+                              ),
                             ),
-                            child: Text(
-                              s,
-                              style: const TextStyle(fontSize: 12, color: _accent),
-                            ),
-                          ),
-                        )
-                        .toList(),
-                  ),
-                ],
+                          )
+                          .toList(),
+                    ),
+                  ],
+                ),
               ),
             ),
         ],

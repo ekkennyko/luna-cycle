@@ -11,6 +11,7 @@ import 'package:luna/core/constants/prefs_keys.dart';
 import 'package:luna/core/theme/app_colors.dart';
 import 'package:luna/core/theme/date_picker_theme.dart';
 import 'package:luna/shared/widgets/gradient_button.dart';
+import 'package:luna/shared/widgets/section_label.dart';
 
 const _accent = AppColors.phaseMenstrual;
 const _bg = AppColors.appBackground;
@@ -507,14 +508,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'PREVIEW',
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.4),
-                    fontSize: 11,
-                    letterSpacing: 1,
-                    fontWeight: FontWeight.w500,
-                  ),
+                SectionLabel(
+                  text: 'PREVIEW',
+                  color: Colors.white.withValues(alpha: 0.4),
+                  fontWeight: FontWeight.w500,
                 ),
                 const SizedBox(height: 12),
                 _PreviewRow(
