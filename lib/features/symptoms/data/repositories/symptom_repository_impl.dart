@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 import 'package:luna/core/database/app_database.dart';
+import 'package:luna/core/extensions/date_time_ext.dart';
 import 'package:luna/features/symptoms/domain/repositories/i_symptom_repository.dart';
 
 class SymptomRepositoryImpl implements ISymptomRepository {
@@ -24,7 +25,7 @@ class SymptomRepositoryImpl implements ISymptomRepository {
 
   @override
   Future<List<SymptomLog>> getLogsForDate(DateTime date) {
-    final day = DateTime(date.year, date.month, date.day).toUtc();
+    final day = date.dateOnly;
     final next = day.add(const Duration(days: 1));
     return (_db.select(_db.symptomLogs)..where((t) => t.date.isBiggerOrEqualValue(day) & t.date.isSmallerThanValue(next))).get();
   }
@@ -43,14 +44,14 @@ class SymptomRepositoryImpl implements ISymptomRepository {
 
   @override
   Future<void> deleteLogsForDate(DateTime date) {
-    final day = DateTime(date.year, date.month, date.day).toUtc();
+    final day = date.dateOnly;
     final next = day.add(const Duration(days: 1));
     return (_db.delete(_db.symptomLogs)..where((t) => t.date.isBiggerOrEqualValue(day) & t.date.isSmallerThanValue(next))).go();
   }
 
   @override
   Stream<List<SymptomLog>> watchLogsForDate(DateTime date) {
-    final day = DateTime(date.year, date.month, date.day).toUtc();
+    final day = date.dateOnly;
     final next = day.add(const Duration(days: 1));
     return (_db.select(_db.symptomLogs)..where((t) => t.date.isBiggerOrEqualValue(day) & t.date.isSmallerThanValue(next))).watch();
   }

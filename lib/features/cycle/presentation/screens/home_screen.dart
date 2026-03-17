@@ -10,6 +10,7 @@ import 'package:luna/features/cycle/domain/cycle_phase_calculator.dart';
 import 'package:luna/features/cycle/presentation/providers/cycle_providers.dart';
 import 'package:luna/shared/providers/core_providers.dart';
 import 'package:luna/core/constants/app_constants.dart';
+import 'package:luna/core/extensions/date_time_ext.dart';
 import 'package:luna/core/constants/prefs_keys.dart';
 import 'package:luna/core/theme/app_colors.dart';
 import 'package:luna/core/theme/date_picker_theme.dart';
@@ -276,7 +277,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
           final today = ref.read(effectiveTodayProvider);
           await repo.deleteLogsForDate(today);
           final syms = await ref.read(activeSymptomsProvider.future);
-          final day = DateTime(today.year, today.month, today.day).toUtc();
+          final day = today.dateOnly;
           for (final sym in syms) {
             if (selected.contains(sym.name)) {
               await repo.saveLog(

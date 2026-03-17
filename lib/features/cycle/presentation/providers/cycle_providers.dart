@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:luna/core/constants/app_constants.dart';
+import 'package:luna/core/extensions/date_time_ext.dart';
 import 'package:luna/core/database/app_database.dart';
 import 'package:luna/features/cycle/domain/cycle_phase_calculator.dart';
 import 'package:luna/features/cycle/domain/cycle_predictor.dart';
@@ -220,7 +221,7 @@ class CycleNotifier extends AsyncNotifier<void> {
   Future<void> build() async {}
 
   Future<void> logPeriodStart(DateTime date, {int flowIntensity = 2}) async {
-    final day = DateTime(date.year, date.month, date.day).toUtc();
+    final day = date.dateOnly;
     final existing = await _repo.getEntryForDate(date);
     if (existing != null) {
       await _repo.saveEntry(
@@ -243,7 +244,7 @@ class CycleNotifier extends AsyncNotifier<void> {
   Future<void> saveMood(DateTime date, int mood) => _repo.saveMood(date, mood);
 
   Future<void> endPeriod(DateTime date) async {
-    final day = DateTime(date.year, date.month, date.day).toUtc();
+    final day = date.dateOnly;
     final existing = await _repo.getEntryForDate(date);
     if (existing != null) {
       await _repo.updateEntryType(existing.id, 'period_end');
@@ -267,7 +268,7 @@ final todayMoodProvider = Provider<int?>((ref) {
         error: (_, __) => <CycleEntry>[],
       );
   final today = ref.watch(effectiveTodayProvider);
-  final todayUtc = DateTime(today.year, today.month, today.day).toUtc();
+  final todayUtc = today.dateOnly;
   final nextUtc = todayUtc.add(const Duration(days: 1));
   for (final e in entries) {
     if (!e.date.isBefore(todayUtc) && e.date.isBefore(nextUtc)) {
