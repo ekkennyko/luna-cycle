@@ -14,6 +14,7 @@ import 'package:luna/core/constants/prefs_keys.dart';
 import 'package:luna/core/theme/app_colors.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:luna/shared/widgets/common_sheet.dart';
+import 'package:luna/shared/widgets/gradient_button.dart';
 
 class _Phase {
   const _Phase({
@@ -1228,7 +1229,10 @@ class _PeriodSheetState extends State<_PeriodSheet> {
           const SizedBox(height: 20),
 
           // Start period button
-          GestureDetector(
+          GradientButton(
+            label: '🩸 Start Period',
+            color: AppColors.phaseMenstrual,
+            secondaryColor: const Color(0xFFB5179E),
             onTap: _saving
                 ? null
                 : () async {
@@ -1238,35 +1242,6 @@ class _PeriodSheetState extends State<_PeriodSheet> {
                     if (!mounted) return;
                     nav.pop();
                   },
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [AppColors.phaseMenstrual, Color(0xFFB5179E)],
-                ),
-                borderRadius: BorderRadius.circular(AppRadius.button),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.phaseMenstrual.withValues(alpha: 0.4),
-                    blurRadius: 24,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: const Center(
-                child: Text(
-                  '🩸 Start Period',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
           ),
         ],
       ),
@@ -1416,7 +1391,13 @@ class _EndPeriodSheetState extends State<_EndPeriodSheet> {
               // End Period
               Expanded(
                 flex: 2,
-                child: GestureDetector(
+                child: GradientButton(
+                  label: _saving ? 'Saving…' : '✓ End Period',
+                  color: AppColors.phaseLuteal,
+                  secondaryColor: const Color(0xFF7C3AED),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  fontSize: 14,
+                  borderRadius: AppRadius.container,
                   onTap: _saving
                       ? null
                       : () async {
@@ -1426,34 +1407,6 @@ class _EndPeriodSheetState extends State<_EndPeriodSheet> {
                           if (!mounted) return;
                           nav.pop();
                         },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [AppColors.phaseLuteal, Color(0xFF7C3AED)],
-                      ),
-                      borderRadius: BorderRadius.circular(AppRadius.container),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.phaseLuteal.withValues(alpha: 0.4),
-                          blurRadius: 24,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Text(
-                        _saving ? 'Saving…' : '✓ End Period',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
                 ),
               ),
             ],
@@ -1699,7 +1652,10 @@ class _SymptomsSheetState extends State<_SymptomsSheet> {
           const SizedBox(height: 20),
 
           // Save button
-          GestureDetector(
+          GradientButton(
+            label: _selected.isNotEmpty ? 'Save (${_selected.length} selected)' : 'Save',
+            color: phase.color,
+            padding: const EdgeInsets.symmetric(vertical: 15),
             onTap: _saving
                 ? null
                 : () async {
@@ -1709,35 +1665,6 @@ class _SymptomsSheetState extends State<_SymptomsSheet> {
                     if (!mounted) return;
                     nav.pop();
                   },
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 15),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [phase.color, phase.color.withValues(alpha: 0.8)],
-                ),
-                borderRadius: BorderRadius.circular(AppRadius.button),
-                boxShadow: [
-                  BoxShadow(
-                    color: phase.color.withValues(alpha: 0.4),
-                    blurRadius: 24,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: Center(
-                child: Text(
-                  _selected.isNotEmpty ? 'Save (${_selected.length} selected)' : 'Save',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
           ),
         ],
       ),

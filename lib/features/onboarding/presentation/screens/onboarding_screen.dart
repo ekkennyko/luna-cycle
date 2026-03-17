@@ -9,6 +9,7 @@ import 'package:luna/shared/providers/core_providers.dart';
 import 'package:luna/core/constants/app_constants.dart';
 import 'package:luna/core/constants/prefs_keys.dart';
 import 'package:luna/core/theme/app_colors.dart';
+import 'package:luna/shared/widgets/gradient_button.dart';
 
 const _accent = AppColors.phaseMenstrual;
 const _bg = AppColors.appBackground;
@@ -598,8 +599,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _GradientButton(
+          GradientButton(
             label: label,
+            color: _accent,
             enabled: _canProceed && !_saving,
             onTap: (_canProceed && !_saving) ? _handleNext : null,
           ),
@@ -779,8 +781,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
-                  child: _GradientButton(
+                  child: GradientButton(
                     label: 'Start tracking →',
+                    color: _accent,
                     enabled: true,
                     onTap: _completeOnboarding,
                   ),
@@ -936,60 +939,6 @@ class _DatePickerField extends StatelessWidget {
               : const SizedBox.shrink(),
         ),
       ],
-    );
-  }
-}
-
-class _GradientButton extends StatelessWidget {
-  const _GradientButton({
-    required this.label,
-    required this.enabled,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool enabled;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          gradient: enabled
-              ? LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [_accent, _accent.withValues(alpha: 0.8)],
-                )
-              : null,
-          color: enabled ? null : Colors.white.withValues(alpha: 0.06),
-          borderRadius: BorderRadius.circular(AppRadius.button),
-          boxShadow: enabled
-              ? [
-                  BoxShadow(
-                    color: _accent.withValues(alpha: 0.4),
-                    blurRadius: 24,
-                    offset: const Offset(0, 8),
-                  ),
-                ]
-              : null,
-        ),
-        child: Center(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: enabled ? Colors.white : AppColors.darkHint,
-            ),
-          ),
-        ),
-      ),
     );
   }
 }
