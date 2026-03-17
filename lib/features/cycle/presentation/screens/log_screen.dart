@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:luna/core/constants/strings/log_strings.dart';
 import 'package:luna/core/theme/app_colors.dart';
 import 'package:luna/features/cycle/presentation/providers/cycle_providers.dart';
 
@@ -32,11 +33,11 @@ class _LogScreenState extends ConsumerState<LogScreen> {
           padding: const EdgeInsets.all(20),
           children: [
             _SectionCard(
-              title: 'Period',
+              title: LogStrings.period,
               child: Column(
                 children: [
                   SwitchListTile(
-                    title: const Text('First day / ongoing'),
+                    title: const Text(LogStrings.firstDayOngoing),
                     value: _isPeriod,
                     activeThumbColor: AppColors.primary,
                     onChanged: (v) => setState(() => _isPeriod = v),
@@ -49,7 +50,7 @@ class _LogScreenState extends ConsumerState<LogScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Flow intensity',
+                            LogStrings.flowIntensity,
                             style: Theme.of(context).textTheme.labelLarge,
                           ),
                           const SizedBox(height: 8),
@@ -67,7 +68,7 @@ class _LogScreenState extends ConsumerState<LogScreen> {
             const SizedBox(height: 24),
             FilledButton(
               onPressed: _save,
-              child: const Text('Save'),
+              child: const Text(LogStrings.save),
             ),
           ],
         ),
@@ -112,13 +113,7 @@ class _FlowIntensitySelector extends StatelessWidget {
   final int value;
   final ValueChanged<int> onChanged;
 
-  static const _labels = [
-    '',
-    'Spotting',
-    'Light',
-    'Heavy',
-    'Very\nheavy',
-  ];
+  static const _labels = LogStrings.flowLabels;
   static const _icons = [
     null,
     Icons.water_drop_outlined,

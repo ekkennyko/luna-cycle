@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:luna/core/constants/app_constants.dart';
+import 'package:luna/core/constants/strings/settings_strings.dart';
 import 'package:luna/features/cycle/presentation/providers/cycle_providers.dart';
 import 'package:luna/features/subscription/presentation/providers/subscription_providers.dart';
 import 'package:luna/shared/providers/core_providers.dart';
@@ -21,46 +22,46 @@ class SettingsScreen extends ConsumerWidget {
     );
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(title: const Text(SettingsStrings.settings)),
       body: ListView(
         children: [
           if (!isPremium)
             _SettingsTile(
               icon: Icons.star_outline,
-              title: 'Upgrade to Premium',
-              subtitle: 'Analytics, widget, backup and more',
+              title: SettingsStrings.upgradeToPremium,
+              subtitle: SettingsStrings.upgradeSubtitle,
               color: Colors.amber,
               onTap: () => context.push('/paywall'),
             ),
-          const _SectionHeader('Privacy'),
+          const _SectionHeader(SettingsStrings.privacy),
           _SettingsTile(
             icon: Icons.lock_outline,
-            title: 'App lock',
-            subtitle: 'Biometrics / PIN',
+            title: SettingsStrings.appLock,
+            subtitle: SettingsStrings.biometricsPin,
             onTap: () {},
           ),
-          const _SectionHeader('Data'),
+          const _SectionHeader(SettingsStrings.data),
           _SettingsTile(
             icon: Icons.backup_outlined,
-            title: 'Create backup',
-            subtitle: 'Encrypted .luna file',
+            title: SettingsStrings.createBackup,
+            subtitle: SettingsStrings.encryptedFile,
             isPremium: !isPremium,
             onTap: isPremium ? () {} : () => context.push('/paywall'),
           ),
           _SettingsTile(
             icon: Icons.restore_outlined,
-            title: 'Restore from backup',
+            title: SettingsStrings.restoreFromBackup,
             isPremium: !isPremium,
             onTap: isPremium ? () {} : () => context.push('/paywall'),
           ),
-          const _SectionHeader('Cycle'),
+          const _SectionHeader(SettingsStrings.cycle),
           _SettingsTile(
             icon: Icons.tune_outlined,
-            title: 'Cycle settings',
-            subtitle: 'Average length, period length',
+            title: SettingsStrings.cycleSettings,
+            subtitle: SettingsStrings.cycleLengthSubtitle,
             onTap: () {},
           ),
-          const _SectionHeader('About'),
+          const _SectionHeader(SettingsStrings.about),
           _SettingsTile(
             icon: Icons.info_outline,
             title: AppConstants.appName,
@@ -69,15 +70,15 @@ class SettingsScreen extends ConsumerWidget {
           ),
           _SettingsTile(
             icon: Icons.privacy_tip_outlined,
-            title: 'Privacy policy',
+            title: SettingsStrings.privacyPolicy,
             onTap: () {},
           ),
           if (kDebugMode) ...[
-            const _SectionHeader('Debug'),
+            const _SectionHeader(SettingsStrings.debug),
             _SettingsTile(
               icon: Icons.delete_forever_outlined,
-              title: 'Reset profile',
-              subtitle: 'Delete all cycle data',
+              title: SettingsStrings.resetProfile,
+              subtitle: SettingsStrings.deleteAllData,
               color: Colors.red,
               onTap: () => _confirmReset(context, ref),
             ),
@@ -91,17 +92,17 @@ class SettingsScreen extends ConsumerWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Reset profile?'),
-        content: const Text('All cycle entries, symptom logs and pregnancies will be deleted. This cannot be undone.'),
+        title: const Text(SettingsStrings.resetProfileQuestion),
+        content: const Text(SettingsStrings.resetDialogBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
+            child: const Text(SettingsStrings.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Reset'),
+            child: const Text(SettingsStrings.reset),
           ),
         ],
       ),
@@ -177,7 +178,7 @@ class _PremiumBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
       ),
       child: const Text(
-        'Premium',
+        SettingsStrings.premium,
         style: TextStyle(
           fontSize: 11,
           color: Colors.amber,

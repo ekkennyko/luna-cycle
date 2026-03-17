@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:luna/core/constants/app_constants.dart';
+import 'package:luna/core/constants/strings/paywall_strings.dart';
 import 'package:luna/core/theme/app_colors.dart';
 import 'package:luna/features/subscription/presentation/providers/subscription_providers.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
@@ -35,11 +36,11 @@ class _PaywallContent extends ConsumerWidget {
   final Offerings offerings;
 
   static const _features = [
-    (Icons.bar_chart, 'Advanced analytics', 'Charts, trends, symptoms by phase'),
-    (Icons.add_circle_outline, 'Custom symptoms', 'Add your own symptoms'),
-    (Icons.child_care_outlined, 'Pregnancy tracker', 'Week by week'),
-    (Icons.widgets_outlined, 'Home screen widget', 'Cycle day at a glance'),
-    (Icons.backup_outlined, 'Encrypted backup', 'Your data, safe and private'),
+    (Icons.bar_chart, PaywallStrings.advancedAnalytics, PaywallStrings.analyticsSubtitle),
+    (Icons.add_circle_outline, PaywallStrings.customSymptoms, PaywallStrings.customSymptomsSubtitle),
+    (Icons.child_care_outlined, PaywallStrings.pregnancyTracker, PaywallStrings.pregnancySubtitle),
+    (Icons.widgets_outlined, PaywallStrings.homeWidget, PaywallStrings.homeWidgetSubtitle),
+    (Icons.backup_outlined, PaywallStrings.encryptedBackup, PaywallStrings.backupSubtitle),
   ];
 
   @override
@@ -54,12 +55,12 @@ class _PaywallContent extends ConsumerWidget {
         child: Column(
           children: [
             Text(
-              'Luna Premium',
+              PaywallStrings.lunaPremium,
               style: Theme.of(context).textTheme.displayLarge?.copyWith(color: AppColors.primary),
             ),
             const SizedBox(height: 8),
             Text(
-              'Everything you need to understand your body',
+              PaywallStrings.subtitle,
               style: Theme.of(context).textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),
@@ -85,15 +86,15 @@ class _PaywallContent extends ConsumerWidget {
             const Spacer(),
             if (current != null) ...[
               _PackageButton(
-                label: 'Yearly — \$19.99 / year',
-                sublabel: 'Save 44%',
+                label: PaywallStrings.yearly,
+                sublabel: PaywallStrings.save44,
                 package: current.annual,
                 onTap: (p) => notifier.purchase(p),
                 loading: subState.isLoading,
               ),
               const SizedBox(height: 10),
               _PackageButton(
-                label: 'Monthly — \$2.99 / month',
+                label: PaywallStrings.monthly,
                 package: current.monthly,
                 onTap: (p) => notifier.purchase(p),
                 loading: subState.isLoading,
@@ -102,7 +103,7 @@ class _PaywallContent extends ConsumerWidget {
             ],
             TextButton(
               onPressed: () => notifier.restorePurchases(),
-              child: const Text('Restore purchases'),
+              child: const Text(PaywallStrings.restorePurchases),
             ),
           ],
         ),

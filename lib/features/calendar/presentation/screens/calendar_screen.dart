@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:luna/core/database/app_database.dart';
 import 'package:luna/core/constants/app_constants.dart';
 import 'package:luna/core/constants/mood_data.dart';
+import 'package:luna/core/constants/strings/calendar_strings.dart';
 import 'package:luna/core/theme/app_colors.dart';
 import 'package:luna/features/cycle/domain/cycle_phase_calculator.dart';
 import 'package:luna/features/cycle/presentation/providers/cycle_providers.dart';
@@ -193,13 +194,13 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Calendar',
+                        CalendarStrings.calendar,
                         style: AppTextStyles.displayMedium(
                           color: Colors.white.withValues(alpha: 0.9),
                         ),
                       ),
                       const SectionLabel(
-                        text: 'CYCLE HISTORY',
+                        text: CalendarStrings.cycleHistory,
                         color: _accent,
                         letterSpacing: 2,
                         fontWeight: FontWeight.w500,
@@ -215,15 +216,15 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                     spacing: 16,
                     runSpacing: 6,
                     children: [
-                      _LegendItem(color: _accent, label: 'Period'),
+                      _LegendItem(color: _accent, label: CalendarStrings.legendPeriod),
                       _LegendItem(
                         color: Color(0x40E05A7A),
-                        label: 'Predicted',
+                        label: CalendarStrings.legendPredicted,
                         dashed: true,
                       ),
-                      _LegendItem(color: Color(0x1AF4A261), label: 'Follicular'),
-                      _LegendItem(color: Color(0x1AA8DADC), label: 'Ovulation'),
-                      _LegendItem(color: Color(0x1A9B72CF), label: 'Luteal'),
+                      _LegendItem(color: Color(0x1AF4A261), label: CalendarStrings.legendFollicular),
+                      _LegendItem(color: Color(0x1AA8DADC), label: CalendarStrings.legendOvulation),
+                      _LegendItem(color: Color(0x1A9B72CF), label: CalendarStrings.legendLuteal),
                     ],
                   ),
                 ),
@@ -693,7 +694,7 @@ class _DayDetailSheet extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.only(top: 2),
                       child: Text(
-                        '${CyclePhaseCalculator.phaseName(phase)} phase',
+                        '${CyclePhaseCalculator.phaseName(phase)}${CalendarStrings.phaseSuffix}',
                         style: TextStyle(
                           fontSize: 12,
                           color: _phaseColors[phase],
@@ -705,7 +706,7 @@ class _DayDetailSheet extends StatelessWidget {
                     const Padding(
                       padding: EdgeInsets.only(top: 2),
                       child: Text(
-                        'Predicted period',
+                        CalendarStrings.predictedPeriod,
                         style: TextStyle(
                           fontSize: 12,
                           color: Color(0x99E05A7A),
@@ -723,7 +724,7 @@ class _DayDetailSheet extends StatelessWidget {
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                   child: const Text(
-                    '🩸 Period',
+                    CalendarStrings.periodBadge,
                     style: TextStyle(
                       fontSize: 12,
                       color: _accent,
@@ -741,7 +742,7 @@ class _DayDetailSheet extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 20),
               child: Text(
-                'Nothing logged this day',
+                CalendarStrings.nothingLogged,
                 style: TextStyle(
                   fontSize: 13,
                   color: Colors.white.withValues(alpha: 0.2),
@@ -763,7 +764,7 @@ class _DayDetailSheet extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const SectionLabel(
-                          text: 'MOOD',
+                          text: CalendarStrings.moodLabel,
                           color: AppColors.darkHint,
                         ),
                         const SizedBox(height: 2),
@@ -791,7 +792,7 @@ class _DayDetailSheet extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SectionLabel(
-                      text: 'SYMPTOMS',
+                      text: CalendarStrings.symptomsLabel,
                       color: AppColors.darkHint,
                     ),
                     const SizedBox(height: 10),

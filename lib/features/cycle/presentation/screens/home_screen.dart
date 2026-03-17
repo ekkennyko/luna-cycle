@@ -11,6 +11,7 @@ import 'package:luna/features/cycle/presentation/providers/cycle_providers.dart'
 import 'package:luna/shared/providers/core_providers.dart';
 import 'package:luna/core/constants/app_constants.dart';
 import 'package:luna/core/constants/mood_data.dart';
+import 'package:luna/core/constants/strings/home_strings.dart';
 import 'package:luna/core/extensions/date_time_ext.dart';
 import 'package:luna/core/constants/prefs_keys.dart';
 import 'package:luna/core/theme/app_colors.dart';
@@ -36,34 +37,34 @@ class _Phase {
 
   // ignore: constant_identifier_names
   static const menstrual = _Phase(
-    name: 'Menstrual',
+    name: HomeStrings.menstrual,
     color: AppColors.phaseMenstrual,
     bgColor: AppColors.phaseMenstrualBg,
-    tip: 'Your body is releasing. Rest, use warmth, and be gentle with yourself. Iron-rich foods like spinach and lentils can help replenish.',
+    tip: HomeStrings.menstrualTip,
   );
 
   // ignore: constant_identifier_names
   static const follicular = _Phase(
-    name: 'Follicular',
+    name: HomeStrings.follicular,
     color: AppColors.phaseFolicular,
     bgColor: AppColors.phaseFolicularBg,
-    tip: 'Estrogen is rising — your energy and creativity are building. Great time to start new projects and try challenging workouts.',
+    tip: HomeStrings.follicularTip,
   );
 
   // ignore: constant_identifier_names
   static const ovulation = _Phase(
-    name: 'Ovulation',
+    name: HomeStrings.ovulation,
     color: AppColors.phaseOvulation,
     bgColor: AppColors.phaseOvulationBg,
-    tip: "Peak energy and confidence! You're magnetic right now. Ideal for social events, big presentations, and high-intensity exercise.",
+    tip: HomeStrings.ovulationTip,
   );
 
   // ignore: constant_identifier_names
   static const luteal = _Phase(
-    name: 'Luteal',
+    name: HomeStrings.luteal,
     color: AppColors.phaseLuteal,
     bgColor: AppColors.phaseLutealBg,
-    tip: 'Progesterone peaks then drops. Prioritize sleep, magnesium-rich foods, and reduce caffeine. Self-care is not optional.',
+    tip: HomeStrings.lutealTip,
   );
 
   /// Maps a [CyclePhase] from the calculator to this display model.
@@ -75,7 +76,7 @@ class _Phase {
       };
 }
 
-const _intensityLabels = ['Light', 'Medium', 'Heavy', 'Very Heavy'];
+const _intensityLabels = HomeStrings.intensityLabels;
 const _intensityColors = [
   Color(0xFFF4A261),
   Color(0xFFE07A5F),
@@ -83,18 +84,7 @@ const _intensityColors = [
   Color(0xFFB5179E),
 ];
 
-const _symptomNames = [
-  'Cramps',
-  'Bloating',
-  'Headache',
-  'Fatigue',
-  'Breast tenderness',
-  'Mood swings',
-  'Spotting',
-  'Nausea',
-  'Back pain',
-  'Acne',
-];
+const _symptomNames = HomeStrings.symptomNames;
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -327,12 +317,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
     final activePeriodDay = ref.watch(activePeriodDayProvider).asData?.value;
     final String periodLabel = switch (periodStatus) {
       PeriodStatus.active => activePeriodDay != null && periodLen != null
-          ? 'Day $activePeriodDay of $periodLen'
+          ? '${HomeStrings.dayLabel} $activePeriodDay of $periodLen'
           : activePeriodDay != null
-              ? 'Day $activePeriodDay'
-              : 'Period active',
+              ? '${HomeStrings.dayLabel} $activePeriodDay'
+              : HomeStrings.periodActive,
       PeriodStatus.late => '$daysLate day${daysLate == 1 ? '' : 's'} late',
-      PeriodStatus.expected => 'Period expected today',
+      PeriodStatus.expected => HomeStrings.periodExpectedToday,
       PeriodStatus.upcoming => phaseResult != null ? 'Period in ${phaseResult.daysUntilNextPeriod} day${phaseResult.daysUntilNextPeriod == 1 ? '' : 's'}' : '',
     };
 
@@ -417,7 +407,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Luna',
+                HomeStrings.appTitle,
                 style: AppTextStyles.displayLarge(
                   color: Colors.white.withValues(alpha: 0.9),
                   letterSpacing: -0.5,
@@ -425,7 +415,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                 ),
               ),
               SectionLabel(
-                text: 'CYCLE TRACKER',
+                text: HomeStrings.cycleTracker,
                 color: phase.color,
                 letterSpacing: 2,
                 fontWeight: FontWeight.w500,
@@ -540,14 +530,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                           const Text('🩸', style: TextStyle(fontSize: 32)),
                           const SizedBox(height: 10),
                           Text(
-                            'Tap to log',
+                            HomeStrings.tapToLog,
                             style: AppTextStyles.displayMedium(
                               height: 1,
                             ),
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            'your first period',
+                            HomeStrings.yourFirstPeriod,
                             style: TextStyle(
                               fontSize: 13,
                               color: Colors.white.withValues(alpha: 0.4),
@@ -555,7 +545,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                           ),
                         ] else ...[
                           const Text(
-                            'DAY',
+                            HomeStrings.dayLabel,
                             style: TextStyle(
                               fontSize: 14,
                               color: AppColors.darkSecondaryText,
@@ -634,7 +624,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
           Expanded(
             child: _QuickChip(
               icon: '🩸',
-              label: isPeriodActive ? 'End Period' : (isEmpty ? 'Log period' : 'Period'),
+              label: isPeriodActive ? HomeStrings.endPeriod : (isEmpty ? HomeStrings.logPeriod : HomeStrings.period),
               active: isPeriodActive || isEmpty,
               activeColor: isPeriodActive ? phase.color : AppColors.phaseMenstrual,
               onTap: () => _openPeriodSheet(isPeriodActive: isPeriodActive),
@@ -645,7 +635,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
           Expanded(
             child: _QuickChip(
               icon: moodIdx != null ? moodEmojis[moodIdx] : '💭',
-              label: moodIdx != null ? moodLabels[moodIdx] : 'Mood',
+              label: moodIdx != null ? moodLabels[moodIdx] : HomeStrings.mood,
               onTap: () => _openMoodSheet(phase),
             ),
           ),
@@ -654,7 +644,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
           Expanded(
             child: _QuickChip(
               icon: '✦',
-              label: symptomsCount > 0 ? '$symptomsCount symptoms' : 'Symptoms',
+              label: symptomsCount > 0 ? '$symptomsCount ${HomeStrings.symptoms.toLowerCase()}' : HomeStrings.symptoms,
               onTap: () => _openSymptomsSheet(phase),
             ),
           ),
@@ -710,7 +700,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                 ),
                 const SizedBox(width: 8),
                 SectionLabel(
-                  text: '${phase.name.toUpperCase()} PHASE',
+                  text: '${phase.name.toUpperCase()}${HomeStrings.phaseSuffix}',
                   color: phase.color,
                   fontWeight: FontWeight.w600,
                 ),
@@ -739,9 +729,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
     // Cycle length: last completed cycle, or avg as fallback, or '--'
     final cycleLenStr = cycleLen != null ? '${cycleLen}d' : (avgLen != null ? '~${avgLen}d' : '--');
     final stats = [
-      ('Cycle length', cycleLenStr),
-      ('Period', periodLen != null ? '${periodLen}d' : '--'),
-      ('Avg length', avgLen != null ? '${avgLen}d' : '--'),
+      (HomeStrings.cycleLength, cycleLenStr),
+      (HomeStrings.periodStat, periodLen != null ? '${periodLen}d' : '--'),
+      (HomeStrings.avgLength, avgLen != null ? '${avgLen}d' : '--'),
     ];
 
     return Padding(
@@ -799,7 +789,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                'Your period is longer than usual.',
+                HomeStrings.longerThanUsual,
                 style: TextStyle(
                   fontSize: 13,
                   color: Colors.white.withValues(alpha: 0.6),
@@ -815,8 +805,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
 
   Widget _buildLateBanner(int daysLate) {
     const color = AppColors.phaseMenstrual;
-    final body =
-        daysLate >= 7 ? 'Your period is $daysLate days late. This is normal — cycles vary.' : 'Did your period start? Log it to keep predictions accurate.';
+    final body = daysLate >= 7 ? 'Your period is $daysLate days late. This is normal — cycles vary.' : HomeStrings.logToKeepAccurate;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
@@ -853,7 +842,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                       ),
                       alignment: Alignment.center,
                       child: const Text(
-                        'Log period',
+                        HomeStrings.logPeriod,
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -876,7 +865,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                       ),
                       alignment: Alignment.center,
                       child: Text(
-                        'Not yet',
+                        HomeStrings.notYet,
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
@@ -1131,13 +1120,13 @@ class _PeriodSheetState extends State<_PeriodSheet> {
   @override
   Widget build(BuildContext context) {
     return _SheetContainer(
-      title: 'Log Period',
+      title: HomeStrings.logPeriodTitle,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Flow intensity label
           const Text(
-            'FLOW INTENSITY',
+            HomeStrings.flowIntensity,
             style: TextStyle(
               fontSize: 12,
               color: AppColors.darkSecondaryText,
@@ -1201,7 +1190,7 @@ class _PeriodSheetState extends State<_PeriodSheet> {
 
           // Start period button
           GradientButton(
-            label: '🩸 Start Period',
+            label: HomeStrings.startPeriodButton,
             color: AppColors.phaseMenstrual,
             secondaryColor: const Color(0xFFB5179E),
             onTap: _saving
@@ -1291,26 +1280,26 @@ class _EndPeriodSheetState extends State<_EndPeriodSheet> {
     };
 
     return _SheetContainer(
-      title: 'End Period?',
+      title: HomeStrings.endPeriodTitle,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'When did your period end?',
+            HomeStrings.whenDidPeriodEnd,
             style: TextStyle(fontSize: 14, color: Colors.white.withValues(alpha: 0.6)),
           ),
           const SizedBox(height: 12),
           Row(
             children: [
               _DateChip(
-                label: 'Yesterday',
+                label: HomeStrings.yesterday,
                 dateLabel: DateFormat('MMM d').format(yesterday),
                 selected: _mode == _PickMode.yesterday,
                 onTap: () => setState(() => _mode = _PickMode.yesterday),
               ),
               const SizedBox(width: 10),
               _DateChip(
-                label: 'Today',
+                label: HomeStrings.today,
                 dateLabel: DateFormat('MMM d').format(today),
                 selected: _mode == _PickMode.today,
                 onTap: () => setState(() => _mode = _PickMode.today),
@@ -1322,8 +1311,8 @@ class _EndPeriodSheetState extends State<_EndPeriodSheet> {
             Row(
               children: [
                 _DateChip(
-                  label: 'Pick a date',
-                  dateLabel: _customDate != null ? DateFormat('MMM d').format(_customDate!) : 'Tap to select',
+                  label: HomeStrings.pickADate,
+                  dateLabel: _customDate != null ? DateFormat('MMM d').format(_customDate!) : HomeStrings.tapToSelect,
                   selected: _mode == _PickMode.custom,
                   onTap: () => _pickCustomDate(today),
                 ),
@@ -1345,7 +1334,7 @@ class _EndPeriodSheetState extends State<_EndPeriodSheet> {
                       border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                     ),
                     child: const Center(
-                      child: Text('Cancel', style: TextStyle(color: Colors.white, fontSize: 14)),
+                      child: Text(HomeStrings.cancel, style: TextStyle(color: Colors.white, fontSize: 14)),
                     ),
                   ),
                 ),
@@ -1355,7 +1344,7 @@ class _EndPeriodSheetState extends State<_EndPeriodSheet> {
               Expanded(
                 flex: 2,
                 child: GradientButton(
-                  label: _saving ? 'Saving…' : '✓ End Period',
+                  label: _saving ? HomeStrings.saving : HomeStrings.endPeriodButton,
                   color: AppColors.phaseLuteal,
                   secondaryColor: const Color(0xFF7C3AED),
                   padding: const EdgeInsets.symmetric(vertical: 14),
@@ -1487,7 +1476,7 @@ class _MoodSheetState extends State<_MoodSheet> {
   @override
   Widget build(BuildContext context) {
     return _SheetContainer(
-      title: 'How are you feeling?',
+      title: HomeStrings.howAreYouFeeling,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: List.generate(5, (i) {
@@ -1570,7 +1559,7 @@ class _SymptomsSheetState extends State<_SymptomsSheet> {
   Widget build(BuildContext context) {
     final phase = widget.phase;
     return _SheetContainer(
-      title: 'Log Symptoms',
+      title: HomeStrings.logSymptoms,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1616,7 +1605,7 @@ class _SymptomsSheetState extends State<_SymptomsSheet> {
 
           // Save button
           GradientButton(
-            label: _selected.isNotEmpty ? 'Save (${_selected.length} selected)' : 'Save',
+            label: _selected.isNotEmpty ? '${HomeStrings.save} (${_selected.length} selected)' : HomeStrings.save,
             color: phase.color,
             padding: const EdgeInsets.symmetric(vertical: 15),
             onTap: _saving

@@ -8,6 +8,7 @@ import 'package:luna/features/cycle/presentation/providers/cycle_providers.dart'
 import 'package:luna/shared/providers/core_providers.dart';
 import 'package:luna/core/constants/app_constants.dart';
 import 'package:luna/core/constants/prefs_keys.dart';
+import 'package:luna/core/constants/strings/onboarding_strings.dart';
 import 'package:luna/core/theme/app_colors.dart';
 import 'package:luna/core/theme/date_picker_theme.dart';
 import 'package:luna/shared/widgets/gradient_button.dart';
@@ -123,17 +124,17 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         backgroundColor: const Color(0xFF1E1118),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill)),
         content: const Text(
-          'You can always log your first period later.\nLuna will start tracking from your next period.',
+          OnboardingStrings.startFreshDialogBody,
           style: TextStyle(color: Colors.white70, fontSize: 14, height: 1.6),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel', style: TextStyle(color: AppColors.darkSecondaryText)),
+            child: const Text(OnboardingStrings.cancel, style: TextStyle(color: AppColors.darkSecondaryText)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Start fresh', style: TextStyle(color: _accent)),
+            child: const Text(OnboardingStrings.startFresh, style: TextStyle(color: _accent)),
           ),
         ],
       ),
@@ -230,7 +231,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           ),
           const SizedBox(width: 10),
           Text(
-            'Luna',
+            OnboardingStrings.appTitle,
             style: AppTextStyles.titleMedium(),
           ),
         ],
@@ -275,12 +276,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Tell us about your\nlast period',
+            OnboardingStrings.step0Title,
             style: AppTextStyles.displaySmall,
           ),
           const SizedBox(height: 8),
           Text(
-            'Enter the start and end dates — Luna will calculate everything automatically.',
+            OnboardingStrings.step0Subtitle,
             style: TextStyle(
               fontSize: 13,
               color: Colors.white.withValues(alpha: 0.45),
@@ -289,7 +290,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           ),
           const SizedBox(height: 28),
           _DatePickerField(
-            label: 'When did it start?',
+            label: OnboardingStrings.whenDidItStart,
             date: _periodStart,
             onTap: () async {
               final d = await _pickDate(context, initial: _periodStart);
@@ -311,7 +312,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             child: _periodOngoing
                 ? const SizedBox.shrink()
                 : _DatePickerField(
-                    label: 'When did it end?',
+                    label: OnboardingStrings.whenDidItEnd,
                     date: _periodEnd,
                     optional: true,
                     hint: _periodLength != null ? '$_periodLength day period — got it!' : null,
@@ -360,7 +361,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            'Still ongoing',
+                            OnboardingStrings.stillOngoing,
                             style: TextStyle(
                               fontSize: 14,
                               color: _periodOngoing ? Colors.white : Colors.white.withValues(alpha: 0.45),
@@ -388,7 +389,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Your data is stored only on your device. Luna never sends it anywhere.',
+                    OnboardingStrings.privacyNotice,
                     style: TextStyle(
                       fontSize: 12,
                       color: Colors.white.withValues(alpha: 0.35),
@@ -404,7 +405,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             child: TextButton(
               onPressed: _startFresh,
               child: const Text(
-                "I don't remember — start fresh",
+                OnboardingStrings.startFreshLink,
                 style: TextStyle(fontSize: 13, color: Color(0x4DFFFFFF)),
               ),
             ),
@@ -433,7 +434,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     } else if (_prevStart != null) {
       cycleLenStr = '...';
     } else {
-      cycleLenStr = 'Add date above';
+      cycleLenStr = OnboardingStrings.addDateAbove;
     }
 
     return SingleChildScrollView(
@@ -442,12 +443,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'One more for accuracy',
+            OnboardingStrings.step1Title,
             style: AppTextStyles.displaySmall,
           ),
           const SizedBox(height: 8),
           Text(
-            'When did the period before that start? Luna will calculate your cycle length from real dates.',
+            OnboardingStrings.step1Subtitle,
             style: TextStyle(
               fontSize: 13,
               color: Colors.white.withValues(alpha: 0.45),
@@ -456,7 +457,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           ),
           const SizedBox(height: 28),
           _DatePickerField(
-            label: 'Previous period — start date',
+            label: OnboardingStrings.prevPeriodStart,
             date: _prevStart,
             optional: true,
             hint: cl != null ? '$cl day cycle — calculated from your data ✓' : null,
@@ -480,7 +481,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           if (_prevStart != null) ...[
             const SizedBox(height: 16),
             _DatePickerField(
-              label: 'Previous period — end date',
+              label: OnboardingStrings.prevPeriodEnd,
               date: _prevEnd,
               optional: true,
               hint: prevPl != null ? '$prevPl day period — got it!' : null,
@@ -509,21 +510,21 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 SectionLabel(
-                  text: 'PREVIEW',
+                  text: OnboardingStrings.preview,
                   color: Colors.white.withValues(alpha: 0.4),
                   fontWeight: FontWeight.w500,
                 ),
                 const SizedBox(height: 12),
                 _PreviewRow(
-                  label: 'Period length',
+                  label: OnboardingStrings.periodLength,
                   value: periodLenStr,
                   isPlaceholder: periodLenStr == '—',
                   hasDivider: true,
                 ),
                 _PreviewRow(
-                  label: 'Cycle length',
+                  label: OnboardingStrings.cycleLength,
                   value: cycleLenStr,
-                  isPlaceholder: cycleLenStr == '—' || cycleLenStr == 'Add date above',
+                  isPlaceholder: cycleLenStr == '—' || cycleLenStr == OnboardingStrings.addDateAbove,
                   hasDivider: false,
                 ),
               ],
@@ -542,12 +543,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '💡 Did you know?',
+                  OnboardingStrings.didYouKnow,
                   style: TextStyle(fontSize: 12, color: _accent, fontWeight: FontWeight.w600),
                 ),
                 SizedBox(height: 4),
                 Text(
-                  'Only 13% of people have exactly 28-day cycles. Real data gives you real predictions.',
+                  OnboardingStrings.didYouKnowBody,
                   style: TextStyle(
                     fontSize: 12,
                     color: AppColors.darkSecondaryText,
@@ -565,10 +566,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   Widget _buildBottomButtons() {
     final isLastStep = _step == 1;
     final label = _saving
-        ? 'Saving…'
+        ? OnboardingStrings.saving
         : isLastStep
-            ? 'Get started →'
-            : 'Continue →';
+            ? OnboardingStrings.getStarted
+            : OnboardingStrings.continueButton;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
@@ -589,7 +590,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 TextButton(
                   onPressed: _saving ? null : _handleBack,
                   child: Text(
-                    '← Back',
+                    OnboardingStrings.back,
                     style: TextStyle(fontSize: 13, color: Colors.white.withValues(alpha: 0.4)),
                   ),
                 )
@@ -599,7 +600,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 TextButton(
                   onPressed: _saving ? null : _saveAndFinish,
                   child: const Text(
-                    'Skip →',
+                    OnboardingStrings.skip,
                     style: TextStyle(fontSize: 13, color: AppColors.darkHint),
                   ),
                 )
@@ -620,7 +621,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     if (pl != null) {
       periodLenStr = '$pl days';
     } else if (_periodStart != null && _periodEnd == null) {
-      periodLenStr = 'Still ongoing';
+      periodLenStr = OnboardingStrings.stillOngoing;
     } else {
       periodLenStr = '—';
     }
@@ -629,9 +630,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     final cycleLenStr = cl != null ? '$cl days' : '—';
 
     final rows = [
-      ('Last period started', dateStr),
-      ('Period length', periodLenStr),
-      ('Cycle length', cycleLenStr),
+      (OnboardingStrings.lastPeriodStarted, dateStr),
+      (OnboardingStrings.periodLength, periodLenStr),
+      (OnboardingStrings.cycleLength, cycleLenStr),
     ];
 
     return Scaffold(
@@ -683,13 +684,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         ),
                         const SizedBox(height: 24),
                         Text(
-                          "You're all set!",
+                          OnboardingStrings.allSet,
                           style: AppTextStyles.displayLarge(),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 12),
                         const Text(
-                          'Luna is ready to track your cycle.\nYour data stays private on your device.',
+                          OnboardingStrings.completionSubtitle,
                           style: TextStyle(
                             fontSize: 14,
                             color: AppColors.darkSecondaryText,
@@ -754,7 +755,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
                   child: GradientButton(
-                    label: 'Start tracking →',
+                    label: OnboardingStrings.startTracking,
                     color: _accent,
                     enabled: true,
                     onTap: _completeOnboarding,
@@ -847,7 +848,7 @@ class _DatePickerField extends StatelessWidget {
             ),
             if (optional)
               Text(
-                'optional',
+                OnboardingStrings.optional,
                 style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.19)),
               ),
           ],
@@ -869,7 +870,7 @@ class _DatePickerField extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    date != null ? DateFormat('MMMM d, y').format(date!) : 'Tap to select',
+                    date != null ? DateFormat('MMMM d, y').format(date!) : OnboardingStrings.tapToSelect,
                     style: TextStyle(
                       fontSize: 14,
                       color: hasDate ? Colors.white : Colors.white.withValues(alpha: 0.25),
