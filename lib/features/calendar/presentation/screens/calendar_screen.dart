@@ -8,6 +8,7 @@ import 'package:luna/core/theme/app_colors.dart';
 import 'package:luna/features/cycle/domain/cycle_phase_calculator.dart';
 import 'package:luna/features/cycle/presentation/providers/cycle_providers.dart';
 import 'package:luna/shared/providers/core_providers.dart';
+import 'package:luna/shared/widgets/common_sheet.dart';
 
 const _bg = AppColors.appBackground;
 const _accent = AppColors.phaseMenstrual;
@@ -695,33 +696,12 @@ class _DayDetailSheet extends StatelessWidget {
     final symptoms = symptomLogs[key];
     final hasAnyData = isPeriod || mood != null || symptoms != null;
 
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFF1E1118), Color(0xFF150D12)],
-        ),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
-        border: Border(
-          top: BorderSide(color: Color(0x0FFFFFFF)),
-          left: BorderSide(color: Color(0x0FFFFFFF)),
-          right: BorderSide(color: Color(0x0FFFFFFF)),
-        ),
-      ),
+    return AppSheet(
       padding: const EdgeInsets.fromLTRB(24, 20, 24, 40),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Drag handle
-          Container(
-            width: 36,
-            height: 4,
-            decoration: BoxDecoration(
-              color: AppColors.darkHint,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
+          const DragHandle(),
           const SizedBox(height: 20),
 
           // Date header row

@@ -13,6 +13,7 @@ import 'package:luna/core/constants/app_constants.dart';
 import 'package:luna/core/constants/prefs_keys.dart';
 import 'package:luna/core/theme/app_colors.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:luna/shared/widgets/common_sheet.dart';
 
 class _Phase {
   const _Phase({
@@ -1113,20 +1114,7 @@ class _SheetContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFF1E1118), Color(0xFF150D12)],
-        ),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
-        border: Border(
-          top: BorderSide(color: Color(0x0FFFFFFF)),
-          left: BorderSide(color: Color(0x0FFFFFFF)),
-          right: BorderSide(color: Color(0x0FFFFFFF)),
-        ),
-      ),
+    return AppSheet(
       padding: EdgeInsets.only(
         left: 20,
         right: 20,
@@ -1137,17 +1125,7 @@ class _SheetContainer extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Drag handle
-          Center(
-            child: Container(
-              width: 36,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.darkHint,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
+          const Center(child: DragHandle()),
           const SizedBox(height: 20),
           Text(
             title,
