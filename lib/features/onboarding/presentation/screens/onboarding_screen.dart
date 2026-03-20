@@ -107,9 +107,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         await notifier.endPeriod(_periodEnd!);
       }
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(PrefsKeys.userCycleLength, _cycleLength ?? 28);
-    await prefs.setInt(PrefsKeys.userPeriodLength, _periodLength ?? 5);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt(PrefsKeys.userCycleLength, _cycleLength ?? 28);
+      await prefs.setInt(PrefsKeys.userPeriodLength, _periodLength ?? 5);
 
       if (!mounted) return;
       setState(() {
