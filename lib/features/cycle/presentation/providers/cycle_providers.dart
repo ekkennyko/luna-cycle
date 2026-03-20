@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:luna/core/constants/app_constants.dart';
 import 'package:luna/core/extensions/date_time_ext.dart';
 import 'package:luna/core/database/app_database.dart';
+import 'package:luna/core/notifications/notification_service.dart';
 import 'package:luna/features/cycle/domain/cycle_phase_calculator.dart';
 import 'package:luna/features/cycle/domain/cycle_predictor.dart';
 import 'package:luna/features/cycle/domain/repositories/i_cycle_repository.dart';
@@ -244,6 +245,7 @@ class CycleNotifier extends AsyncNotifier<void> {
         ),
       );
     }
+    await _rescheduleNotifications();
   }
 
   Future<void> saveMood(DateTime date, int mood) => _repo.saveMood(date, mood);
@@ -257,6 +259,54 @@ class CycleNotifier extends AsyncNotifier<void> {
       await _repo.saveEntry(
         CycleEntriesCompanion.insert(date: day, type: 'period_end'),
       );
+    }
+    await _rescheduleNotifications();
+  }
+
+  Future<void> _rescheduleNotifications() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final periodEnabled = prefs.getBool(PrefsKeys.notificationsPeriodEnabled) ?? true;
+      final periodDays = prefs.getInt(PrefsKeys.notificationsPeriodDays) ?? 2;
+      final fertileEnabled = prefs.getBool(PrefsKeys.notificationsFertileEnabled) ?? true;
+      final lateEnabled = prefs.getBool(PrefsKeys.notificationsLateEnabled) ?? true;
+
+      final lastStart = await _repo.getLastPeriodStart();
+      if (lastStart == null) return;
+
+      final allStarts = await _repo.getAllPeriodStarts();
+      final lengths = allStarts.length < 2 ? <int>[] : [for (int i = 1; i < allStarts.length; i++) allStarts[i].date.difference(allStarts[i - 1].date).inDays];
+      final avgCycleLen = lengths.isEmpty ? AppConstants.defaultCycleLength : CyclePredictor.predictNextCycleLength(lengths);
+
+      final nextPeriod = lastStart.date.add(Duration(days: avgCycleLen));
+
+      final lastEnd = await _repo.getLastPeriodEnd();
+      final periodEnd = (lastEnd != null && !lastEnd.date.isBefore(lastStart.date)) ? lastEnd.date : null;
+
+      final userPeriodLen = prefs.getInt(PrefsKeys.userPeriodLength) ?? AppConstants.defaultPeriodLength;
+      final today = ref.read(effectiveTodayProvider);
+      final phase = CyclePhaseCalculator.calculate(
+        periodStart: lastStart.date,
+        periodLength: userPeriodLen,
+        cycleLength: avgCycleLen,
+        today: today,
+        periodEnd: periodEnd,
+      );
+
+      final daysLate = (periodEnd == null && phase.daysUntilNextPeriod < 0) ? -phase.daysUntilNextPeriod : 0;
+
+      await NotificationService.rescheduleAll(
+        nextPeriodDate: nextPeriod,
+        fertileWindowStart: phase.fertileWindow.start,
+        periodReminderEnabled: periodEnabled,
+        periodReminderDays: periodDays,
+        fertileWindowEnabled: fertileEnabled,
+        latePeriodEnabled: lateEnabled,
+        daysLate: daysLate,
+        appLockEnabled: false,
+      );
+    } catch (_) {
+      // Notification scheduling is best-effort
     }
   }
 

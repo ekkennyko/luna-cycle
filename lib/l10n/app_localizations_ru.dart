@@ -595,4 +595,46 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get symptomDrySkin => 'Сухость кожи';
+
+  @override
+  String notificationPeriodReminder(int days) {
+    return 'Ожидается менструация через $days дней';
+  }
+
+  @override
+  String get notificationFertileWindow => 'Сегодня начинается фертильное окно';
+
+  @override
+  String notificationLatePeriod(int days) {
+    return 'Задержка менструации $days дней';
+  }
+
+  @override
+  String get notificationLunaPrivate => 'Luna';
+
+  @override
+  String get settingsNotifications => 'Уведомления';
+
+  @override
+  String get settingsPeriodReminder => 'Напоминание о периоде';
+
+  @override
+  String get settingsPeriodReminderSubtitle => 'Напомнить до начала менструации';
+
+  @override
+  String get settingsFertileWindow => 'Фертильное окно';
+
+  @override
+  String get settingsFertileWindowSubtitle => 'Уведомить когда начинается фертильное окно';
+
+  @override
+  String get settingsLatePeriod => 'Задержка';
+
+  @override
+  String get settingsLatePeriodSubtitle => 'Уведомить при задержке';
+
+  @override
+  String settingsReminderDays(int days) {
+    return 'За $days дней';
+  }
 }

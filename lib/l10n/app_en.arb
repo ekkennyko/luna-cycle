@@ -258,5 +258,34 @@
   "symptomInsomnia": "Insomnia",
   "symptomDiarrhea": "Diarrhea",
   "symptomConstipation": "Constipation",
-  "symptomDrySkin": "Dry skin"
+  "symptomDrySkin": "Dry skin",
+
+  "notificationPeriodReminder": "Your period is expected in {days} days",
+  "@notificationPeriodReminder": {
+    "placeholders": {
+      "days": { "type": "int" }
+    }
+  },
+  "notificationFertileWindow": "Your fertile window starts today",
+  "notificationLatePeriod": "Your period is {days} days late",
+  "@notificationLatePeriod": {
+    "placeholders": {
+      "days": { "type": "int" }
+    }
+  },
+  "notificationLunaPrivate": "Luna",
+
+  "settingsNotifications": "Notifications",
+  "settingsPeriodReminder": "Period reminder",
+  "settingsPeriodReminderSubtitle": "Remind before your period",
+  "settingsFertileWindow": "Fertile window",
+  "settingsFertileWindowSubtitle": "Notify when fertile window starts",
+  "settingsLatePeriod": "Late period",
+  "settingsLatePeriodSubtitle": "Notify when period is late",
+  "settingsReminderDays": "{days} days before",
+  "@settingsReminderDays": {
+    "placeholders": {
+      "days": { "type": "int" }
+    }
+  }
 }

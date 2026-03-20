@@ -197,5 +197,34 @@
   "symptomInsomnia": "Бессонница",
   "symptomDiarrhea": "Диарея",
   "symptomConstipation": "Запор",
-  "symptomDrySkin": "Сухость кожи"
+  "symptomDrySkin": "Сухость кожи",
+
+  "notificationPeriodReminder": "Ожидается менструация через {days} дней",
+  "@notificationPeriodReminder": {
+    "placeholders": {
+      "days": { "type": "int" }
+    }
+  },
+  "notificationFertileWindow": "Сегодня начинается фертильное окно",
+  "notificationLatePeriod": "Задержка менструации {days} дней",
+  "@notificationLatePeriod": {
+    "placeholders": {
+      "days": { "type": "int" }
+    }
+  },
+  "notificationLunaPrivate": "Luna",
+
+  "settingsNotifications": "Уведомления",
+  "settingsPeriodReminder": "Напоминание о периоде",
+  "settingsPeriodReminderSubtitle": "Напомнить до начала менструации",
+  "settingsFertileWindow": "Фертильное окно",
+  "settingsFertileWindowSubtitle": "Уведомить когда начинается фертильное окно",
+  "settingsLatePeriod": "Задержка",
+  "settingsLatePeriodSubtitle": "Уведомить при задержке",
+  "settingsReminderDays": "За {days} дней",
+  "@settingsReminderDays": {
+    "placeholders": {
+      "days": { "type": "int" }
+    }
+  }
 }

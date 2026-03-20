@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:luna/core/constants/app_constants.dart';
+import 'package:luna/core/constants/prefs_keys.dart';
+import 'package:luna/core/notifications/notification_service.dart';
 import 'package:luna/l10n/app_localizations.dart';
 import 'package:luna/features/cycle/presentation/providers/cycle_providers.dart';
 import 'package:luna/features/subscription/presentation/providers/subscription_providers.dart';
@@ -41,6 +43,8 @@ class SettingsScreen extends ConsumerWidget {
             subtitle: l10n.settingsBiometricsPin,
             onTap: () {},
           ),
+          _SectionHeader(l10n.settingsNotifications),
+          const _NotificationsSection(),
           _SectionHeader(l10n.settingsData),
           _SettingsTile(
             icon: Icons.backup_outlined,
@@ -116,6 +120,158 @@ class SettingsScreen extends ConsumerWidget {
       ref.read(debugDayOffsetProvider.notifier).reset();
       if (context.mounted) context.go('/onboarding');
     }
+  }
+}
+
+class _NotificationsSection extends ConsumerStatefulWidget {
+  const _NotificationsSection();
+
+  @override
+  ConsumerState<_NotificationsSection> createState() => _NotificationsSectionState();
+}
+
+class _NotificationsSectionState extends ConsumerState<_NotificationsSection> {
+  bool _periodEnabled = true;
+  int _periodDays = 2;
+  bool _fertileEnabled = true;
+  bool _lateEnabled = true;
+  bool _loaded = false;
+
+  static const _dayOptions = [1, 2, 3, 5, 7];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPrefs();
+  }
+
+  Future<void> _loadPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() {
+      _periodEnabled = prefs.getBool(PrefsKeys.notificationsPeriodEnabled) ?? true;
+      _periodDays = prefs.getInt(PrefsKeys.notificationsPeriodDays) ?? 2;
+      _fertileEnabled = prefs.getBool(PrefsKeys.notificationsFertileEnabled) ?? true;
+      _lateEnabled = prefs.getBool(PrefsKeys.notificationsLateEnabled) ?? true;
+      _loaded = true;
+    });
+  }
+
+  Future<void> _saveAndReschedule() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(PrefsKeys.notificationsPeriodEnabled, _periodEnabled);
+    await prefs.setInt(PrefsKeys.notificationsPeriodDays, _periodDays);
+    await prefs.setBool(PrefsKeys.notificationsFertileEnabled, _fertileEnabled);
+    await prefs.setBool(PrefsKeys.notificationsLateEnabled, _lateEnabled);
+
+    final nextPeriod = await ref.read(nextPeriodDateProvider.future);
+    final phase = await ref.read(currentPhaseProvider.future);
+    final status = await ref.read(periodStatusProvider.future);
+    if (nextPeriod == null || phase == null) return;
+
+    await NotificationService.rescheduleAll(
+      nextPeriodDate: nextPeriod,
+      fertileWindowStart: phase.fertileWindow.start,
+      periodReminderEnabled: _periodEnabled,
+      periodReminderDays: _periodDays,
+      fertileWindowEnabled: _fertileEnabled,
+      latePeriodEnabled: _lateEnabled,
+      daysLate: status.$1 == PeriodStatus.late ? status.$2 : 0,
+      appLockEnabled: false,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_loaded) return const SizedBox.shrink();
+    final l10n = AppLocalizations.of(context)!;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _ToggleTile(
+          icon: Icons.notifications_outlined,
+          title: l10n.settingsPeriodReminder,
+          subtitle: l10n.settingsPeriodReminderSubtitle,
+          value: _periodEnabled,
+          onChanged: (v) {
+            setState(() => _periodEnabled = v);
+            _saveAndReschedule();
+          },
+        ),
+        AnimatedSize(
+          duration: const Duration(milliseconds: 200),
+          child: _periodEnabled
+              ? Padding(
+                  padding: const EdgeInsets.fromLTRB(56, 0, 16, 8),
+                  child: Wrap(
+                    spacing: 8,
+                    children: _dayOptions
+                        .map(
+                          (d) => ChoiceChip(
+                            label: Text(l10n.settingsReminderDays(d)),
+                            selected: _periodDays == d,
+                            onSelected: (v) {
+                              if (v) {
+                                setState(() => _periodDays = d);
+                                _saveAndReschedule();
+                              }
+                            },
+                          ),
+                        )
+                        .toList(),
+                  ),
+                )
+              : const SizedBox.shrink(),
+        ),
+        _ToggleTile(
+          icon: Icons.favorite_outline,
+          title: l10n.settingsFertileWindow,
+          subtitle: l10n.settingsFertileWindowSubtitle,
+          value: _fertileEnabled,
+          onChanged: (v) {
+            setState(() => _fertileEnabled = v);
+            _saveAndReschedule();
+          },
+        ),
+        _ToggleTile(
+          icon: Icons.schedule_outlined,
+          title: l10n.settingsLatePeriod,
+          subtitle: l10n.settingsLatePeriodSubtitle,
+          value: _lateEnabled,
+          onChanged: (v) {
+            setState(() => _lateEnabled = v);
+            _saveAndReschedule();
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class _ToggleTile extends StatelessWidget {
+  const _ToggleTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Icon(icon),
+      title: Text(title),
+      subtitle: Text(subtitle),
+      trailing: Switch(value: value, onChanged: onChanged),
+    );
   }
 }
 

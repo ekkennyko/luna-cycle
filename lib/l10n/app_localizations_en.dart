@@ -595,4 +595,46 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get symptomDrySkin => 'Dry skin';
+
+  @override
+  String notificationPeriodReminder(int days) {
+    return 'Your period is expected in $days days';
+  }
+
+  @override
+  String get notificationFertileWindow => 'Your fertile window starts today';
+
+  @override
+  String notificationLatePeriod(int days) {
+    return 'Your period is $days days late';
+  }
+
+  @override
+  String get notificationLunaPrivate => 'Luna';
+
+  @override
+  String get settingsNotifications => 'Notifications';
+
+  @override
+  String get settingsPeriodReminder => 'Period reminder';
+
+  @override
+  String get settingsPeriodReminderSubtitle => 'Remind before your period';
+
+  @override
+  String get settingsFertileWindow => 'Fertile window';
+
+  @override
+  String get settingsFertileWindowSubtitle => 'Notify when fertile window starts';
+
+  @override
+  String get settingsLatePeriod => 'Late period';
+
+  @override
+  String get settingsLatePeriodSubtitle => 'Notify when period is late';
+
+  @override
+  String settingsReminderDays(int days) {
+    return '$days days before';
+  }
 }

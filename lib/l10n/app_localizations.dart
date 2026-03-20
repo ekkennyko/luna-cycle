@@ -1189,6 +1189,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Dry skin'**
   String get symptomDrySkin;
+
+  /// No description provided for @notificationPeriodReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Your period is expected in {days} days'**
+  String notificationPeriodReminder(int days);
+
+  /// No description provided for @notificationFertileWindow.
+  ///
+  /// In en, this message translates to:
+  /// **'Your fertile window starts today'**
+  String get notificationFertileWindow;
+
+  /// No description provided for @notificationLatePeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Your period is {days} days late'**
+  String notificationLatePeriod(int days);
+
+  /// No description provided for @notificationLunaPrivate.
+  ///
+  /// In en, this message translates to:
+  /// **'Luna'**
+  String get notificationLunaPrivate;
+
+  /// No description provided for @settingsNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get settingsNotifications;
+
+  /// No description provided for @settingsPeriodReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Period reminder'**
+  String get settingsPeriodReminder;
+
+  /// No description provided for @settingsPeriodReminderSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remind before your period'**
+  String get settingsPeriodReminderSubtitle;
+
+  /// No description provided for @settingsFertileWindow.
+  ///
+  /// In en, this message translates to:
+  /// **'Fertile window'**
+  String get settingsFertileWindow;
+
+  /// No description provided for @settingsFertileWindowSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Notify when fertile window starts'**
+  String get settingsFertileWindowSubtitle;
+
+  /// No description provided for @settingsLatePeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Late period'**
+  String get settingsLatePeriod;
+
+  /// No description provided for @settingsLatePeriodSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Notify when period is late'**
+  String get settingsLatePeriodSubtitle;
+
+  /// No description provided for @settingsReminderDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{days} days before'**
+  String settingsReminderDays(int days);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
