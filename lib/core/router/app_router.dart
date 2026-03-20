@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:luna/core/constants/app_constants.dart';
+import 'package:luna/core/theme/app_colors.dart';
 import 'package:luna/features/cycle/presentation/providers/cycle_providers.dart';
 import 'package:luna/features/cycle/presentation/screens/home_screen.dart';
 import 'package:luna/features/cycle/presentation/screens/log_screen.dart';
@@ -77,11 +79,11 @@ class _MainShell extends ConsumerWidget {
   final Widget child;
 
   static Color _phaseColor(String? phase) => switch (phase) {
-        'menstrual' => const Color(0xFFE05A7A),
-        'follicular' => const Color(0xFFF4A261),
-        'ovulation' => const Color(0xFFA8DADC),
-        'luteal' => const Color(0xFF9B72CF),
-        _ => const Color(0xFFE05A7A),
+        'menstrual' => AppColors.phaseMenstrual,
+        'follicular' => AppColors.phaseFolicular,
+        'ovulation' => AppColors.phaseOvulation,
+        'luteal' => AppColors.phaseLuteal,
+        _ => AppColors.phaseMenstrual,
       };
 
   @override
@@ -102,7 +104,7 @@ class _MainShell extends ConsumerWidget {
     ];
 
     return Scaffold(
-      backgroundColor: const Color(0xFF120A0A),
+      backgroundColor: AppColors.appBackground,
       body: child,
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
@@ -122,14 +124,14 @@ class _MainShell extends ConsumerWidget {
                   behavior: HitTestBehavior.opaque,
                   onTap: () => context.go(item.route),
                   child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
+                    duration: AppConstants.quickAnim,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 20,
                       vertical: 8,
                     ),
                     decoration: BoxDecoration(
                       color: selected ? phaseColor.withValues(alpha: 0.2) : Colors.transparent,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(AppRadius.container),
                     ),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -138,7 +140,7 @@ class _MainShell extends ConsumerWidget {
                           item.icon,
                           style: TextStyle(
                             fontSize: 18,
-                            color: selected ? phaseColor : Colors.white.withValues(alpha: 0.3),
+                            color: selected ? phaseColor : AppColors.darkHint,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -146,7 +148,7 @@ class _MainShell extends ConsumerWidget {
                           item.label,
                           style: TextStyle(
                             fontSize: 10,
-                            color: selected ? phaseColor : Colors.white.withValues(alpha: 0.3),
+                            color: selected ? phaseColor : AppColors.darkHint,
                             letterSpacing: 0.5,
                           ),
                         ),

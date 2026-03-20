@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:luna/core/constants/app_constants.dart';
 import 'package:luna/core/theme/app_colors.dart';
 
 class AppTheme {
@@ -15,7 +16,6 @@ class AppTheme {
           brightness: Brightness.light,
         ),
         scaffoldBackgroundColor: AppColors.surface,
-        fontFamily: 'Inter',
         appBarTheme: const AppBarTheme(
           backgroundColor: AppColors.surface,
           foregroundColor: AppColors.textPrimary,
@@ -23,7 +23,6 @@ class AppTheme {
           scrolledUnderElevation: 0,
           centerTitle: true,
           titleTextStyle: TextStyle(
-            fontFamily: 'Inter',
             fontSize: 17,
             fontWeight: FontWeight.w600,
             color: AppColors.textPrimary,
@@ -33,7 +32,7 @@ class AppTheme {
           color: Colors.white,
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppRadius.container),
             side: const BorderSide(color: AppColors.outline, width: 1),
           ),
         ),
@@ -43,10 +42,9 @@ class AppTheme {
             foregroundColor: Colors.white,
             minimumSize: const Size.fromHeight(52),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(AppRadius.card),
             ),
             textStyle: const TextStyle(
-              fontFamily: 'Inter',
               fontSize: 16,
               fontWeight: FontWeight.w600,
             ),
@@ -102,7 +100,6 @@ class AppTheme {
           brightness: Brightness.dark,
         ),
         scaffoldBackgroundColor: AppColors.surfaceDark,
-        fontFamily: 'Inter',
         appBarTheme: const AppBarTheme(
           backgroundColor: AppColors.surfaceDark,
           foregroundColor: Colors.white,
@@ -110,7 +107,6 @@ class AppTheme {
           scrolledUnderElevation: 0,
           centerTitle: true,
           titleTextStyle: TextStyle(
-            fontFamily: 'Inter',
             fontSize: 17,
             fontWeight: FontWeight.w600,
             color: Colors.white,
@@ -120,7 +116,7 @@ class AppTheme {
           color: AppColors.surfaceVariantDark,
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppRadius.container),
           ),
         ),
         filledButtonTheme: FilledButtonThemeData(
@@ -129,7 +125,7 @@ class AppTheme {
             foregroundColor: Colors.white,
             minimumSize: const Size.fromHeight(52),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(AppRadius.card),
             ),
           ),
         ),

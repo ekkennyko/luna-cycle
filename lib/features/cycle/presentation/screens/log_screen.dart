@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:luna/core/constants/strings/log_strings.dart';
 import 'package:luna/core/theme/app_colors.dart';
+import 'package:luna/l10n/app_localizations.dart';
 import 'package:luna/features/cycle/presentation/providers/cycle_providers.dart';
 
 class LogScreen extends ConsumerStatefulWidget {
@@ -20,6 +22,7 @@ class _LogScreenState extends ConsumerState<LogScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final formatted = DateFormat('MMMM d, yyyy').format(widget.date);
 
     return Scaffold(
@@ -32,11 +35,11 @@ class _LogScreenState extends ConsumerState<LogScreen> {
           padding: const EdgeInsets.all(20),
           children: [
             _SectionCard(
-              title: 'Period',
+              title: l10n.logPeriod,
               child: Column(
                 children: [
                   SwitchListTile(
-                    title: const Text('First day / ongoing'),
+                    title: Text(l10n.logFirstDayOngoing),
                     value: _isPeriod,
                     activeThumbColor: AppColors.primary,
                     onChanged: (v) => setState(() => _isPeriod = v),
@@ -49,7 +52,7 @@ class _LogScreenState extends ConsumerState<LogScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Flow intensity',
+                            l10n.logFlowIntensity,
                             style: Theme.of(context).textTheme.labelLarge,
                           ),
                           const SizedBox(height: 8),
@@ -67,7 +70,7 @@ class _LogScreenState extends ConsumerState<LogScreen> {
             const SizedBox(height: 24),
             FilledButton(
               onPressed: _save,
-              child: const Text('Save'),
+              child: Text(l10n.logSave),
             ),
           ],
         ),
@@ -112,13 +115,7 @@ class _FlowIntensitySelector extends StatelessWidget {
   final int value;
   final ValueChanged<int> onChanged;
 
-  static const _labels = [
-    '',
-    'Spotting',
-    'Light',
-    'Heavy',
-    'Very\nheavy',
-  ];
+  static const _labels = LogStrings.flowLabels;
   static const _icons = [
     null,
     Icons.water_drop_outlined,

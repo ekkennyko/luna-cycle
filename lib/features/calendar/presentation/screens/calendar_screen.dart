@@ -1,53 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:luna/core/theme/app_text_styles.dart';
 import 'package:intl/intl.dart';
 import 'package:luna/core/database/app_database.dart';
+import 'package:luna/core/constants/app_constants.dart';
+import 'package:luna/core/constants/mood_data.dart';
+import 'package:luna/core/theme/app_colors.dart';
+import 'package:luna/l10n/app_localizations.dart';
 import 'package:luna/features/cycle/domain/cycle_phase_calculator.dart';
 import 'package:luna/features/cycle/presentation/providers/cycle_providers.dart';
 import 'package:luna/shared/providers/core_providers.dart';
+import 'package:luna/shared/widgets/app_card.dart';
+import 'package:luna/shared/widgets/common_sheet.dart';
+import 'package:luna/shared/widgets/section_label.dart';
 
-const _bg = Color(0xFF120A0A);
-const _accent = Color(0xFFE05A7A);
+const _bg = AppColors.appBackground;
+const _accent = AppColors.phaseMenstrual;
 
 const _phaseColors = {
-  CyclePhase.menstrual: Color(0xFFE05A7A),
-  CyclePhase.follicular: Color(0xFFF4A261),
-  CyclePhase.ovulation: Color(0xFFA8DADC),
-  CyclePhase.luteal: Color(0xFF9B72CF),
+  CyclePhase.menstrual: AppColors.phaseMenstrual,
+  CyclePhase.follicular: AppColors.phaseFolicular,
+  CyclePhase.ovulation: AppColors.phaseOvulation,
+  CyclePhase.luteal: AppColors.phaseLuteal,
 };
 
 const _phaseBgs = {
-  CyclePhase.menstrual: Color(0x26E05A7A),
-  CyclePhase.follicular: Color(0x1AF4A261),
-  CyclePhase.ovulation: Color(0x1AA8DADC),
-  CyclePhase.luteal: Color(0x1A9B72CF),
+  CyclePhase.menstrual: AppColors.phaseMenstrualBg,
+  CyclePhase.follicular: AppColors.phaseFolicularBg,
+  CyclePhase.ovulation: AppColors.phaseOvulationBg,
+  CyclePhase.luteal: AppColors.phaseLutealBg,
 };
-
-const _moodEmojis = ['😔', '😐', '🙂', '😊', '🤩'];
-const _moodLabels = ['Low', 'Okay', 'Good', 'Happy', 'Amazing'];
 
 /// All period ranges: [{start, end}] derived from DB entries.
 final periodRangesProvider = FutureProvider<List<({DateTime start, DateTime end})>>((ref) async {
   ref.watch(cycleEntriesProvider);
   final entries = await ref.read(cycleRepositoryProvider).getAllEntries();
-  final starts = entries.where((e) => e.type == 'period_start').toList()..sort((a, b) => a.date.compareTo(b.date));
-  final ends = entries.where((e) => e.type == 'period_end').toList()..sort((a, b) => a.date.compareTo(b.date));
-
-  final ranges = <({DateTime start, DateTime end})>[];
-  for (final s in starts) {
-    DateTime? endDate;
-    for (final e in ends) {
-      if (!e.date.isBefore(s.date)) {
-        endDate = e.date;
-        break;
-      }
-    }
-    if (endDate != null) {
-      ranges.add((start: s.date, end: endDate));
-    }
-  }
-  return ranges;
+  return matchPeriodRanges(entries);
 });
 
 final predictedPeriodsProvider = FutureProvider<List<({DateTime start, DateTime end})>>(
@@ -131,6 +119,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final ranges = ref.watch(periodRangesProvider).asData?.value ?? [];
     final predicted = ref.watch(predictedPeriodsProvider).asData?.value ?? [];
     final moods = ref.watch(allMoodsProvider);
@@ -206,42 +195,37 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Calendar',
-                        style: GoogleFonts.playfairDisplay(
-                          fontSize: 26,
-                          fontWeight: FontWeight.w600,
+                        l10n.calendarTitle,
+                        style: AppTextStyles.displayMedium(
                           color: Colors.white.withValues(alpha: 0.9),
                         ),
                       ),
-                      const Text(
-                        'CYCLE HISTORY',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: _accent,
-                          letterSpacing: 2,
-                          fontWeight: FontWeight.w500,
-                        ),
+                      SectionLabel(
+                        text: l10n.calendarCycleHistory,
+                        color: _accent,
+                        letterSpacing: 2,
+                        fontWeight: FontWeight.w500,
                       ),
                     ],
                   ),
                 ),
 
                 // Legend
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(24, 12, 24, 0),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
                   child: Wrap(
                     spacing: 16,
                     runSpacing: 6,
                     children: [
-                      _LegendItem(color: _accent, label: 'Period'),
+                      _LegendItem(color: _accent, label: l10n.calendarLegendPeriod),
                       _LegendItem(
-                        color: Color(0x40E05A7A),
-                        label: 'Predicted',
+                        color: const Color(0x40E05A7A),
+                        label: l10n.calendarLegendPredicted,
                         dashed: true,
                       ),
-                      _LegendItem(color: Color(0x1AF4A261), label: 'Follicular'),
-                      _LegendItem(color: Color(0x1AA8DADC), label: 'Ovulation'),
-                      _LegendItem(color: Color(0x1A9B72CF), label: 'Luteal'),
+                      _LegendItem(color: const Color(0x1AF4A261), label: l10n.calendarLegendFollicular),
+                      _LegendItem(color: const Color(0x1AA8DADC), label: l10n.calendarLegendOvulation),
+                      _LegendItem(color: const Color(0x1A9B72CF), label: l10n.calendarLegendLuteal),
                     ],
                   ),
                 ),
@@ -356,12 +340,7 @@ class _MonthGrid extends StatelessWidget {
           // Month header
           Text(
             monthName,
-            style: GoogleFonts.playfairDisplay(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Colors.white.withValues(alpha: 0.8),
-              letterSpacing: 0.5,
-            ),
+            style: AppTextStyles.monthLabel,
           ),
           const SizedBox(height: 16),
 
@@ -684,6 +663,7 @@ class _DayDetailSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final dateNorm = DateTime(date.year, date.month, date.day);
     final isPeriod = _getPeriodPosition(dateNorm, ranges) != null;
     final isPredicted = !isPeriod && _getPredictedPosition(dateNorm, predicted) != null;
@@ -693,33 +673,12 @@ class _DayDetailSheet extends StatelessWidget {
     final symptoms = symptomLogs[key];
     final hasAnyData = isPeriod || mood != null || symptoms != null;
 
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFF1E1118), Color(0xFF150D12)],
-        ),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        border: Border(
-          top: BorderSide(color: Color(0x0FFFFFFF)),
-          left: BorderSide(color: Color(0x0FFFFFFF)),
-          right: BorderSide(color: Color(0x0FFFFFFF)),
-        ),
-      ),
+    return AppSheet(
       padding: const EdgeInsets.fromLTRB(24, 20, 24, 40),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Drag handle
-          Container(
-            width: 36,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
+          const DragHandle(),
           const SizedBox(height: 20),
 
           // Date header row
@@ -731,17 +690,13 @@ class _DayDetailSheet extends StatelessWidget {
                 children: [
                   Text(
                     DateFormat('MMMM d').format(date),
-                    style: GoogleFonts.playfairDisplay(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
+                    style: AppTextStyles.titleLarge,
                   ),
                   if (phase != null)
                     Padding(
                       padding: const EdgeInsets.only(top: 2),
                       child: Text(
-                        '${CyclePhaseCalculator.phaseName(phase)} phase',
+                        '${CyclePhaseCalculator.phaseName(phase)}${l10n.calendarPhaseSuffix}',
                         style: TextStyle(
                           fontSize: 12,
                           color: _phaseColors[phase],
@@ -750,11 +705,11 @@ class _DayDetailSheet extends StatelessWidget {
                       ),
                     ),
                   if (isPredicted)
-                    const Padding(
-                      padding: EdgeInsets.only(top: 2),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
                       child: Text(
-                        'Predicted period',
-                        style: TextStyle(
+                        l10n.calendarPredictedPeriod,
+                        style: const TextStyle(
                           fontSize: 12,
                           color: Color(0x99E05A7A),
                         ),
@@ -768,11 +723,11 @@ class _DayDetailSheet extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: const Color(0x33E05A7A),
                     border: Border.all(color: const Color(0x66E05A7A)),
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
-                  child: const Text(
-                    '🩸 Period',
-                    style: TextStyle(
+                  child: Text(
+                    l10n.calendarPeriodBadge,
+                    style: const TextStyle(
                       fontSize: 12,
                       color: _accent,
                       fontWeight: FontWeight.w600,
@@ -789,7 +744,7 @@ class _DayDetailSheet extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 20),
               child: Text(
-                'Nothing logged this day',
+                l10n.calendarNothingLogged,
                 style: TextStyle(
                   fontSize: 13,
                   color: Colors.white.withValues(alpha: 0.2),
@@ -799,87 +754,72 @@ class _DayDetailSheet extends StatelessWidget {
 
           // Mood card
           if (mood != null) ...[
-            Container(
-              margin: const EdgeInsets.only(bottom: 14),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.04),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
-              ),
-              child: Row(
-                children: [
-                  Text(_moodEmojis[mood - 1], style: const TextStyle(fontSize: 28)),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'MOOD',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.white.withValues(alpha: 0.3),
-                          letterSpacing: 1,
+            Padding(
+              padding: const EdgeInsets.only(bottom: 14),
+              child: AppCard(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Row(
+                  children: [
+                    Text(moodEmojis[mood - 1], style: const TextStyle(fontSize: 28)),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SectionLabel(
+                          text: l10n.calendarMoodLabel,
+                          color: AppColors.darkHint,
                         ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        _moodLabels[mood - 1],
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.white.withValues(alpha: 0.7),
+                        const SizedBox(height: 2),
+                        Text(
+                          moodLabels[mood - 1],
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.white.withValues(alpha: 0.7),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
 
           // Symptoms card
           if (symptoms != null && symptoms.isNotEmpty)
-            Container(
+            SizedBox(
               width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.04),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'SYMPTOMS',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.white.withValues(alpha: 0.3),
-                      letterSpacing: 1,
+              child: AppCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SectionLabel(
+                      text: l10n.calendarSymptomsLabel,
+                      color: AppColors.darkHint,
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: symptoms
-                        .map(
-                          (s) => Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                            decoration: BoxDecoration(
-                              color: const Color(0x26E05A7A),
-                              border: Border.all(color: const Color(0x4DE05A7A)),
-                              borderRadius: BorderRadius.circular(20),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: symptoms
+                          .map(
+                            (s) => Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: const Color(0x26E05A7A),
+                                border: Border.all(color: const Color(0x4DE05A7A)),
+                                borderRadius: BorderRadius.circular(AppRadius.pill),
+                              ),
+                              child: Text(
+                                s,
+                                style: const TextStyle(fontSize: 12, color: _accent),
+                              ),
                             ),
-                            child: Text(
-                              s,
-                              style: const TextStyle(fontSize: 12, color: _accent),
-                            ),
-                          ),
-                        )
-                        .toList(),
-                  ),
-                ],
+                          )
+                          .toList(),
+                    ),
+                  ],
+                ),
               ),
             ),
         ],

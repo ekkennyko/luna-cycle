@@ -1,11 +1,13 @@
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:luna/core/constants/app_constants.dart';
+import 'package:luna/core/extensions/date_time_ext.dart';
 import 'package:luna/core/database/app_database.dart';
 import 'package:luna/features/cycle/domain/cycle_phase_calculator.dart';
 import 'package:luna/features/cycle/domain/cycle_predictor.dart';
 import 'package:luna/features/cycle/domain/repositories/i_cycle_repository.dart';
 import 'package:luna/shared/providers/core_providers.dart';
+import 'package:luna/core/constants/prefs_keys.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // Debug time offset in days (0 = today). Only used in debug builds.
@@ -50,7 +52,7 @@ final lastPeriodEndProvider = FutureProvider<CycleEntry?>((ref) async {
 // Period length saved during onboarding or settings. Falls back to the app default.
 final userPeriodLengthProvider = FutureProvider<int>((ref) async {
   final prefs = await SharedPreferences.getInstance();
-  return prefs.getInt('user_period_length') ?? AppConstants.defaultPeriodLength;
+  return prefs.getInt(PrefsKeys.userPeriodLength) ?? AppConstants.defaultPeriodLength;
 });
 
 // Whether the current period is still ongoing.
@@ -89,23 +91,28 @@ final cycleLengthsProvider = FutureProvider<List<int>>((ref) async {
   ];
 });
 
-// All completed period lengths in chronological order (oldest → newest).
-final completedPeriodLengthsProvider = FutureProvider<List<int>>((ref) async {
-  ref.watch(cycleEntriesProvider);
-  final entries = await ref.read(cycleRepositoryProvider).getAllEntries();
+/// Pairs each period_start with its nearest period_end (end >= start).
+List<({DateTime start, DateTime end})> matchPeriodRanges(List<CycleEntry> entries) {
   final starts = entries.where((e) => e.type == 'period_start').toList()..sort((a, b) => a.date.compareTo(b.date));
   final ends = entries.where((e) => e.type == 'period_end').toList()..sort((a, b) => a.date.compareTo(b.date));
 
-  final lengths = <int>[];
+  final ranges = <({DateTime start, DateTime end})>[];
   for (final s in starts) {
     for (final e in ends) {
       if (!e.date.isBefore(s.date)) {
-        lengths.add(e.date.difference(s.date).inDays + 1);
+        ranges.add((start: s.date, end: e.date));
         break;
       }
     }
   }
-  return lengths;
+  return ranges;
+}
+
+// All completed period lengths in chronological order (oldest → newest).
+final completedPeriodLengthsProvider = FutureProvider<List<int>>((ref) async {
+  ref.watch(cycleEntriesProvider);
+  final entries = await ref.read(cycleRepositoryProvider).getAllEntries();
+  return matchPeriodRanges(entries).map((r) => r.end.difference(r.start).inDays + 1).toList();
 });
 
 // Predicted period length using weighted average.
@@ -219,7 +226,7 @@ class CycleNotifier extends AsyncNotifier<void> {
   Future<void> build() async {}
 
   Future<void> logPeriodStart(DateTime date, {int flowIntensity = 2}) async {
-    final day = DateTime(date.year, date.month, date.day).toUtc();
+    final day = date.dateOnly;
     final existing = await _repo.getEntryForDate(date);
     if (existing != null) {
       await _repo.saveEntry(
@@ -242,7 +249,7 @@ class CycleNotifier extends AsyncNotifier<void> {
   Future<void> saveMood(DateTime date, int mood) => _repo.saveMood(date, mood);
 
   Future<void> endPeriod(DateTime date) async {
-    final day = DateTime(date.year, date.month, date.day).toUtc();
+    final day = date.dateOnly;
     final existing = await _repo.getEntryForDate(date);
     if (existing != null) {
       await _repo.updateEntryType(existing.id, 'period_end');
@@ -266,7 +273,7 @@ final todayMoodProvider = Provider<int?>((ref) {
         error: (_, __) => <CycleEntry>[],
       );
   final today = ref.watch(effectiveTodayProvider);
-  final todayUtc = DateTime(today.year, today.month, today.day).toUtc();
+  final todayUtc = today.dateOnly;
   final nextUtc = todayUtc.add(const Duration(days: 1));
   for (final e in entries) {
     if (!e.date.isBefore(todayUtc) && e.date.isBefore(nextUtc)) {

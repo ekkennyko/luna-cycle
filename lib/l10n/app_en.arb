@@ -1,0 +1,252 @@
+{
+  "@@locale": "en",
+
+  "homeAppTitle": "Luna",
+  "homeCycleTracker": "CYCLE TRACKER",
+  "homeDayLabel": "DAY",
+  "homeTapToLog": "Tap to log",
+  "homeYourFirstPeriod": "your first period",
+  "homePeriodActive": "Period active",
+  "homePeriodExpectedToday": "Period expected today",
+  "homeEndPeriod": "End Period",
+  "homeLogPeriod": "Log period",
+  "homePeriod": "Period",
+  "homeMood": "Mood",
+  "homeSymptoms": "Symptoms",
+  "homePhaseSuffix": " PHASE",
+  "homeCycleLength": "Cycle length",
+  "homePeriodStat": "Period",
+  "homeAvgLength": "Avg length",
+  "homeLongerThanUsual": "Your period is longer than usual.",
+  "homeLogToKeepAccurate": "Did your period start? Log it to keep predictions accurate.",
+  "homeNotYet": "Not yet",
+  "homeLogPeriodTitle": "Log Period",
+  "homeFlowIntensity": "FLOW INTENSITY",
+  "homeStartPeriodButton": "🩸 Start Period",
+  "homeEndPeriodTitle": "End Period?",
+  "homeWhenDidPeriodEnd": "When did your period end?",
+  "homeYesterday": "Yesterday",
+  "homeToday": "Today",
+  "homePickADate": "Pick a date",
+  "homeTapToSelect": "Tap to select",
+  "homeCancel": "Cancel",
+  "homeSaving": "Saving…",
+  "homeEndPeriodButton": "✓ End Period",
+  "homeHowAreYouFeeling": "How are you feeling?",
+  "homeLogSymptoms": "Log Symptoms",
+  "homeSave": "Save",
+
+  "homePhaseMenstrual": "Menstrual",
+  "homePhaseFollicular": "Follicular",
+  "homePhaseOvulation": "Ovulation",
+  "homePhaseLuteal": "Luteal",
+
+  "homeMenstrualTip": "Your body is releasing. Rest, use warmth, and be gentle with yourself. Iron-rich foods like spinach and lentils can help replenish.",
+  "homeFollicularTip": "Estrogen is rising — your energy and creativity are building. Great time to start new projects and try challenging workouts.",
+  "homeOvulationTip": "Peak energy and confidence! You're magnetic right now. Ideal for social events, big presentations, and high-intensity exercise.",
+  "homeLutealTip": "Progesterone peaks then drops. Prioritize sleep, magnesium-rich foods, and reduce caffeine. Self-care is not optional.",
+
+  "homeIntensityLight": "Light",
+  "homeIntensityMedium": "Medium",
+  "homeIntensityHeavy": "Heavy",
+  "homeIntensityVeryHeavy": "Very Heavy",
+
+  "homeSymptomCramps": "Cramps",
+  "homeSymptomBloating": "Bloating",
+  "homeSymptomHeadache": "Headache",
+  "homeSymptomFatigue": "Fatigue",
+  "homeSymptomBreastTenderness": "Breast tenderness",
+  "homeSymptomMoodSwings": "Mood swings",
+  "homeSymptomSpotting": "Spotting",
+  "homeSymptomNausea": "Nausea",
+  "homeSymptomBackPain": "Back pain",
+  "homeSymptomAcne": "Acne",
+
+  "homeDayOfPeriod": "Day {day} of {total}",
+  "@homeDayOfPeriod": {
+    "placeholders": {
+      "day": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "homeDayNumber": "Day {day}",
+  "@homeDayNumber": {
+    "placeholders": {
+      "day": { "type": "int" }
+    }
+  },
+  "homeDaysLate": "{count} {count, plural, one{day} other{days}} late",
+  "@homeDaysLate": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "homePeriodInDays": "Period in {count} {count, plural, one{day} other{days}}",
+  "@homePeriodInDays": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "homeSymptomsCount": "{count} symptoms",
+  "@homeSymptomsCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "homeSaveCount": "Save ({count} selected)",
+  "@homeSaveCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "homePeriodLate": "Your period is {count} days late. This is normal — cycles vary.",
+  "@homePeriodLate": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+
+  "calendarTitle": "Calendar",
+  "calendarCycleHistory": "CYCLE HISTORY",
+  "calendarLegendPeriod": "Period",
+  "calendarLegendPredicted": "Predicted",
+  "calendarLegendFollicular": "Follicular",
+  "calendarLegendOvulation": "Ovulation",
+  "calendarLegendLuteal": "Luteal",
+  "calendarPhaseSuffix": " phase",
+  "calendarPredictedPeriod": "Predicted period",
+  "calendarPeriodBadge": "🩸 Period",
+  "calendarNothingLogged": "Nothing logged this day",
+  "calendarMoodLabel": "MOOD",
+  "calendarSymptomsLabel": "SYMPTOMS",
+
+  "onboardingAppTitle": "Luna",
+  "onboardingStep0Title": "Tell us about your\nlast period",
+  "onboardingStep0Subtitle": "Enter the start and end dates — Luna will calculate everything automatically.",
+  "onboardingWhenDidItStart": "When did it start?",
+  "onboardingWhenDidItEnd": "When did it end?",
+  "onboardingStillOngoing": "Still ongoing",
+  "onboardingPrivacyNotice": "Your data is stored only on your device. Luna never sends it anywhere.",
+  "onboardingStartFreshLink": "I don't remember — start fresh",
+  "onboardingStartFreshDialogBody": "You can always log your first period later.\nLuna will start tracking from your next period.",
+  "onboardingCancel": "Cancel",
+  "onboardingStartFresh": "Start fresh",
+  "onboardingStep1Title": "One more for accuracy",
+  "onboardingStep1Subtitle": "When did the period before that start? Luna will calculate your cycle length from real dates.",
+  "onboardingPrevPeriodStart": "Previous period — start date",
+  "onboardingPrevPeriodEnd": "Previous period — end date",
+  "onboardingPreview": "PREVIEW",
+  "onboardingPeriodLength": "Period length",
+  "onboardingCycleLength": "Cycle length",
+  "onboardingAddDateAbove": "Add date above",
+  "onboardingDidYouKnow": "💡 Did you know?",
+  "onboardingDidYouKnowBody": "Only 13% of people have exactly 28-day cycles. Real data gives you real predictions.",
+  "onboardingSaving": "Saving…",
+  "onboardingGetStarted": "Get started →",
+  "onboardingContinue": "Continue →",
+  "onboardingBack": "← Back",
+  "onboardingSkip": "Skip →",
+  "onboardingAllSet": "You're all set!",
+  "onboardingCompletionSubtitle": "Luna is ready to track your cycle.\nYour data stays private on your device.",
+  "onboardingLastPeriodStarted": "Last period started",
+  "onboardingStartTracking": "Start tracking →",
+  "onboardingTapToSelect": "Tap to select",
+  "onboardingOptional": "optional",
+  "onboardingDayPeriod": "{count} day period — got it!",
+  "@onboardingDayPeriod": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "onboardingDays": "{count} days",
+  "@onboardingDays": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "onboardingDayCycleCalculated": "{count} day cycle — calculated from your data ✓",
+  "@onboardingDayCycleCalculated": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+
+  "settingsTitle": "Settings",
+  "settingsUpgradeToPremium": "Upgrade to Premium",
+  "settingsUpgradeSubtitle": "Analytics, widget, backup and more",
+  "settingsPrivacy": "Privacy",
+  "settingsData": "Data",
+  "settingsCycle": "Cycle",
+  "settingsAbout": "About",
+  "settingsDebug": "Debug",
+  "settingsAppLock": "App lock",
+  "settingsBiometricsPin": "Biometrics / PIN",
+  "settingsCreateBackup": "Create backup",
+  "settingsEncryptedFile": "Encrypted .luna file",
+  "settingsRestoreFromBackup": "Restore from backup",
+  "settingsCycleSettings": "Cycle settings",
+  "settingsCycleLengthSubtitle": "Average length, period length",
+  "settingsPrivacyPolicy": "Privacy policy",
+  "settingsResetProfile": "Reset profile",
+  "settingsDeleteAllData": "Delete all cycle data",
+  "settingsPremium": "Premium",
+  "settingsResetProfileQuestion": "Reset profile?",
+  "settingsResetDialogBody": "All cycle entries, symptom logs and pregnancies will be deleted. This cannot be undone.",
+  "settingsCancel": "Cancel",
+  "settingsReset": "Reset",
+  "settingsVersion": "Version {version}",
+  "@settingsVersion": {
+    "placeholders": {
+      "version": { "type": "String" }
+    }
+  },
+
+  "paywallLunaPremium": "Luna Premium",
+  "paywallSubtitle": "Everything you need to understand your body",
+  "paywallAdvancedAnalytics": "Advanced analytics",
+  "paywallAnalyticsSubtitle": "Charts, trends, symptoms by phase",
+  "paywallCustomSymptoms": "Custom symptoms",
+  "paywallCustomSymptomsSubtitle": "Add your own symptoms",
+  "paywallPregnancyTracker": "Pregnancy tracker",
+  "paywallPregnancySubtitle": "Week by week",
+  "paywallHomeWidget": "Home screen widget",
+  "paywallHomeWidgetSubtitle": "Cycle day at a glance",
+  "paywallEncryptedBackup": "Encrypted backup",
+  "paywallBackupSubtitle": "Your data, safe and private",
+  "paywallYearly": "Yearly — $19.99 / year",
+  "paywallSave44": "Save 44%",
+  "paywallMonthly": "Monthly — $2.99 / month",
+  "paywallRestorePurchases": "Restore purchases",
+  "paywallFailed": "Failed to load: {error}",
+  "@paywallFailed": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+
+  "analyticsTitle": "Analytics",
+  "analyticsPremiumTitle": "Analytics — Premium",
+  "analyticsPremiumBody": "Cycle charts, phase symptoms and predictions are available with a Premium subscription.",
+  "analyticsTryPremium": "Try Premium",
+  "analyticsComingSoon": "Cycle charts — coming soon",
+
+  "logPeriod": "Period",
+  "logFirstDayOngoing": "First day / ongoing",
+  "logFlowIntensity": "Flow intensity",
+  "logSave": "Save",
+  "logFlowSpotting": "Spotting",
+  "logFlowLight": "Light",
+  "logFlowHeavy": "Heavy",
+  "logFlowVeryHeavy": "Very\nheavy",
+
+  "navCycle": "Cycle",
+  "navCalendar": "Calendar",
+  "navAnalytics": "Analytics",
+  "navSettings": "Settings",
+
+  "moodLow": "Low",
+  "moodOkay": "Okay",
+  "moodGood": "Good",
+  "moodHappy": "Happy",
+  "moodAmazing": "Amazing"
+}

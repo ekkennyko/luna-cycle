@@ -9,6 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
 
   # State management
   flutter_riverpod: ^3.2.1
@@ -67,3 +69,6 @@ dev_dependencies:
   # Drift code generation
   drift_dev: ^2.32.0
   build_runner: ^2.4.13
+
+flutter:
+  generate: true

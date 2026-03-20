@@ -1,14 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:luna/core/theme/app_text_styles.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:luna/features/cycle/presentation/providers/cycle_providers.dart';
 import 'package:luna/shared/providers/core_providers.dart';
+import 'package:luna/core/constants/app_constants.dart';
+import 'package:luna/core/constants/prefs_keys.dart';
+import 'package:luna/l10n/app_localizations.dart';
+import 'package:luna/core/theme/app_colors.dart';
+import 'package:luna/core/theme/date_picker_theme.dart';
+import 'package:luna/shared/widgets/gradient_button.dart';
+import 'package:luna/shared/widgets/section_label.dart';
 
-const _accent = Color(0xFFE05A7A);
-const _bg = Color(0xFF120A0A);
+const _accent = AppColors.phaseMenstrual;
+const _bg = AppColors.appBackground;
 
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
@@ -61,15 +68,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       firstDate: firstDate ?? now.subtract(const Duration(days: 365 * 2)),
       lastDate: lastDate ?? now,
       builder: (ctx, child) => Theme(
-        data: ThemeData.dark().copyWith(
-          colorScheme: const ColorScheme.dark(
-            primary: _accent,
-            onPrimary: Colors.white,
-            surface: Color(0xFF1E1118),
-            onSurface: Colors.white,
-          ),
-          dialogTheme: const DialogThemeData(backgroundColor: Color(0xFF1E1118)),
-        ),
+        data: appDatePickerTheme(_accent),
         child: child!,
       ),
     );
@@ -109,8 +108,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       }
 
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setInt('user_cycle_length', _cycleLength ?? 28);
-      await prefs.setInt('user_period_length', _periodLength ?? 5);
+      await prefs.setInt(PrefsKeys.userCycleLength, _cycleLength ?? 28);
+      await prefs.setInt(PrefsKeys.userPeriodLength, _periodLength ?? 5);
 
       if (!mounted) return;
       setState(() {
@@ -130,23 +129,24 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Future<void> _startFresh() async {
+    final l10n = AppLocalizations.of(context)!;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1E1118),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        content: const Text(
-          'You can always log your first period later.\nLuna will start tracking from your next period.',
-          style: TextStyle(color: Colors.white70, fontSize: 14, height: 1.6),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill)),
+        content: Text(
+          l10n.onboardingStartFreshDialogBody,
+          style: const TextStyle(color: Colors.white70, fontSize: 14, height: 1.6),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Cancel', style: TextStyle(color: Colors.white.withValues(alpha: 0.5))),
+            child: Text(l10n.onboardingCancel, style: const TextStyle(color: AppColors.darkSecondaryText)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Start fresh', style: TextStyle(color: _accent)),
+            child: Text(l10n.onboardingStartFresh, style: const TextStyle(color: _accent)),
           ),
         ],
       ),
@@ -154,16 +154,16 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     if (confirm != true || !mounted) return;
     await ref.read(appDatabaseProvider).resetAllData();
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('user_cycle_length', 28);
-    await prefs.setInt('user_period_length', 5);
-    await prefs.setBool('onboarding_complete', true);
+    await prefs.setInt(PrefsKeys.userCycleLength, 28);
+    await prefs.setInt(PrefsKeys.userPeriodLength, 5);
+    await prefs.setBool(PrefsKeys.onboardingComplete, true);
     if (!mounted) return;
     context.go('/');
   }
 
   Future<void> _completeOnboarding() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('onboarding_complete', true);
+    await prefs.setBool(PrefsKeys.onboardingComplete, true);
     if (!mounted) return;
     context.go('/');
   }
@@ -227,6 +227,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Widget _buildLogoBar() {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
       child: Row(
@@ -243,12 +244,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           ),
           const SizedBox(width: 10),
           Text(
-            'Luna',
-            style: GoogleFonts.playfairDisplay(
-              fontSize: 18,
-              color: Colors.white.withValues(alpha: 0.9),
-              fontWeight: FontWeight.w600,
-            ),
+            l10n.onboardingAppTitle,
+            style: AppTextStyles.titleMedium(),
           ),
         ],
       ),
@@ -286,23 +283,19 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Widget _buildStep0() {
+    final l10n = AppLocalizations.of(context)!;
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(24, 4, 24, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Tell us about your\nlast period',
-            style: GoogleFonts.playfairDisplay(
-              fontSize: 24,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-              height: 1.2,
-            ),
+            l10n.onboardingStep0Title,
+            style: AppTextStyles.displaySmall,
           ),
           const SizedBox(height: 8),
           Text(
-            'Enter the start and end dates — Luna will calculate everything automatically.',
+            l10n.onboardingStep0Subtitle,
             style: TextStyle(
               fontSize: 13,
               color: Colors.white.withValues(alpha: 0.45),
@@ -311,7 +304,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           ),
           const SizedBox(height: 28),
           _DatePickerField(
-            label: 'When did it start?',
+            label: l10n.onboardingWhenDidItStart,
             date: _periodStart,
             onTap: () async {
               final d = await _pickDate(context, initial: _periodStart);
@@ -333,10 +326,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             child: _periodOngoing
                 ? const SizedBox.shrink()
                 : _DatePickerField(
-                    label: 'When did it end?',
+                    label: l10n.onboardingWhenDidItEnd,
                     date: _periodEnd,
                     optional: true,
-                    hint: _periodLength != null ? '$_periodLength day period — got it!' : null,
+                    hint: _periodLength != null ? l10n.onboardingDayPeriod(_periodLength!) : null,
                     onTap: () async {
                       if (_periodStart == null) return;
                       final d = await _pickDate(
@@ -360,7 +353,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             child: _periodEnd == null
                 ? AnimatedOpacity(
                     opacity: 1.0,
-                    duration: const Duration(milliseconds: 200),
+                    duration: AppConstants.quickAnim,
                     child: GestureDetector(
                       onTap: () => setState(() {
                         _periodOngoing = !_periodOngoing;
@@ -382,7 +375,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            'Still ongoing',
+                            l10n.onboardingStillOngoing,
                             style: TextStyle(
                               fontSize: 14,
                               color: _periodOngoing ? Colors.white : Colors.white.withValues(alpha: 0.45),
@@ -400,7 +393,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.03),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(AppRadius.card),
               border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
             ),
             child: Row(
@@ -410,7 +403,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Your data is stored only on your device. Luna never sends it anywhere.',
+                    l10n.onboardingPrivacyNotice,
                     style: TextStyle(
                       fontSize: 12,
                       color: Colors.white.withValues(alpha: 0.35),
@@ -425,9 +418,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           Center(
             child: TextButton(
               onPressed: _startFresh,
-              child: const Text(
-                "I don't remember — start fresh",
-                style: TextStyle(fontSize: 13, color: Color(0x4DFFFFFF)),
+              child: Text(
+                l10n.onboardingStartFreshLink,
+                style: const TextStyle(fontSize: 13, color: Color(0x4DFFFFFF)),
               ),
             ),
           ),
@@ -437,12 +430,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Widget _buildStep1() {
+    final l10n = AppLocalizations.of(context)!;
     final prevPl = _prevPeriodLength;
     final cl = _cycleLength;
 
     final String periodLenStr;
     if (prevPl != null) {
-      periodLenStr = '$prevPl days';
+      periodLenStr = l10n.onboardingDays(prevPl);
     } else if (_prevStart != null && _prevEnd == null) {
       periodLenStr = '—';
     } else {
@@ -451,11 +445,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
     final String cycleLenStr;
     if (cl != null) {
-      cycleLenStr = '$cl days';
+      cycleLenStr = l10n.onboardingDays(cl);
     } else if (_prevStart != null) {
       cycleLenStr = '...';
     } else {
-      cycleLenStr = 'Add date above';
+      cycleLenStr = l10n.onboardingAddDateAbove;
     }
 
     return SingleChildScrollView(
@@ -464,17 +458,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'One more for accuracy',
-            style: GoogleFonts.playfairDisplay(
-              fontSize: 24,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-              height: 1.2,
-            ),
+            l10n.onboardingStep1Title,
+            style: AppTextStyles.displaySmall,
           ),
           const SizedBox(height: 8),
           Text(
-            'When did the period before that start? Luna will calculate your cycle length from real dates.',
+            l10n.onboardingStep1Subtitle,
             style: TextStyle(
               fontSize: 13,
               color: Colors.white.withValues(alpha: 0.45),
@@ -483,10 +472,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           ),
           const SizedBox(height: 28),
           _DatePickerField(
-            label: 'Previous period — start date',
+            label: l10n.onboardingPrevPeriodStart,
             date: _prevStart,
             optional: true,
-            hint: cl != null ? '$cl day cycle — calculated from your data ✓' : null,
+            hint: cl != null ? l10n.onboardingDayCycleCalculated(cl) : null,
             onTap: () async {
               final last = _periodStart?.subtract(const Duration(days: 1));
               final d = await _pickDate(
@@ -507,10 +496,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           if (_prevStart != null) ...[
             const SizedBox(height: 16),
             _DatePickerField(
-              label: 'Previous period — end date',
+              label: l10n.onboardingPrevPeriodEnd,
               date: _prevEnd,
               optional: true,
-              hint: prevPl != null ? '$prevPl day period — got it!' : null,
+              hint: prevPl != null ? l10n.onboardingDayPeriod(prevPl) : null,
               onTap: () async {
                 final maxDate = _periodStart?.subtract(const Duration(days: 1));
                 final d = await _pickDate(
@@ -529,32 +518,28 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.03),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
+              borderRadius: BorderRadius.circular(AppRadius.container),
+              border: Border.all(color: AppColors.darkCardBorder),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'PREVIEW',
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.4),
-                    fontSize: 11,
-                    letterSpacing: 1,
-                    fontWeight: FontWeight.w500,
-                  ),
+                SectionLabel(
+                  text: l10n.onboardingPreview,
+                  color: Colors.white.withValues(alpha: 0.4),
+                  fontWeight: FontWeight.w500,
                 ),
                 const SizedBox(height: 12),
                 _PreviewRow(
-                  label: 'Period length',
+                  label: l10n.onboardingPeriodLength,
                   value: periodLenStr,
                   isPlaceholder: periodLenStr == '—',
                   hasDivider: true,
                 ),
                 _PreviewRow(
-                  label: 'Cycle length',
+                  label: l10n.onboardingCycleLength,
                   value: cycleLenStr,
-                  isPlaceholder: cycleLenStr == '—' || cycleLenStr == 'Add date above',
+                  isPlaceholder: cycleLenStr == '—' || cycleLenStr == l10n.onboardingAddDateAbove,
                   hasDivider: false,
                 ),
               ],
@@ -566,22 +551,22 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
             decoration: BoxDecoration(
               color: _accent.withValues(alpha: 0.07),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(AppRadius.card),
               border: Border.all(color: _accent.withValues(alpha: 0.15)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  '💡 Did you know?',
-                  style: TextStyle(fontSize: 12, color: _accent, fontWeight: FontWeight.w600),
+                Text(
+                  l10n.onboardingDidYouKnow,
+                  style: const TextStyle(fontSize: 12, color: _accent, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Only 13% of people have exactly 28-day cycles. Real data gives you real predictions.',
-                  style: TextStyle(
+                  l10n.onboardingDidYouKnowBody,
+                  style: const TextStyle(
                     fontSize: 12,
-                    color: Colors.white.withValues(alpha: 0.5),
+                    color: AppColors.darkSecondaryText,
                     height: 1.5,
                   ),
                 ),
@@ -594,20 +579,22 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Widget _buildBottomButtons() {
+    final l10n = AppLocalizations.of(context)!;
     final isLastStep = _step == 1;
     final label = _saving
-        ? 'Saving…'
+        ? l10n.onboardingSaving
         : isLastStep
-            ? 'Get started →'
-            : 'Continue →';
+            ? l10n.onboardingGetStarted
+            : l10n.onboardingContinue;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _GradientButton(
+          GradientButton(
             label: label,
+            color: _accent,
             enabled: _canProceed && !_saving,
             onTap: (_canProceed && !_saving) ? _handleNext : null,
           ),
@@ -619,7 +606,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 TextButton(
                   onPressed: _saving ? null : _handleBack,
                   child: Text(
-                    '← Back',
+                    l10n.onboardingBack,
                     style: TextStyle(fontSize: 13, color: Colors.white.withValues(alpha: 0.4)),
                   ),
                 )
@@ -629,8 +616,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 TextButton(
                   onPressed: _saving ? null : _saveAndFinish,
                   child: Text(
-                    'Skip →',
-                    style: TextStyle(fontSize: 13, color: Colors.white.withValues(alpha: 0.3)),
+                    l10n.onboardingSkip,
+                    style: const TextStyle(fontSize: 13, color: AppColors.darkHint),
                   ),
                 )
               else
@@ -643,25 +630,26 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Widget _buildCompletionScreen() {
+    final l10n = AppLocalizations.of(context)!;
     final dateStr = _periodStart != null ? DateFormat('MMM d, y').format(_periodStart!) : '—';
 
     final String periodLenStr;
     final pl = _periodLength;
     if (pl != null) {
-      periodLenStr = '$pl days';
+      periodLenStr = l10n.onboardingDays(pl);
     } else if (_periodStart != null && _periodEnd == null) {
-      periodLenStr = 'Still ongoing';
+      periodLenStr = l10n.onboardingStillOngoing;
     } else {
       periodLenStr = '—';
     }
 
     final cl = _cycleLength;
-    final cycleLenStr = cl != null ? '$cl days' : '—';
+    final cycleLenStr = cl != null ? l10n.onboardingDays(cl) : '—';
 
     final rows = [
-      ('Last period started', dateStr),
-      ('Period length', periodLenStr),
-      ('Cycle length', cycleLenStr),
+      (l10n.onboardingLastPeriodStarted, dateStr),
+      (l10n.onboardingPeriodLength, periodLenStr),
+      (l10n.onboardingCycleLength, cycleLenStr),
     ];
 
     return Scaffold(
@@ -713,20 +701,16 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         ),
                         const SizedBox(height: 24),
                         Text(
-                          "You're all set!",
-                          style: GoogleFonts.playfairDisplay(
-                            fontSize: 28,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
+                          l10n.onboardingAllSet,
+                          style: AppTextStyles.displayLarge(),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          'Luna is ready to track your cycle.\nYour data stays private on your device.',
-                          style: TextStyle(
+                          l10n.onboardingCompletionSubtitle,
+                          style: const TextStyle(
                             fontSize: 14,
-                            color: Colors.white.withValues(alpha: 0.5),
+                            color: AppColors.darkSecondaryText,
                             height: 1.7,
                           ),
                           textAlign: TextAlign.center,
@@ -737,9 +721,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                           width: double.infinity,
                           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.04),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
+                            color: AppColors.darkCardBg,
+                            borderRadius: BorderRadius.circular(AppRadius.pill),
+                            border: Border.all(color: AppColors.darkCardBorder),
                           ),
                           child: Column(
                             children: List.generate(rows.length, (i) {
@@ -754,9 +738,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                                       children: [
                                         Text(
                                           row.$1,
-                                          style: TextStyle(
+                                          style: const TextStyle(
                                             fontSize: 13,
-                                            color: Colors.white.withValues(alpha: 0.5),
+                                            color: AppColors.darkSecondaryText,
                                           ),
                                         ),
                                         Text(
@@ -771,9 +755,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                                     ),
                                   ),
                                   if (i < rows.length - 1)
-                                    Divider(
+                                    const Divider(
                                       height: 1,
-                                      color: Colors.white.withValues(alpha: 0.04),
+                                      color: AppColors.darkCardBg,
                                     ),
                                 ],
                               );
@@ -787,8 +771,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
-                  child: _GradientButton(
-                    label: 'Start tracking →',
+                  child: GradientButton(
+                    label: l10n.onboardingStartTracking,
+                    color: _accent,
                     enabled: true,
                     onTap: _completeOnboarding,
                   ),
@@ -842,7 +827,7 @@ class _PreviewRow extends StatelessWidget {
             ],
           ),
         ),
-        if (hasDivider) Divider(height: 1, color: Colors.white.withValues(alpha: 0.04)),
+        if (hasDivider) const Divider(height: 1, color: AppColors.darkCardBg),
       ],
     );
   }
@@ -865,6 +850,7 @@ class _DatePickerField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final hasDate = date != null;
     final showHint = hasDate && hint != null;
 
@@ -880,7 +866,7 @@ class _DatePickerField extends StatelessWidget {
             ),
             if (optional)
               Text(
-                'optional',
+                l10n.onboardingOptional,
                 style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.19)),
               ),
           ],
@@ -889,11 +875,11 @@ class _DatePickerField extends StatelessWidget {
         GestureDetector(
           onTap: onTap,
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
+            duration: AppConstants.quickAnim,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
               color: hasDate ? _accent.withValues(alpha: 0.12) : Colors.white.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadius.container),
               border: Border.all(
                 color: hasDate ? _accent.withValues(alpha: 0.31) : Colors.white.withValues(alpha: 0.1),
               ),
@@ -902,7 +888,7 @@ class _DatePickerField extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    date != null ? DateFormat('MMMM d, y').format(date!) : 'Tap to select',
+                    date != null ? DateFormat('MMMM d, y').format(date!) : l10n.onboardingTapToSelect,
                     style: TextStyle(
                       fontSize: 14,
                       color: hasDate ? Colors.white : Colors.white.withValues(alpha: 0.25),
@@ -944,60 +930,6 @@ class _DatePickerField extends StatelessWidget {
               : const SizedBox.shrink(),
         ),
       ],
-    );
-  }
-}
-
-class _GradientButton extends StatelessWidget {
-  const _GradientButton({
-    required this.label,
-    required this.enabled,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool enabled;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          gradient: enabled
-              ? const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFFE05A7A), Color(0xCCE05A7A)],
-                )
-              : null,
-          color: enabled ? null : Colors.white.withValues(alpha: 0.06),
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: enabled
-              ? [
-                  BoxShadow(
-                    color: _accent.withValues(alpha: 0.4),
-                    blurRadius: 24,
-                    offset: const Offset(0, 8),
-                  ),
-                ]
-              : null,
-        ),
-        child: Center(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: enabled ? Colors.white : Colors.white.withValues(alpha: 0.3),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

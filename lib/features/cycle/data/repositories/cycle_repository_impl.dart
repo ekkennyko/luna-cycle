@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 import 'package:luna/core/database/app_database.dart';
+import 'package:luna/core/extensions/date_time_ext.dart';
 import 'package:luna/features/cycle/domain/repositories/i_cycle_repository.dart';
 
 class CycleRepositoryImpl implements ICycleRepository {
@@ -18,7 +19,7 @@ class CycleRepositoryImpl implements ICycleRepository {
 
   @override
   Future<CycleEntry?> getEntryForDate(DateTime date) {
-    final day = DateTime(date.year, date.month, date.day).toUtc();
+    final day = date.dateOnly;
     final next = day.add(const Duration(days: 1));
     return (_db.select(_db.cycleEntries)..where((t) => t.date.isBiggerOrEqualValue(day) & t.date.isSmallerThanValue(next))).getSingleOrNull();
   }
@@ -42,7 +43,7 @@ class CycleRepositoryImpl implements ICycleRepository {
 
   @override
   Future<void> saveMood(DateTime date, int mood) async {
-    final day = DateTime(date.year, date.month, date.day).toUtc();
+    final day = date.dateOnly;
     final existing = await getEntryForDate(date);
     if (existing != null) {
       await saveEntry(existing.toCompanion(true).copyWith(mood: Value(mood)));

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:luna/core/constants/app_constants.dart';
+import 'package:luna/l10n/app_localizations.dart';
 import 'package:luna/features/cycle/presentation/providers/cycle_providers.dart';
 import 'package:luna/features/subscription/presentation/providers/subscription_providers.dart';
 import 'package:luna/shared/providers/core_providers.dart';
@@ -13,6 +14,7 @@ class SettingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final isPremiumAsync = ref.watch(isPremiumProvider);
     final isPremium = isPremiumAsync.when(
       data: (v) => v,
@@ -21,63 +23,63 @@ class SettingsScreen extends ConsumerWidget {
     );
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(title: Text(l10n.settingsTitle)),
       body: ListView(
         children: [
           if (!isPremium)
             _SettingsTile(
               icon: Icons.star_outline,
-              title: 'Upgrade to Premium',
-              subtitle: 'Analytics, widget, backup and more',
+              title: l10n.settingsUpgradeToPremium,
+              subtitle: l10n.settingsUpgradeSubtitle,
               color: Colors.amber,
               onTap: () => context.push('/paywall'),
             ),
-          const _SectionHeader('Privacy'),
+          _SectionHeader(l10n.settingsPrivacy),
           _SettingsTile(
             icon: Icons.lock_outline,
-            title: 'App lock',
-            subtitle: 'Biometrics / PIN',
+            title: l10n.settingsAppLock,
+            subtitle: l10n.settingsBiometricsPin,
             onTap: () {},
           ),
-          const _SectionHeader('Data'),
+          _SectionHeader(l10n.settingsData),
           _SettingsTile(
             icon: Icons.backup_outlined,
-            title: 'Create backup',
-            subtitle: 'Encrypted .luna file',
+            title: l10n.settingsCreateBackup,
+            subtitle: l10n.settingsEncryptedFile,
             isPremium: !isPremium,
             onTap: isPremium ? () {} : () => context.push('/paywall'),
           ),
           _SettingsTile(
             icon: Icons.restore_outlined,
-            title: 'Restore from backup',
+            title: l10n.settingsRestoreFromBackup,
             isPremium: !isPremium,
             onTap: isPremium ? () {} : () => context.push('/paywall'),
           ),
-          const _SectionHeader('Cycle'),
+          _SectionHeader(l10n.settingsCycle),
           _SettingsTile(
             icon: Icons.tune_outlined,
-            title: 'Cycle settings',
-            subtitle: 'Average length, period length',
+            title: l10n.settingsCycleSettings,
+            subtitle: l10n.settingsCycleLengthSubtitle,
             onTap: () {},
           ),
-          const _SectionHeader('About'),
+          _SectionHeader(l10n.settingsAbout),
           _SettingsTile(
             icon: Icons.info_outline,
             title: AppConstants.appName,
-            subtitle: 'Version ${AppConstants.appVersion}',
+            subtitle: l10n.settingsVersion(AppConstants.appVersion),
             onTap: () {},
           ),
           _SettingsTile(
             icon: Icons.privacy_tip_outlined,
-            title: 'Privacy policy',
+            title: l10n.settingsPrivacyPolicy,
             onTap: () {},
           ),
           if (kDebugMode) ...[
-            const _SectionHeader('Debug'),
+            _SectionHeader(l10n.settingsDebug),
             _SettingsTile(
               icon: Icons.delete_forever_outlined,
-              title: 'Reset profile',
-              subtitle: 'Delete all cycle data',
+              title: l10n.settingsResetProfile,
+              subtitle: l10n.settingsDeleteAllData,
               color: Colors.red,
               onTap: () => _confirmReset(context, ref),
             ),
@@ -88,20 +90,21 @@ class SettingsScreen extends ConsumerWidget {
   }
 
   Future<void> _confirmReset(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Reset profile?'),
-        content: const Text('All cycle entries, symptom logs and pregnancies will be deleted. This cannot be undone.'),
+        title: Text(l10n.settingsResetProfileQuestion),
+        content: Text(l10n.settingsResetDialogBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
+            child: Text(l10n.settingsCancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Reset'),
+            child: Text(l10n.settingsReset),
           ),
         ],
       ),
@@ -176,9 +179,9 @@ class _PremiumBadge extends StatelessWidget {
         color: Colors.amber.shade100,
         borderRadius: BorderRadius.circular(8),
       ),
-      child: const Text(
-        'Premium',
-        style: TextStyle(
+      child: Text(
+        AppLocalizations.of(context)!.settingsPremium,
+        style: const TextStyle(
           fontSize: 11,
           color: Colors.amber,
           fontWeight: FontWeight.w700,

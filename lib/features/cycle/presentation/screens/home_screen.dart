@@ -4,12 +4,24 @@ import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:luna/core/theme/app_text_styles.dart';
 import 'package:luna/core/database/app_database.dart';
 import 'package:luna/features/cycle/domain/cycle_phase_calculator.dart';
 import 'package:luna/features/cycle/presentation/providers/cycle_providers.dart';
 import 'package:luna/shared/providers/core_providers.dart';
+import 'package:luna/core/constants/app_constants.dart';
+import 'package:luna/core/constants/mood_data.dart';
+import 'package:luna/core/constants/strings/home_strings.dart';
+import 'package:luna/core/extensions/date_time_ext.dart';
+import 'package:luna/l10n/app_localizations.dart';
+import 'package:luna/core/constants/prefs_keys.dart';
+import 'package:luna/core/theme/app_colors.dart';
+import 'package:luna/core/theme/date_picker_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:luna/shared/widgets/common_sheet.dart';
+import 'package:luna/shared/widgets/app_card.dart';
+import 'package:luna/shared/widgets/gradient_button.dart';
+import 'package:luna/shared/widgets/section_label.dart';
 
 class _Phase {
   const _Phase({
@@ -26,34 +38,34 @@ class _Phase {
 
   // ignore: constant_identifier_names
   static const menstrual = _Phase(
-    name: 'Menstrual',
-    color: Color(0xFFE05A7A),
-    bgColor: Color(0x1FE05A7A), // 0.12 alpha
-    tip: 'Your body is releasing. Rest, use warmth, and be gentle with yourself. Iron-rich foods like spinach and lentils can help replenish.',
+    name: HomeStrings.menstrual,
+    color: AppColors.phaseMenstrual,
+    bgColor: AppColors.phaseMenstrualBg,
+    tip: HomeStrings.menstrualTip,
   );
 
   // ignore: constant_identifier_names
   static const follicular = _Phase(
-    name: 'Follicular',
-    color: Color(0xFFF4A261),
-    bgColor: Color(0x1AF4A261), // 0.10 alpha
-    tip: 'Estrogen is rising — your energy and creativity are building. Great time to start new projects and try challenging workouts.',
+    name: HomeStrings.follicular,
+    color: AppColors.phaseFolicular,
+    bgColor: AppColors.phaseFolicularBg,
+    tip: HomeStrings.follicularTip,
   );
 
   // ignore: constant_identifier_names
   static const ovulation = _Phase(
-    name: 'Ovulation',
-    color: Color(0xFFA8DADC),
-    bgColor: Color(0x1AA8DADC),
-    tip: "Peak energy and confidence! You're magnetic right now. Ideal for social events, big presentations, and high-intensity exercise.",
+    name: HomeStrings.ovulation,
+    color: AppColors.phaseOvulation,
+    bgColor: AppColors.phaseOvulationBg,
+    tip: HomeStrings.ovulationTip,
   );
 
   // ignore: constant_identifier_names
   static const luteal = _Phase(
-    name: 'Luteal',
-    color: Color(0xFF9B72CF),
-    bgColor: Color(0x1A9B72CF),
-    tip: 'Progesterone peaks then drops. Prioritize sleep, magnesium-rich foods, and reduce caffeine. Self-care is not optional.',
+    name: HomeStrings.luteal,
+    color: AppColors.phaseLuteal,
+    bgColor: AppColors.phaseLutealBg,
+    tip: HomeStrings.lutealTip,
   );
 
   /// Maps a [CyclePhase] from the calculator to this display model.
@@ -65,10 +77,7 @@ class _Phase {
       };
 }
 
-const _moods = ['😔', '😐', '🙂', '😊', '🤩'];
-const _moodLabels = ['Low', 'Okay', 'Good', 'Happy', 'Amazing'];
-
-const _intensityLabels = ['Light', 'Medium', 'Heavy', 'Very Heavy'];
+const _intensityLabels = HomeStrings.intensityLabels;
 const _intensityColors = [
   Color(0xFFF4A261),
   Color(0xFFE07A5F),
@@ -76,18 +85,7 @@ const _intensityColors = [
   Color(0xFFB5179E),
 ];
 
-const _symptomNames = [
-  'Cramps',
-  'Bloating',
-  'Headache',
-  'Fatigue',
-  'Breast tenderness',
-  'Mood swings',
-  'Spotting',
-  'Nausea',
-  'Back pain',
-  'Acne',
-];
+const _symptomNames = HomeStrings.symptomNames;
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -167,7 +165,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
 
   Future<void> _loadBannerDismissState() async {
     final prefs = await SharedPreferences.getInstance();
-    final ts = prefs.getInt('late_banner_dismissed_at');
+    final ts = prefs.getInt(PrefsKeys.lateBannerDismissedAt);
     if (ts != null && mounted) {
       setState(() {
         _bannerHiddenUntil = DateTime.fromMillisecondsSinceEpoch(ts).add(const Duration(hours: 24));
@@ -177,7 +175,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
 
   Future<void> _dismissBannerFor24Hours() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('late_banner_dismissed_at', DateTime.now().millisecondsSinceEpoch);
+    await prefs.setInt(PrefsKeys.lateBannerDismissedAt, DateTime.now().millisecondsSinceEpoch);
     if (mounted) {
       setState(() => _bannerHiddenUntil = DateTime.now().add(const Duration(hours: 24)));
     }
@@ -270,7 +268,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
           final today = ref.read(effectiveTodayProvider);
           await repo.deleteLogsForDate(today);
           final syms = await ref.read(activeSymptomsProvider.future);
-          final day = DateTime(today.year, today.month, today.day).toUtc();
+          final day = today.dateOnly;
           for (final sym in syms) {
             if (selected.contains(sym.name)) {
               await repo.saveLog(
@@ -317,16 +315,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
     final lastStart = ref.watch(lastPeriodStartProvider);
     final isEmpty = lastStart.asData != null && lastStart.asData!.value == null;
 
+    final l10n = AppLocalizations.of(context)!;
     final activePeriodDay = ref.watch(activePeriodDayProvider).asData?.value;
     final String periodLabel = switch (periodStatus) {
       PeriodStatus.active => activePeriodDay != null && periodLen != null
-          ? 'Day $activePeriodDay of $periodLen'
+          ? l10n.homeDayOfPeriod(activePeriodDay, periodLen)
           : activePeriodDay != null
-              ? 'Day $activePeriodDay'
-              : 'Period active',
-      PeriodStatus.late => '$daysLate day${daysLate == 1 ? '' : 's'} late',
-      PeriodStatus.expected => 'Period expected today',
-      PeriodStatus.upcoming => phaseResult != null ? 'Period in ${phaseResult.daysUntilNextPeriod} day${phaseResult.daysUntilNextPeriod == 1 ? '' : 's'}' : '',
+              ? l10n.homeDayNumber(activePeriodDay)
+              : l10n.homePeriodActive,
+      PeriodStatus.late => l10n.homeDaysLate(daysLate),
+      PeriodStatus.expected => l10n.homePeriodExpectedToday,
+      PeriodStatus.upcoming => phaseResult != null ? l10n.homePeriodInDays(phaseResult.daysUntilNextPeriod) : '',
     };
 
     final now = DateTime.now();
@@ -337,7 +336,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
     final symptomsCount = todayLogs.length;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF120A0A),
+      backgroundColor: AppColors.appBackground,
       body: Stack(
         children: [
           Positioned(
@@ -401,6 +400,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
   }
 
   Widget _buildHeader(_Phase phase) {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
       child: Row(
@@ -410,23 +410,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Luna',
-                style: GoogleFonts.playfairDisplay(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w600,
+                l10n.homeAppTitle,
+                style: AppTextStyles.displayLarge(
                   color: Colors.white.withValues(alpha: 0.9),
                   letterSpacing: -0.5,
                   height: 1.1,
                 ),
               ),
-              Text(
-                'CYCLE TRACKER',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: phase.color,
-                  letterSpacing: 2,
-                  fontWeight: FontWeight.w500,
-                ),
+              SectionLabel(
+                text: l10n.homeCycleTracker,
+                color: phase.color,
+                letterSpacing: 2,
+                fontWeight: FontWeight.w500,
               ),
             ],
           ),
@@ -447,10 +442,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                         height: 38,
                         padding: const EdgeInsets.symmetric(horizontal: 10),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF9B72CF).withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(14),
+                          color: AppColors.phaseLuteal.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(AppRadius.card),
                           border: Border.all(
-                            color: const Color(0xFF9B72CF).withValues(alpha: 0.35),
+                            color: AppColors.phaseLuteal.withValues(alpha: 0.35),
                           ),
                         ),
                         alignment: Alignment.center,
@@ -459,7 +454,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                           style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: Color(0xFF9B72CF),
+                            color: AppColors.phaseLuteal,
                             letterSpacing: 0.5,
                           ),
                         ),
@@ -474,7 +469,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                 height: 38,
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.06),
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(AppRadius.card),
                   border: Border.all(
                     color: Colors.white.withValues(alpha: 0.08),
                   ),
@@ -531,88 +526,86 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                     ),
 
                     // Center labels
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (isEmpty) ...[
-                          const Text('🩸', style: TextStyle(fontSize: 32)),
-                          const SizedBox(height: 10),
-                          Text(
-                            'Tap to log',
-                            style: GoogleFonts.playfairDisplay(
-                              fontSize: 26,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                              height: 1,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            'your first period',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.white.withValues(alpha: 0.4),
-                            ),
-                          ),
-                        ] else ...[
-                          Text(
-                            'DAY',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.white.withValues(alpha: 0.5),
-                              letterSpacing: 2,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            displayDay > 0 ? '$displayDay' : '–',
-                            style: GoogleFonts.playfairDisplay(
-                              fontSize: 72,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                              height: 1,
-                              shadows: [
-                                Shadow(
-                                  color: phase.color.withValues(alpha: 0.53),
-                                  blurRadius: 30,
+                    Builder(
+                      builder: (context) {
+                        final l10n = AppLocalizations.of(context)!;
+                        return Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (isEmpty) ...[
+                              const Text('🩸', style: TextStyle(fontSize: 32)),
+                              const SizedBox(height: 10),
+                              Text(
+                                l10n.homeTapToLog,
+                                style: AppTextStyles.displayMedium(
+                                  height: 1,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                l10n.homeYourFirstPeriod,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.white.withValues(alpha: 0.4),
+                                ),
+                              ),
+                            ] else ...[
+                              Text(
+                                l10n.homeDayLabel,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: AppColors.darkSecondaryText,
+                                  letterSpacing: 2,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                displayDay > 0 ? '$displayDay' : '–',
+                                style: AppTextStyles.heroNumber.copyWith(
+                                  shadows: [
+                                    Shadow(
+                                      color: phase.color.withValues(alpha: 0.53),
+                                      blurRadius: 30,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Text(
+                                phase.name,
+                                style: TextStyle(
+                                  fontSize: 17,
+                                  color: phase.color,
+                                  fontWeight: FontWeight.w500,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                              if (periodLabel.isNotEmpty) ...[
+                                const SizedBox(height: 4),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.05),
+                                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                                    border: Border.all(
+                                      color: Colors.white.withValues(alpha: 0.06),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    periodLabel,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.white.withValues(alpha: 0.6),
+                                    ),
+                                  ),
                                 ),
                               ],
-                            ),
-                          ),
-                          Text(
-                            phase.name,
-                            style: TextStyle(
-                              fontSize: 17,
-                              color: phase.color,
-                              fontWeight: FontWeight.w500,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                          if (periodLabel.isNotEmpty) ...[
-                            const SizedBox(height: 4),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 3,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.05),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.06),
-                                ),
-                              ),
-                              child: Text(
-                                periodLabel,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.white.withValues(alpha: 0.6),
-                                ),
-                              ),
-                            ),
+                            ],
                           ],
-                        ],
-                      ],
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -631,6 +624,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
     required int symptomsCount,
     required bool isEmpty,
   }) {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 0, 24, 0),
       child: Row(
@@ -639,9 +633,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
           Expanded(
             child: _QuickChip(
               icon: '🩸',
-              label: isPeriodActive ? 'End Period' : (isEmpty ? 'Log period' : 'Period'),
+              label: isPeriodActive ? l10n.homeEndPeriod : (isEmpty ? l10n.homeLogPeriod : l10n.homePeriod),
               active: isPeriodActive || isEmpty,
-              activeColor: isPeriodActive ? phase.color : const Color(0xFFE05A7A),
+              activeColor: isPeriodActive ? phase.color : AppColors.phaseMenstrual,
               onTap: () => _openPeriodSheet(isPeriodActive: isPeriodActive),
             ),
           ),
@@ -649,8 +643,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
           // Mood
           Expanded(
             child: _QuickChip(
-              icon: moodIdx != null ? _moods[moodIdx] : '💭',
-              label: moodIdx != null ? _moodLabels[moodIdx] : 'Mood',
+              icon: moodIdx != null ? moodEmojis[moodIdx] : '💭',
+              label: moodIdx != null ? moodLabels[moodIdx] : l10n.homeMood,
               onTap: () => _openMoodSheet(phase),
             ),
           ),
@@ -659,7 +653,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
           Expanded(
             child: _QuickChip(
               icon: '✦',
-              label: symptomsCount > 0 ? '$symptomsCount symptoms' : 'Symptoms',
+              label: symptomsCount > 0 ? l10n.homeSymptomsCount(symptomsCount) : l10n.homeSymptoms,
               onTap: () => _openSymptomsSheet(phase),
             ),
           ),
@@ -691,7 +685,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
             end: Alignment.bottomRight,
             colors: [phase.bgColor, Colors.white.withValues(alpha: 0.02)],
           ),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppRadius.pill),
           border: Border.all(color: phase.color.withValues(alpha: 0.25)),
         ),
         child: Column(
@@ -714,14 +708,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                   ),
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  '${phase.name.toUpperCase()} PHASE',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: phase.color,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 1,
-                  ),
+                SectionLabel(
+                  text: '${phase.name.toUpperCase()}${AppLocalizations.of(context)!.homePhaseSuffix}',
+                  color: phase.color,
+                  fontWeight: FontWeight.w600,
                 ),
               ],
             ),
@@ -745,12 +735,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
     required int? periodLen,
     required int? avgLen,
   }) {
+    final l10n = AppLocalizations.of(context)!;
     // Cycle length: last completed cycle, or avg as fallback, or '--'
     final cycleLenStr = cycleLen != null ? '${cycleLen}d' : (avgLen != null ? '~${avgLen}d' : '--');
     final stats = [
-      ('Cycle length', cycleLenStr),
-      ('Period', periodLen != null ? '${periodLen}d' : '--'),
-      ('Avg length', avgLen != null ? '${avgLen}d' : '--'),
+      (l10n.homeCycleLength, cycleLenStr),
+      (l10n.homePeriodStat, periodLen != null ? '${periodLen}d' : '--'),
+      (l10n.homeAvgLength, avgLen != null ? '${avgLen}d' : '--'),
     ];
 
     return Padding(
@@ -764,24 +755,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                 left: i == 0 ? 0 : 5,
                 right: i == stats.length - 1 ? 0 : 5,
               ),
-              child: Container(
+              child: AppCard(
                 padding: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.04),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.07),
-                  ),
-                ),
                 child: Column(
                   children: [
                     Text(
                       value,
-                      style: GoogleFonts.playfairDisplay(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
+                      style: AppTextStyles.titleSmall(fontWeight: FontWeight.w700),
                     ),
                     const SizedBox(height: 2),
                     Text(
@@ -804,13 +784,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
   }
 
   Widget _buildLongerThanUsualHint() {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.04),
-          borderRadius: BorderRadius.circular(16),
+          color: AppColors.darkCardBg,
+          borderRadius: BorderRadius.circular(AppRadius.container),
           border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
         ),
         child: Row(
@@ -819,7 +800,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                'Your period is longer than usual.',
+                l10n.homeLongerThanUsual,
                 style: TextStyle(
                   fontSize: 13,
                   color: Colors.white.withValues(alpha: 0.6),
@@ -834,9 +815,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
   }
 
   Widget _buildLateBanner(int daysLate) {
-    const color = Color(0xFFE05A7A);
-    final body =
-        daysLate >= 7 ? 'Your period is $daysLate days late. This is normal — cycles vary.' : 'Did your period start? Log it to keep predictions accurate.';
+    final l10n = AppLocalizations.of(context)!;
+    const color = AppColors.phaseMenstrual;
+    final body = daysLate >= 7 ? l10n.homePeriodLate(daysLate) : l10n.homeLogToKeepAccurate;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
@@ -844,7 +825,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
         padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.10),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.container),
           border: Border.all(color: const Color(0x30E05A7A)),
         ),
         child: Column(
@@ -872,12 +853,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                         border: Border.all(color: color.withValues(alpha: 0.40)),
                       ),
                       alignment: Alignment.center,
-                      child: const Text(
-                        'Log period',
-                        style: TextStyle(
+                      child: Text(
+                        l10n.homeLogPeriod,
+                        style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFFE05A7A),
+                          color: AppColors.phaseMenstrual,
                         ),
                       ),
                     ),
@@ -896,7 +877,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                       ),
                       alignment: Alignment.center,
                       child: Text(
-                        'Not yet',
+                        l10n.homeNotYet,
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
@@ -936,7 +917,7 @@ class _QuickChip extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+        duration: AppConstants.quickAnim,
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
         decoration: BoxDecoration(
           gradient: active
@@ -950,7 +931,7 @@ class _QuickChip extends StatelessWidget {
                 )
               : null,
           color: active ? null : Colors.white.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.container),
           border: Border.all(
             color: active ? color.withValues(alpha: 0.50) : Colors.white.withValues(alpha: 0.08),
           ),
@@ -1110,20 +1091,7 @@ class _SheetContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFF1E1118), Color(0xFF150D12)],
-        ),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        border: Border(
-          top: BorderSide(color: Color(0x0FFFFFFF)),
-          left: BorderSide(color: Color(0x0FFFFFFF)),
-          right: BorderSide(color: Color(0x0FFFFFFF)),
-        ),
-      ),
+    return AppSheet(
       padding: EdgeInsets.only(
         left: 20,
         right: 20,
@@ -1134,25 +1102,11 @@ class _SheetContainer extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Drag handle
-          Center(
-            child: Container(
-              width: 36,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
+          const Center(child: DragHandle()),
           const SizedBox(height: 20),
           Text(
             title,
-            style: GoogleFonts.playfairDisplay(
-              fontSize: 17,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-            ),
+            style: AppTextStyles.titleSmall(),
           ),
           const SizedBox(height: 20),
           child,
@@ -1177,17 +1131,18 @@ class _PeriodSheetState extends State<_PeriodSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return _SheetContainer(
-      title: 'Log Period',
+      title: l10n.homeLogPeriodTitle,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Flow intensity label
           Text(
-            'FLOW INTENSITY',
-            style: TextStyle(
+            l10n.homeFlowIntensity,
+            style: const TextStyle(
               fontSize: 12,
-              color: Colors.white.withValues(alpha: 0.5),
+              color: AppColors.darkSecondaryText,
               letterSpacing: 1,
             ),
           ),
@@ -1207,7 +1162,7 @@ class _PeriodSheetState extends State<_PeriodSheet> {
                   child: GestureDetector(
                     onTap: () => setState(() => _intensity = i),
                     child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
+                      duration: AppConstants.quickAnim,
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       decoration: BoxDecoration(
                         color: selected ? color.withValues(alpha: 0.4) : Colors.white.withValues(alpha: 0.05),
@@ -1247,7 +1202,10 @@ class _PeriodSheetState extends State<_PeriodSheet> {
           const SizedBox(height: 20),
 
           // Start period button
-          GestureDetector(
+          GradientButton(
+            label: l10n.homeStartPeriodButton,
+            color: AppColors.phaseMenstrual,
+            secondaryColor: const Color(0xFFB5179E),
             onTap: _saving
                 ? null
                 : () async {
@@ -1257,35 +1215,6 @@ class _PeriodSheetState extends State<_PeriodSheet> {
                     if (!mounted) return;
                     nav.pop();
                   },
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFFE05A7A), Color(0xFFB5179E)],
-                ),
-                borderRadius: BorderRadius.circular(18),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFFE05A7A).withValues(alpha: 0.4),
-                    blurRadius: 24,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: const Center(
-                child: Text(
-                  '🩸 Start Period',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
           ),
         ],
       ),
@@ -1340,15 +1269,7 @@ class _EndPeriodSheetState extends State<_EndPeriodSheet> {
       firstDate: firstDate,
       lastDate: today,
       builder: (ctx, child) => Theme(
-        data: ThemeData.dark().copyWith(
-          colorScheme: const ColorScheme.dark(
-            primary: Color(0xFFE05A7A),
-            onPrimary: Colors.white,
-            surface: Color(0xFF1E1118),
-            onSurface: Colors.white,
-          ),
-          dialogTheme: const DialogThemeData(backgroundColor: Color(0xFF1E1118)),
-        ),
+        data: appDatePickerTheme(AppColors.phaseMenstrual),
         child: child!,
       ),
     );
@@ -1371,27 +1292,28 @@ class _EndPeriodSheetState extends State<_EndPeriodSheet> {
       _PickMode.custom => _customDate ?? today,
     };
 
+    final l10n = AppLocalizations.of(context)!;
     return _SheetContainer(
-      title: 'End Period?',
+      title: l10n.homeEndPeriodTitle,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'When did your period end?',
+            l10n.homeWhenDidPeriodEnd,
             style: TextStyle(fontSize: 14, color: Colors.white.withValues(alpha: 0.6)),
           ),
           const SizedBox(height: 12),
           Row(
             children: [
               _DateChip(
-                label: 'Yesterday',
+                label: l10n.homeYesterday,
                 dateLabel: DateFormat('MMM d').format(yesterday),
                 selected: _mode == _PickMode.yesterday,
                 onTap: () => setState(() => _mode = _PickMode.yesterday),
               ),
               const SizedBox(width: 10),
               _DateChip(
-                label: 'Today',
+                label: l10n.homeToday,
                 dateLabel: DateFormat('MMM d').format(today),
                 selected: _mode == _PickMode.today,
                 onTap: () => setState(() => _mode = _PickMode.today),
@@ -1403,8 +1325,8 @@ class _EndPeriodSheetState extends State<_EndPeriodSheet> {
             Row(
               children: [
                 _DateChip(
-                  label: 'Pick a date',
-                  dateLabel: _customDate != null ? DateFormat('MMM d').format(_customDate!) : 'Tap to select',
+                  label: l10n.homePickADate,
+                  dateLabel: _customDate != null ? DateFormat('MMM d').format(_customDate!) : l10n.homeTapToSelect,
                   selected: _mode == _PickMode.custom,
                   onTap: () => _pickCustomDate(today),
                 ),
@@ -1422,11 +1344,11 @@ class _EndPeriodSheetState extends State<_EndPeriodSheet> {
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.06),
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(AppRadius.container),
                       border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                     ),
-                    child: const Center(
-                      child: Text('Cancel', style: TextStyle(color: Colors.white, fontSize: 14)),
+                    child: Center(
+                      child: Text(l10n.homeCancel, style: const TextStyle(color: Colors.white, fontSize: 14)),
                     ),
                   ),
                 ),
@@ -1435,7 +1357,13 @@ class _EndPeriodSheetState extends State<_EndPeriodSheet> {
               // End Period
               Expanded(
                 flex: 2,
-                child: GestureDetector(
+                child: GradientButton(
+                  label: _saving ? l10n.homeSaving : l10n.homeEndPeriodButton,
+                  color: AppColors.phaseLuteal,
+                  secondaryColor: const Color(0xFF7C3AED),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  fontSize: 14,
+                  borderRadius: AppRadius.container,
                   onTap: _saving
                       ? null
                       : () async {
@@ -1445,34 +1373,6 @@ class _EndPeriodSheetState extends State<_EndPeriodSheet> {
                           if (!mounted) return;
                           nav.pop();
                         },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [Color(0xFF9B72CF), Color(0xFF7C3AED)],
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF9B72CF).withValues(alpha: 0.4),
-                          blurRadius: 24,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Text(
-                        _saving ? 'Saving…' : '✓ End Period',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
                 ),
               ),
             ],
@@ -1498,17 +1398,17 @@ class _DateChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const accent = Color(0xFFE05A7A);
+    const accent = AppColors.phaseMenstrual;
 
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
+          duration: AppConstants.quickAnim,
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
           decoration: BoxDecoration(
             color: selected ? accent.withValues(alpha: 0.15) : Colors.white.withValues(alpha: 0.05),
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(AppRadius.card),
             border: Border.all(
               width: 1.5,
               color: selected ? accent.withValues(alpha: 0.6) : Colors.white.withValues(alpha: 0.08),
@@ -1520,14 +1420,14 @@ class _DateChip extends StatelessWidget {
               Row(
                 children: [
                   AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
+                    duration: AppConstants.quickAnim,
                     width: 16,
                     height: 16,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(
                         width: 1.5,
-                        color: selected ? accent : Colors.white.withValues(alpha: 0.3),
+                        color: selected ? accent : AppColors.darkHint,
                       ),
                       color: selected ? accent : Colors.transparent,
                     ),
@@ -1590,7 +1490,7 @@ class _MoodSheetState extends State<_MoodSheet> {
   @override
   Widget build(BuildContext context) {
     return _SheetContainer(
-      title: 'How are you feeling?',
+      title: AppLocalizations.of(context)!.homeHowAreYouFeeling,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: List.generate(5, (i) {
@@ -1605,12 +1505,12 @@ class _MoodSheetState extends State<_MoodSheet> {
               nav.pop();
             },
             child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
+              duration: AppConstants.quickAnim,
               curve: const Cubic(0.34, 1.56, 0.64, 1),
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
               decoration: BoxDecoration(
                 color: selected ? Colors.white.withValues(alpha: 0.1) : Colors.transparent,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppRadius.container),
                 border: Border.all(
                   color: selected ? Colors.white.withValues(alpha: 0.2) : Colors.transparent,
                 ),
@@ -1619,18 +1519,18 @@ class _MoodSheetState extends State<_MoodSheet> {
                 children: [
                   AnimatedScale(
                     scale: selected ? 1.1 : 1.0,
-                    duration: const Duration(milliseconds: 200),
+                    duration: AppConstants.quickAnim,
                     child: Text(
-                      _moods[i],
+                      moodEmojis[i],
                       style: const TextStyle(fontSize: 30),
                     ),
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    _moodLabels[i].toUpperCase(),
-                    style: TextStyle(
+                    moodLabels[i].toUpperCase(),
+                    style: const TextStyle(
                       fontSize: 9,
-                      color: Colors.white.withValues(alpha: 0.5),
+                      color: AppColors.darkSecondaryText,
                       letterSpacing: 0.5,
                     ),
                   ),
@@ -1671,9 +1571,10 @@ class _SymptomsSheetState extends State<_SymptomsSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final phase = widget.phase;
     return _SheetContainer(
-      title: 'Log Symptoms',
+      title: l10n.homeLogSymptoms,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1698,7 +1599,7 @@ class _SymptomsSheetState extends State<_SymptomsSheet> {
                   ),
                   decoration: BoxDecoration(
                     color: active ? phase.color.withValues(alpha: 0.3) : Colors.white.withValues(alpha: 0.05),
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
                     border: Border.all(
                       color: active ? phase.color.withValues(alpha: 0.7) : Colors.white.withValues(alpha: 0.1),
                     ),
@@ -1718,7 +1619,10 @@ class _SymptomsSheetState extends State<_SymptomsSheet> {
           const SizedBox(height: 20),
 
           // Save button
-          GestureDetector(
+          GradientButton(
+            label: _selected.isNotEmpty ? l10n.homeSaveCount(_selected.length) : l10n.homeSave,
+            color: phase.color,
+            padding: const EdgeInsets.symmetric(vertical: 15),
             onTap: _saving
                 ? null
                 : () async {
@@ -1728,35 +1632,6 @@ class _SymptomsSheetState extends State<_SymptomsSheet> {
                     if (!mounted) return;
                     nav.pop();
                   },
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 15),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [phase.color, phase.color.withValues(alpha: 0.8)],
-                ),
-                borderRadius: BorderRadius.circular(18),
-                boxShadow: [
-                  BoxShadow(
-                    color: phase.color.withValues(alpha: 0.4),
-                    blurRadius: 24,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: Center(
-                child: Text(
-                  _selected.isNotEmpty ? 'Save (${_selected.length} selected)' : 'Save',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
           ),
         ],
       ),
