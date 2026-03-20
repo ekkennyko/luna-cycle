@@ -313,5 +313,17 @@
     "placeholders": {
       "days": { "type": "int" }
     }
-  }
+  },
+
+  "appLockBiometricReason": "Unlock Luna",
+  "appLockEnterPin": "Enter your PIN",
+  "appLockTryAgain": "Try again in {seconds}s",
+  "@appLockTryAgain": {
+    "placeholders": {
+      "seconds": { "type": "int" }
+    }
+  },
+  "appLockSetPin": "Set a PIN",
+  "appLockConfirmPin": "Confirm your PIN",
+  "appLockPinMismatch": "PINs don't match. Try again."
 }

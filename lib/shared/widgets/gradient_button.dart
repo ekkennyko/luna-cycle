@@ -19,14 +19,12 @@ class GradientButton extends StatelessWidget {
   final Color color;
   final VoidCallback? onTap;
 
-  /// Second gradient stop. Defaults to [color] at 80 % opacity.
   final Color? secondaryColor;
 
   final bool enabled;
   final EdgeInsetsGeometry padding;
   final double fontSize;
 
-  /// Defaults to [AppRadius.button].
   final double? borderRadius;
 
   @override

@@ -699,4 +699,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String settingsReminderDays(int days) {
     return '$days days before';
   }
+
+  @override
+  String get appLockBiometricReason => 'Unlock Luna';
+
+  @override
+  String get appLockEnterPin => 'Enter your PIN';
+
+  @override
+  String appLockTryAgain(int seconds) {
+    return 'Try again in ${seconds}s';
+  }
+
+  @override
+  String get appLockSetPin => 'Set a PIN';
+
+  @override
+  String get appLockConfirmPin => 'Confirm your PIN';
+
+  @override
+  String get appLockPinMismatch => 'PINs don\'t match. Try again.';
 }

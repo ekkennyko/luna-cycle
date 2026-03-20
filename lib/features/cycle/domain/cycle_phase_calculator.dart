@@ -20,7 +20,6 @@ class PhaseResult {
 
   final CyclePhase phase;
 
-  /// Current day within the cycle (1-based, where 1 = first day of period).
   final int dayOfCycle;
 
   final int cycleLength;
@@ -31,7 +30,6 @@ class PhaseResult {
   final DateTime nextPeriodDate;
   final DateTime ovulationDate;
 
-  /// Five days before ovulation through one day after.
   final DateRange fertileWindow;
 }
 
@@ -105,6 +103,5 @@ class CyclePhaseCalculator {
     );
   }
 
-  /// Returns the phase identifier key (matches [CyclePhase] enum name).
   static String phaseName(CyclePhase phase) => phase.name;
 }

@@ -65,8 +65,6 @@ GoRouter createRouter(String initialLocation) => GoRouter(
       ],
     );
 
-// ── Shell with dark bottom nav ─────────────────────────────────────────────
-
 class _MainShell extends ConsumerWidget {
   const _MainShell({required this.child});
 

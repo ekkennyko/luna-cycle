@@ -1381,6 +1381,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{days} days before'**
   String settingsReminderDays(int days);
+
+  /// No description provided for @appLockBiometricReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock Luna'**
+  String get appLockBiometricReason;
+
+  /// No description provided for @appLockEnterPin.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your PIN'**
+  String get appLockEnterPin;
+
+  /// No description provided for @appLockTryAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again in {seconds}s'**
+  String appLockTryAgain(int seconds);
+
+  /// No description provided for @appLockSetPin.
+  ///
+  /// In en, this message translates to:
+  /// **'Set a PIN'**
+  String get appLockSetPin;
+
+  /// No description provided for @appLockConfirmPin.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm your PIN'**
+  String get appLockConfirmPin;
+
+  /// No description provided for @appLockPinMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'PINs don\'t match. Try again.'**
+  String get appLockPinMismatch;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -10,4 +10,7 @@ class PrefsKeys {
   static const notificationsPeriodDays = 'notifications_period_days';
   static const notificationsFertileEnabled = 'notifications_fertile_enabled';
   static const notificationsLateEnabled = 'notifications_late_enabled';
+
+  static const appLockEnabled = 'app_lock_enabled';
+  static const appLockPinHash = 'app_lock_pin_hash';
 }

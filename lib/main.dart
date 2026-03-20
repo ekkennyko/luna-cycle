@@ -3,9 +3,11 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:luna/core/notifications/notification_service.dart';
 import 'package:luna/core/router/app_router.dart';
 import 'package:luna/core/theme/app_theme.dart';
+import 'package:luna/features/settings/presentation/widgets/lock_screen.dart';
 import 'package:luna/l10n/app_localizations.dart';
 import 'package:luna/features/cycle/presentation/providers/cycle_providers.dart';
 import 'package:luna/features/subscription/presentation/providers/subscription_providers.dart';
@@ -26,7 +28,14 @@ void main() async {
     await initRevenueCat();
   }
 
-  runApp(ProviderScope(child: LunaApp(showOnboarding: !onboardingDone)));
+  final appLockEnabled = prefs.getBool(PrefsKeys.appLockEnabled) ?? false;
+  final showLock = appLockEnabled && onboardingDone && (Platform.isAndroid || Platform.isIOS);
+
+  runApp(
+    ProviderScope(
+      child: LunaApp(showOnboarding: !onboardingDone, showLock: showLock),
+    ),
+  );
 
   if (onboardingDone && (Platform.isAndroid || Platform.isIOS)) {
     unawaited(_scheduleStartupNotifications(prefs));
@@ -49,7 +58,7 @@ Future<void> _scheduleStartupNotifications(SharedPreferences prefs) async {
       fertileWindowEnabled: prefs.getBool(PrefsKeys.notificationsFertileEnabled) ?? true,
       latePeriodEnabled: prefs.getBool(PrefsKeys.notificationsLateEnabled) ?? true,
       daysLate: status.$1 == PeriodStatus.late ? status.$2 : 0,
-      appLockEnabled: false,
+      appLockEnabled: prefs.getBool(PrefsKeys.appLockEnabled) ?? false,
     );
   } catch (_) {
     // Startup notification scheduling is best-effort
@@ -58,16 +67,46 @@ Future<void> _scheduleStartupNotifications(SharedPreferences prefs) async {
   }
 }
 
-class LunaApp extends ConsumerWidget {
-  const LunaApp({super.key, required this.showOnboarding});
+class LunaApp extends ConsumerStatefulWidget {
+  const LunaApp({
+    super.key,
+    required this.showOnboarding,
+    this.showLock = false,
+  });
 
   final bool showOnboarding;
+  final bool showLock;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<LunaApp> createState() => _LunaAppState();
+}
+
+class _LunaAppState extends ConsumerState<LunaApp> {
+  late bool _locked;
+  late final GoRouter _router;
+
+  @override
+  void initState() {
+    super.initState();
+    _locked = widget.showLock;
+    _router = createRouter(widget.showOnboarding ? '/onboarding' : '/');
+  }
+
+  @override
+  Widget build(BuildContext context) {
     ref.listen(encryptionServiceProvider, (_, service) async {
       if (!service.isInitialized) await service.init();
     });
+
+    if (_locked) {
+      return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.dark,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: LockScreen(onUnlocked: () => setState(() => _locked = false)),
+      );
+    }
 
     return MaterialApp.router(
       title: 'Luna',
@@ -77,7 +116,7 @@ class LunaApp extends ConsumerWidget {
       themeMode: ThemeMode.system,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      routerConfig: createRouter(showOnboarding ? '/onboarding' : '/'),
+      routerConfig: _router,
     );
   }
 }

@@ -62,6 +62,9 @@ dependencies:
   timezone: ^0.9.4
   flutter_timezone: ^1.0.8
 
+  # Hashing (PIN)
+  crypto: ^3.0.6
+
   # Utilities
   uuid: ^4.5.3
   collection: ^1.19.0

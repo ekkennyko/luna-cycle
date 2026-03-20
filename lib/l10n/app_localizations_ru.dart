@@ -699,4 +699,24 @@ class AppLocalizationsRu extends AppLocalizations {
   String settingsReminderDays(int days) {
     return 'За $days дней';
   }
+
+  @override
+  String get appLockBiometricReason => 'Разблокировать Luna';
+
+  @override
+  String get appLockEnterPin => 'Введи PIN-код';
+
+  @override
+  String appLockTryAgain(int seconds) {
+    return 'Повтори через $secondsс';
+  }
+
+  @override
+  String get appLockSetPin => 'Установи PIN-код';
+
+  @override
+  String get appLockConfirmPin => 'Подтверди PIN-код';
+
+  @override
+  String get appLockPinMismatch => 'PIN-коды не совпадают. Попробуй снова.';
 }

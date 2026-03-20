@@ -28,7 +28,6 @@ final effectiveTodayProvider = Provider<DateTime>((ref) {
   return DateTime(now.year, now.month, now.day).add(Duration(days: offset));
 });
 
-// All active symptoms except mood entries.
 final activeSymptomsProvider = FutureProvider<List<Symptom>>((ref) async {
   final all = await ref.read(symptomRepositoryProvider).getActiveSymptoms();
   return all.where((s) => s.category != 'mood').toList();
@@ -38,26 +37,21 @@ final cycleEntriesProvider = StreamProvider<List<CycleEntry>>((ref) {
   return ref.watch(cycleRepositoryProvider).watchAllEntries();
 });
 
-// The most recent period_start entry, or null if none exists.
 final lastPeriodStartProvider = FutureProvider<CycleEntry?>((ref) async {
   ref.watch(cycleEntriesProvider);
   return ref.read(cycleRepositoryProvider).getLastPeriodStart();
 });
 
-// The most recent period_end entry, or null if none exists.
 final lastPeriodEndProvider = FutureProvider<CycleEntry?>((ref) async {
   ref.watch(cycleEntriesProvider);
   return ref.read(cycleRepositoryProvider).getLastPeriodEnd();
 });
 
-// Period length saved during onboarding or settings. Falls back to the app default.
 final userPeriodLengthProvider = FutureProvider<int>((ref) async {
   final prefs = await SharedPreferences.getInstance();
   return prefs.getInt(PrefsKeys.userPeriodLength) ?? AppConstants.defaultPeriodLength;
 });
 
-// Whether the current period is still ongoing.
-// True only when a period_start exists with no subsequent period_end.
 final isPeriodActiveProvider = FutureProvider<bool>((ref) async {
   final start = await ref.watch(lastPeriodStartProvider.future);
   if (start == null) return false;
@@ -68,7 +62,6 @@ final isPeriodActiveProvider = FutureProvider<bool>((ref) async {
   return true;
 });
 
-// Current day number within the active period (1-based). Null if no period is active.
 final activePeriodDayProvider = FutureProvider<int?>((ref) async {
   final isActive = await ref.watch(isPeriodActiveProvider.future);
   if (!isActive) return null;
@@ -77,13 +70,11 @@ final activePeriodDayProvider = FutureProvider<int?>((ref) async {
   return ref.watch(effectiveTodayProvider).difference(start.date).inDays + 1;
 });
 
-// All period_start entries in chronological order.
 final allPeriodStartsProvider = FutureProvider<List<CycleEntry>>((ref) async {
   ref.watch(cycleEntriesProvider);
   return ref.read(cycleRepositoryProvider).getAllPeriodStarts();
 });
 
-// All completed cycle lengths in chronological order (oldest → newest).
 final cycleLengthsProvider = FutureProvider<List<int>>((ref) async {
   final starts = await ref.watch(allPeriodStartsProvider.future);
   if (starts.length < 2) return [];
@@ -92,7 +83,6 @@ final cycleLengthsProvider = FutureProvider<List<int>>((ref) async {
   ];
 });
 
-/// Pairs each period_start with its nearest period_end (end >= start).
 List<({DateTime start, DateTime end})> matchPeriodRanges(List<CycleEntry> entries) {
   final starts = entries.where((e) => e.type == 'period_start').toList()..sort((a, b) => a.date.compareTo(b.date));
   final ends = entries.where((e) => e.type == 'period_end').toList()..sort((a, b) => a.date.compareTo(b.date));
@@ -109,30 +99,24 @@ List<({DateTime start, DateTime end})> matchPeriodRanges(List<CycleEntry> entrie
   return ranges;
 }
 
-// All completed period lengths in chronological order (oldest → newest).
 final completedPeriodLengthsProvider = FutureProvider<List<int>>((ref) async {
   ref.watch(cycleEntriesProvider);
   final entries = await ref.read(cycleRepositoryProvider).getAllEntries();
   return matchPeriodRanges(entries).map((r) => r.end.difference(r.start).inDays + 1).toList();
 });
 
-// Predicted period length using weighted average.
-// Falls back to userPeriodLengthProvider when no completed periods exist.
 final averagePeriodLengthProvider = FutureProvider<int>((ref) async {
   final lengths = await ref.watch(completedPeriodLengthsProvider.future);
   if (lengths.isEmpty) return await ref.watch(userPeriodLengthProvider.future);
   return CyclePredictor.predictNextCycleLength(lengths);
 });
 
-// Predicted cycle length using weighted average with outlier trimming.
-// Falls back to the app default when no completed cycles exist.
 final averageCycleLengthProvider = FutureProvider<int>((ref) async {
   final lengths = await ref.watch(cycleLengthsProvider.future);
   if (lengths.isEmpty) return AppConstants.defaultCycleLength;
   return CyclePredictor.predictNextCycleLength(lengths);
 });
 
-// Duration of the last completed cycle in days. Null when fewer than two cycles exist.
 final cycleLengthProvider = FutureProvider<int?>((ref) async {
   final starts = await ref.watch(allPeriodStartsProvider.future);
   if (starts.length < 2) return null;
@@ -141,9 +125,6 @@ final cycleLengthProvider = FutureProvider<int?>((ref) async {
   return last.date.difference(prev.date).inDays;
 });
 
-// Duration of the current or most recent period in days.
-// Returns the recorded actual length if the period has a period_end,
-// otherwise returns the expected length from settings.
 final periodLengthProvider = FutureProvider<int?>((ref) async {
   final start = await ref.watch(lastPeriodStartProvider.future);
   if (start == null) return null;
@@ -156,14 +137,12 @@ final periodLengthProvider = FutureProvider<int?>((ref) async {
   return await ref.watch(userPeriodLengthProvider.future);
 });
 
-// Predicted cycle length, or null when fewer than two cycles exist.
 final avgCycleLengthNullableProvider = FutureProvider<int?>((ref) async {
   final lengths = await ref.watch(cycleLengthsProvider.future);
   if (lengths.isEmpty) return null;
   return CyclePredictor.predictNextCycleLength(lengths);
 });
 
-// Predicted start date of the next period based on the average cycle length.
 final nextPeriodDateProvider = FutureProvider<DateTime?>((ref) async {
   final last = await ref.watch(lastPeriodStartProvider.future);
   if (last == null) return null;
@@ -171,7 +150,6 @@ final nextPeriodDateProvider = FutureProvider<DateTime?>((ref) async {
   return last.date.add(Duration(days: avgLen));
 });
 
-// Current day number within the cycle (1-based, counting from the last period start).
 final currentCycleDayProvider = FutureProvider<int?>((ref) async {
   final last = await ref.watch(lastPeriodStartProvider.future);
   if (last == null) return null;

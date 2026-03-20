@@ -247,5 +247,17 @@
     "placeholders": {
       "days": { "type": "int" }
     }
-  }
+  },
+
+  "appLockBiometricReason": "Разблокировать Luna",
+  "appLockEnterPin": "Введи PIN-код",
+  "appLockTryAgain": "Повтори через {seconds}с",
+  "@appLockTryAgain": {
+    "placeholders": {
+      "seconds": { "type": "int" }
+    }
+  },
+  "appLockSetPin": "Установи PIN-код",
+  "appLockConfirmPin": "Подтверди PIN-код",
+  "appLockPinMismatch": "PIN-коды не совпадают. Попробуй снова."
 }

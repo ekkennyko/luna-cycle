@@ -1,10 +1,15 @@
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 import 'package:luna/core/constants/app_constants.dart';
 import 'package:luna/core/constants/prefs_keys.dart';
 import 'package:luna/core/notifications/notification_service.dart';
+import 'package:luna/features/settings/presentation/screens/set_pin_screen.dart';
+import 'package:luna/features/settings/presentation/widgets/lock_screen.dart';
 import 'package:luna/l10n/app_localizations.dart';
 import 'package:luna/features/cycle/presentation/providers/cycle_providers.dart';
 import 'package:luna/features/subscription/presentation/providers/subscription_providers.dart';
@@ -37,13 +42,7 @@ class SettingsScreen extends ConsumerWidget {
               color: Colors.amber,
               onTap: () => PaywallSheet.show(context),
             ),
-          _SectionHeader(l10n.settingsPrivacy),
-          _SettingsTile(
-            icon: Icons.lock_outline,
-            title: l10n.settingsAppLock,
-            subtitle: l10n.settingsBiometricsPin,
-            onTap: () {},
-          ),
+          const _AppLockSection(),
           _SectionHeader(l10n.settingsNotifications),
           const _NotificationsSection(),
           _SectionHeader(l10n.settingsData),
@@ -178,7 +177,7 @@ class _NotificationsSectionState extends ConsumerState<_NotificationsSection> {
       fertileWindowEnabled: _fertileEnabled,
       latePeriodEnabled: _lateEnabled,
       daysLate: status.$1 == PeriodStatus.late ? status.$2 : 0,
-      appLockEnabled: false,
+      appLockEnabled: prefs.getBool(PrefsKeys.appLockEnabled) ?? false,
     );
   }
 
@@ -244,6 +243,71 @@ class _NotificationsSectionState extends ConsumerState<_NotificationsSection> {
             setState(() => _lateEnabled = v);
             _saveAndReschedule();
           },
+        ),
+      ],
+    );
+  }
+}
+
+class _AppLockSection extends ConsumerStatefulWidget {
+  const _AppLockSection();
+
+  @override
+  ConsumerState<_AppLockSection> createState() => _AppLockSectionState();
+}
+
+class _AppLockSectionState extends ConsumerState<_AppLockSection> {
+  bool _enabled = false;
+  bool _loaded = false;
+
+  static const _storage = FlutterSecureStorage();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPref();
+  }
+
+  Future<void> _loadPref() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() {
+      _enabled = prefs.getBool(PrefsKeys.appLockEnabled) ?? false;
+      _loaded = true;
+    });
+  }
+
+  Future<void> _onToggle(bool value) async {
+    if (value) {
+      final nav = Navigator.of(context, rootNavigator: true);
+      final result = await nav.push<bool>(
+        MaterialPageRoute(builder: (_) => const SetPinScreen()),
+      );
+      if (result == true && mounted) setState(() => _enabled = true);
+    } else {
+      final verified = await LockScreen.verify(context);
+      if (!verified || !mounted) return;
+      await _storage.delete(key: PrefsKeys.appLockPinHash);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(PrefsKeys.appLockEnabled, false);
+      if (mounted) setState(() => _enabled = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (Platform.isWindows || !_loaded) return const SizedBox.shrink();
+    final l10n = AppLocalizations.of(context)!;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SectionHeader(l10n.settingsPrivacy),
+        _ToggleTile(
+          icon: Icons.lock_outline,
+          title: l10n.settingsAppLock,
+          subtitle: l10n.settingsBiometricsPin,
+          value: _enabled,
+          onChanged: (v) => _onToggle(v),
         ),
       ],
     );

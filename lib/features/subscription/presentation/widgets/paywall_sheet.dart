@@ -28,8 +28,6 @@ class PaywallSheet {
   }
 }
 
-// ── Sheet content ────────────────────────────────────────────────────────────
-
 class _PaywallSheetContent extends ConsumerStatefulWidget {
   const _PaywallSheetContent();
 
@@ -65,11 +63,12 @@ class _PaywallSheetContentState extends ConsumerState<_PaywallSheetContent> {
   Future<void> _loadOfferings() async {
     try {
       final o = await Purchases.getOfferings();
-      if (mounted)
+      if (mounted) {
         setState(() {
           _offerings = o;
           _offeringsLoaded = true;
         });
+      }
     } catch (_) {
       if (mounted) setState(() => _offeringsLoaded = true);
     }
@@ -219,8 +218,6 @@ class _PaywallSheetContentState extends ConsumerState<_PaywallSheetContent> {
     );
   }
 }
-
-// ── Sub-widgets ──────────────────────────────────────────────────────────────
 
 class _Header extends StatefulWidget {
   const _Header({required this.accent, required this.l10n});
@@ -709,8 +706,6 @@ class _FooterDot extends StatelessWidget {
     return const Text('·', style: TextStyle(color: Color(0x4DFFFFFF), fontSize: 11));
   }
 }
-
-// ── Success screen ───────────────────────────────────────────────────────────
 
 class _SuccessView extends StatelessWidget {
   const _SuccessView({required this.accent, required this.l10n, required this.onContinue});

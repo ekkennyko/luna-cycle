@@ -1,5 +1,4 @@
 abstract class PaywallStrings {
-  // Features (used in static const outside BuildContext)
   static const advancedAnalytics = 'Advanced analytics';
   static const analyticsSubtitle = 'Charts, trends, symptoms by phase';
   static const customSymptoms = 'Custom symptoms';
