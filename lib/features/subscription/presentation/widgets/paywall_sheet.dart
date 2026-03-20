@@ -437,38 +437,41 @@ class _PricingRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _PlanCard(
-            accent: accent,
-            label: l10n.paywallYearly,
-            price: yearlyPrice,
-            priceColor: accent,
-            priceLabel: '$yearlyPerMonth ${l10n.paywallPerMonth}',
-            oldPrice: '\$35.88',
-            badge: l10n.paywallBestValue,
-            selected: selected == 'yearly',
-            loading: !offeringsLoaded,
-            onTap: () => onSelect('yearly'),
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: _PlanCard(
+              accent: accent,
+              label: l10n.paywallYearly,
+              price: yearlyPrice,
+              priceColor: accent,
+              priceLabel: '$yearlyPerMonth ${l10n.paywallPerMonth}',
+              oldPrice: '\$35.88',
+              badge: l10n.paywallBestValue,
+              selected: selected == 'yearly',
+              loading: !offeringsLoaded,
+              onTap: () => onSelect('yearly'),
+            ),
           ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _PlanCard(
-            accent: accent,
-            label: l10n.paywallMonthly,
-            price: monthlyPrice,
-            priceColor: const Color(0xCCFFFFFF),
-            priceLabel: null,
-            oldPrice: null,
-            badge: null,
-            selected: selected == 'monthly',
-            loading: !offeringsLoaded,
-            onTap: () => onSelect('monthly'),
+          const SizedBox(width: 10),
+          Expanded(
+            child: _PlanCard(
+              accent: accent,
+              label: l10n.paywallMonthly,
+              price: monthlyPrice,
+              priceColor: const Color(0xCCFFFFFF),
+              priceLabel: null,
+              oldPrice: null,
+              badge: null,
+              selected: selected == 'monthly',
+              loading: !offeringsLoaded,
+              onTap: () => onSelect('monthly'),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -505,58 +508,60 @@ class _PlanCard extends StatelessWidget {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: EdgeInsets.fromLTRB(12, badge != null ? 20 : 16, 12, 16),
-            decoration: BoxDecoration(
-              color: selected ? accent.withValues(alpha: 0.09) : Colors.white.withValues(alpha: 0.04),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(
-                color: selected ? accent : Colors.white.withValues(alpha: 0.08),
-                width: 1.5,
+          SizedBox.expand(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.fromLTRB(12, 16, 12, 16),
+              decoration: BoxDecoration(
+                color: selected ? accent.withValues(alpha: 0.09) : Colors.white.withValues(alpha: 0.04),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: selected ? accent : Colors.white.withValues(alpha: 0.08),
+                  width: 1.5,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  if (badge == null) const SizedBox(height: 10),
+                  Text(
+                    label,
+                    style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 4),
+                  if (loading)
+                    SizedBox(
+                      width: 20,
+                      height: 24,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: accent),
+                    )
+                  else
+                    Text(
+                      price,
+                      style: TextStyle(color: priceColor, fontSize: 20, fontWeight: FontWeight.w700),
+                    ),
+                  const SizedBox(height: 2),
+                  if (priceLabel != null)
+                    Text(
+                      priceLabel!,
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.25), fontSize: 10),
+                    ),
+                  if (oldPrice != null) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      oldPrice!,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.19),
+                        fontSize: 9,
+                        decoration: TextDecoration.lineThrough,
+                        decorationColor: Colors.white.withValues(alpha: 0.19),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                if (badge == null) const SizedBox(height: 10),
-                Text(
-                  label,
-                  style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 4),
-                if (loading)
-                  SizedBox(
-                    width: 20,
-                    height: 24,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: accent),
-                  )
-                else
-                  Text(
-                    price,
-                    style: TextStyle(color: priceColor, fontSize: 20, fontWeight: FontWeight.w700),
-                  ),
-                const SizedBox(height: 2),
-                if (priceLabel != null)
-                  Text(
-                    priceLabel!,
-                    style: TextStyle(color: Colors.white.withValues(alpha: 0.25), fontSize: 10),
-                  ),
-                if (oldPrice != null) ...[
-                  const SizedBox(height: 6),
-                  Text(
-                    oldPrice!,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.19),
-                      fontSize: 9,
-                      decoration: TextDecoration.lineThrough,
-                      decorationColor: Colors.white.withValues(alpha: 0.19),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
+          ), // SizedBox.expand
           if (badge != null)
             Positioned(
               top: -10,
