@@ -454,7 +454,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get paywallLunaPremium => 'Luna Premium';
 
   @override
-  String get paywallSubtitle => 'Everything you need to understand your body';
+  String get paywallSubtitle => 'Unlock the full Luna experience';
 
   @override
   String get paywallAdvancedAnalytics => 'Advanced analytics';
@@ -487,13 +487,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get paywallBackupSubtitle => 'Your data, safe and private';
 
   @override
-  String get paywallYearly => 'Yearly — \$19.99 / year';
+  String get paywallYearly => 'Yearly';
 
   @override
   String get paywallSave44 => 'Save 44%';
 
   @override
-  String get paywallMonthly => 'Monthly — \$2.99 / month';
+  String get paywallMonthly => 'Monthly';
 
   @override
   String get paywallRestorePurchases => 'Restore purchases';
@@ -502,6 +502,68 @@ class AppLocalizationsEn extends AppLocalizations {
   String paywallFailed(String error) {
     return 'Failed to load: $error';
   }
+
+  @override
+  String get paywallTitle => 'Luna Premium';
+
+  @override
+  String get paywallTrialBadge => '7-day free trial — cancel anytime';
+
+  @override
+  String get paywallFeatureAnalytics => 'Advanced Analytics';
+
+  @override
+  String get paywallFeatureAnalyticsSubtitle => 'Charts, patterns, insights';
+
+  @override
+  String get paywallFeatureWidget => 'Home Screen Widget';
+
+  @override
+  String get paywallFeatureWidgetSubtitle => 'Cycle at a glance';
+
+  @override
+  String get paywallFeaturePregnancy => 'Pregnancy Tracker';
+
+  @override
+  String get paywallFeaturePregnancySubtitle => 'Week by week journey';
+
+  @override
+  String get paywallFeatureExport => 'Export PDF';
+
+  @override
+  String get paywallFeatureExportSubtitle => 'Share with your doctor';
+
+  @override
+  String get paywallBestValue => 'BEST VALUE';
+
+  @override
+  String get paywallPerMonth => '/ mo';
+
+  @override
+  String paywallFinePrint(String price) {
+    return 'After free trial, $price. Cancel anytime in App Store / Google Play.';
+  }
+
+  @override
+  String get paywallCta => 'Start 7-Day Free Trial';
+
+  @override
+  String get paywallRestore => 'Restore purchases';
+
+  @override
+  String get paywallPrivacyPolicy => 'Privacy Policy';
+
+  @override
+  String get paywallTerms => 'Terms of Use';
+
+  @override
+  String get paywallSuccessTitle => 'Welcome to Premium!';
+
+  @override
+  String get paywallSuccessSubtitle => 'All features are now unlocked.\nEnjoy your Luna Premium experience.';
+
+  @override
+  String get paywallContinue => 'Continue →';
 
   @override
   String get analyticsTitle => 'Analytics';

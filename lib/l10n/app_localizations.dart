@@ -911,7 +911,7 @@ abstract class AppLocalizations {
   /// No description provided for @paywallSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Everything you need to understand your body'**
+  /// **'Unlock the full Luna experience'**
   String get paywallSubtitle;
 
   /// No description provided for @paywallAdvancedAnalytics.
@@ -977,7 +977,7 @@ abstract class AppLocalizations {
   /// No description provided for @paywallYearly.
   ///
   /// In en, this message translates to:
-  /// **'Yearly — \$19.99 / year'**
+  /// **'Yearly'**
   String get paywallYearly;
 
   /// No description provided for @paywallSave44.
@@ -989,7 +989,7 @@ abstract class AppLocalizations {
   /// No description provided for @paywallMonthly.
   ///
   /// In en, this message translates to:
-  /// **'Monthly — \$2.99 / month'**
+  /// **'Monthly'**
   String get paywallMonthly;
 
   /// No description provided for @paywallRestorePurchases.
@@ -1003,6 +1003,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Failed to load: {error}'**
   String paywallFailed(String error);
+
+  /// No description provided for @paywallTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Luna Premium'**
+  String get paywallTitle;
+
+  /// No description provided for @paywallTrialBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'7-day free trial — cancel anytime'**
+  String get paywallTrialBadge;
+
+  /// No description provided for @paywallFeatureAnalytics.
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced Analytics'**
+  String get paywallFeatureAnalytics;
+
+  /// No description provided for @paywallFeatureAnalyticsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Charts, patterns, insights'**
+  String get paywallFeatureAnalyticsSubtitle;
+
+  /// No description provided for @paywallFeatureWidget.
+  ///
+  /// In en, this message translates to:
+  /// **'Home Screen Widget'**
+  String get paywallFeatureWidget;
+
+  /// No description provided for @paywallFeatureWidgetSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cycle at a glance'**
+  String get paywallFeatureWidgetSubtitle;
+
+  /// No description provided for @paywallFeaturePregnancy.
+  ///
+  /// In en, this message translates to:
+  /// **'Pregnancy Tracker'**
+  String get paywallFeaturePregnancy;
+
+  /// No description provided for @paywallFeaturePregnancySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Week by week journey'**
+  String get paywallFeaturePregnancySubtitle;
+
+  /// No description provided for @paywallFeatureExport.
+  ///
+  /// In en, this message translates to:
+  /// **'Export PDF'**
+  String get paywallFeatureExport;
+
+  /// No description provided for @paywallFeatureExportSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Share with your doctor'**
+  String get paywallFeatureExportSubtitle;
+
+  /// No description provided for @paywallBestValue.
+  ///
+  /// In en, this message translates to:
+  /// **'BEST VALUE'**
+  String get paywallBestValue;
+
+  /// No description provided for @paywallPerMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'/ mo'**
+  String get paywallPerMonth;
+
+  /// No description provided for @paywallFinePrint.
+  ///
+  /// In en, this message translates to:
+  /// **'After free trial, {price}. Cancel anytime in App Store / Google Play.'**
+  String paywallFinePrint(String price);
+
+  /// No description provided for @paywallCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Start 7-Day Free Trial'**
+  String get paywallCta;
+
+  /// No description provided for @paywallRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore purchases'**
+  String get paywallRestore;
+
+  /// No description provided for @paywallPrivacyPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy Policy'**
+  String get paywallPrivacyPolicy;
+
+  /// No description provided for @paywallTerms.
+  ///
+  /// In en, this message translates to:
+  /// **'Terms of Use'**
+  String get paywallTerms;
+
+  /// No description provided for @paywallSuccessTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome to Premium!'**
+  String get paywallSuccessTitle;
+
+  /// No description provided for @paywallSuccessSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'All features are now unlocked.\nEnjoy your Luna Premium experience.'**
+  String get paywallSuccessSubtitle;
+
+  /// No description provided for @paywallContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue →'**
+  String get paywallContinue;
 
   /// No description provided for @analyticsTitle.
   ///

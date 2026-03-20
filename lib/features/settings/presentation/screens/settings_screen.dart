@@ -8,6 +8,7 @@ import 'package:luna/core/notifications/notification_service.dart';
 import 'package:luna/l10n/app_localizations.dart';
 import 'package:luna/features/cycle/presentation/providers/cycle_providers.dart';
 import 'package:luna/features/subscription/presentation/providers/subscription_providers.dart';
+import 'package:luna/features/subscription/presentation/widgets/paywall_sheet.dart';
 import 'package:luna/shared/providers/core_providers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -34,7 +35,7 @@ class SettingsScreen extends ConsumerWidget {
               title: l10n.settingsUpgradeToPremium,
               subtitle: l10n.settingsUpgradeSubtitle,
               color: Colors.amber,
-              onTap: () => context.push('/paywall'),
+              onTap: () => PaywallSheet.show(context),
             ),
           _SectionHeader(l10n.settingsPrivacy),
           _SettingsTile(

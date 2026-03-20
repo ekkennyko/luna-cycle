@@ -202,7 +202,7 @@
   },
 
   "paywallLunaPremium": "Luna Premium",
-  "paywallSubtitle": "Everything you need to understand your body",
+  "paywallSubtitle": "Unlock the full Luna experience",
   "paywallAdvancedAnalytics": "Advanced analytics",
   "paywallAnalyticsSubtitle": "Charts, trends, symptoms by phase",
   "paywallCustomSymptoms": "Custom symptoms",
@@ -213,9 +213,9 @@
   "paywallHomeWidgetSubtitle": "Cycle day at a glance",
   "paywallEncryptedBackup": "Encrypted backup",
   "paywallBackupSubtitle": "Your data, safe and private",
-  "paywallYearly": "Yearly — $19.99 / year",
+  "paywallYearly": "Yearly",
   "paywallSave44": "Save 44%",
-  "paywallMonthly": "Monthly — $2.99 / month",
+  "paywallMonthly": "Monthly",
   "paywallRestorePurchases": "Restore purchases",
   "paywallFailed": "Failed to load: {error}",
   "@paywallFailed": {
@@ -223,6 +223,32 @@
       "error": { "type": "String" }
     }
   },
+
+  "paywallTitle": "Luna Premium",
+  "paywallTrialBadge": "7-day free trial — cancel anytime",
+  "paywallFeatureAnalytics": "Advanced Analytics",
+  "paywallFeatureAnalyticsSubtitle": "Charts, patterns, insights",
+  "paywallFeatureWidget": "Home Screen Widget",
+  "paywallFeatureWidgetSubtitle": "Cycle at a glance",
+  "paywallFeaturePregnancy": "Pregnancy Tracker",
+  "paywallFeaturePregnancySubtitle": "Week by week journey",
+  "paywallFeatureExport": "Export PDF",
+  "paywallFeatureExportSubtitle": "Share with your doctor",
+  "paywallBestValue": "BEST VALUE",
+  "paywallPerMonth": "/ mo",
+  "paywallFinePrint": "After free trial, {price}. Cancel anytime in App Store / Google Play.",
+  "@paywallFinePrint": {
+    "placeholders": {
+      "price": { "type": "String" }
+    }
+  },
+  "paywallCta": "Start 7-Day Free Trial",
+  "paywallRestore": "Restore purchases",
+  "paywallPrivacyPolicy": "Privacy Policy",
+  "paywallTerms": "Terms of Use",
+  "paywallSuccessTitle": "Welcome to Premium!",
+  "paywallSuccessSubtitle": "All features are now unlocked.\nEnjoy your Luna Premium experience.",
+  "paywallContinue": "Continue →",
 
   "analyticsTitle": "Analytics",
   "analyticsPremiumTitle": "Analytics — Premium",

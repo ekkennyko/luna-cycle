@@ -10,7 +10,6 @@ import 'package:luna/features/analytics/presentation/screens/analytics_screen.da
 import 'package:luna/features/calendar/presentation/screens/calendar_screen.dart';
 import 'package:luna/features/onboarding/presentation/screens/onboarding_screen.dart';
 import 'package:luna/features/settings/presentation/screens/settings_screen.dart';
-import 'package:luna/features/subscription/presentation/screens/paywall_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
@@ -62,11 +61,6 @@ GoRouter createRouter(String initialLocation) => GoRouter(
             final date = dateStr != null ? DateTime.parse(dateStr) : DateTime.now();
             return LogScreen(date: date);
           },
-        ),
-        GoRoute(
-          path: '/paywall',
-          parentNavigatorKey: _rootNavigatorKey,
-          builder: (context, state) => const PaywallScreen(),
         ),
       ],
     );

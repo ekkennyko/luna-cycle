@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:luna/l10n/app_localizations.dart';
 import 'package:luna/features/subscription/presentation/providers/subscription_providers.dart';
+import 'package:luna/features/subscription/presentation/widgets/paywall_sheet.dart';
 
 class AnalyticsScreen extends ConsumerWidget {
   const AnalyticsScreen({super.key});
@@ -17,7 +17,7 @@ class AnalyticsScreen extends ConsumerWidget {
       body: isPremiumAsync.when(
         data: (isPremium) {
           if (!isPremium) {
-            return _PremiumGate(onUpgrade: () => context.push('/paywall'));
+            return _PremiumGate(onUpgrade: () => PaywallSheet.show(context));
           }
           return const _AnalyticsContent();
         },

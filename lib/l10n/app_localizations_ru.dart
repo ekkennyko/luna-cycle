@@ -454,7 +454,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get paywallLunaPremium => 'Luna Premium';
 
   @override
-  String get paywallSubtitle => 'Всё, что нужно, чтобы понимать своё тело';
+  String get paywallSubtitle => 'Открой полный опыт Luna';
 
   @override
   String get paywallAdvancedAnalytics => 'Продвинутая аналитика';
@@ -487,13 +487,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get paywallBackupSubtitle => 'Твои данные в безопасности';
 
   @override
-  String get paywallYearly => 'Годовая — \$19.99 / год';
+  String get paywallYearly => 'Ежегодная';
 
   @override
   String get paywallSave44 => 'Экономия 44%';
 
   @override
-  String get paywallMonthly => 'Месячная — \$2.99 / месяц';
+  String get paywallMonthly => 'Ежемесячная';
 
   @override
   String get paywallRestorePurchases => 'Восстановить покупки';
@@ -502,6 +502,68 @@ class AppLocalizationsRu extends AppLocalizations {
   String paywallFailed(String error) {
     return 'Ошибка загрузки: $error';
   }
+
+  @override
+  String get paywallTitle => 'Luna Premium';
+
+  @override
+  String get paywallTrialBadge => '7 дней бесплатно — отмена в любое время';
+
+  @override
+  String get paywallFeatureAnalytics => 'Продвинутая аналитика';
+
+  @override
+  String get paywallFeatureAnalyticsSubtitle => 'Графики, паттерны, инсайты';
+
+  @override
+  String get paywallFeatureWidget => 'Виджет на экране';
+
+  @override
+  String get paywallFeatureWidgetSubtitle => 'Цикл одним взглядом';
+
+  @override
+  String get paywallFeaturePregnancy => 'Трекер беременности';
+
+  @override
+  String get paywallFeaturePregnancySubtitle => 'Неделя за неделей';
+
+  @override
+  String get paywallFeatureExport => 'Экспорт PDF';
+
+  @override
+  String get paywallFeatureExportSubtitle => 'Поделись с врачом';
+
+  @override
+  String get paywallBestValue => 'ВЫГОДНО';
+
+  @override
+  String get paywallPerMonth => '/ мес';
+
+  @override
+  String paywallFinePrint(String price) {
+    return 'После пробного периода — $price. Отмена в App Store / Google Play.';
+  }
+
+  @override
+  String get paywallCta => 'Начать 7 дней бесплатно';
+
+  @override
+  String get paywallRestore => 'Восстановить покупки';
+
+  @override
+  String get paywallPrivacyPolicy => 'Политика конфиденциальности';
+
+  @override
+  String get paywallTerms => 'Условия использования';
+
+  @override
+  String get paywallSuccessTitle => 'Добро пожаловать в Premium!';
+
+  @override
+  String get paywallSuccessSubtitle => 'Все функции теперь доступны.\nПриятного использования Luna Premium.';
+
+  @override
+  String get paywallContinue => 'Продолжить →';
 
   @override
   String get analyticsTitle => 'Аналитика';
