@@ -644,7 +644,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
           Expanded(
             child: _QuickChip(
               icon: moodIdx != null ? moodEmojis[moodIdx] : '💭',
-              label: moodIdx != null ? moodLabels[moodIdx] : l10n.homeMood,
+              label: moodIdx != null ? l10n.moodLabel(moodIdx) : l10n.homeMood,
               onTap: () => _openMoodSheet(phase),
             ),
           ),
@@ -1489,8 +1489,9 @@ class _MoodSheetState extends State<_MoodSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return _SheetContainer(
-      title: AppLocalizations.of(context)!.homeHowAreYouFeeling,
+      title: l10n.homeHowAreYouFeeling,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: List.generate(5, (i) {
@@ -1527,7 +1528,7 @@ class _MoodSheetState extends State<_MoodSheet> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    moodLabels[i].toUpperCase(),
+                    l10n.moodLabel(i).toUpperCase(),
                     style: const TextStyle(
                       fontSize: 9,
                       color: AppColors.darkSecondaryText,

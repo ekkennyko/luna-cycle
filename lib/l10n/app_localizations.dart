@@ -1135,6 +1135,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Amazing'**
   String get moodAmazing;
+
+  /// No description provided for @symptomHappy.
+  ///
+  /// In en, this message translates to:
+  /// **'Happy'**
+  String get symptomHappy;
+
+  /// No description provided for @symptomIrritable.
+  ///
+  /// In en, this message translates to:
+  /// **'Irritable'**
+  String get symptomIrritable;
+
+  /// No description provided for @symptomAnxious.
+  ///
+  /// In en, this message translates to:
+  /// **'Anxious'**
+  String get symptomAnxious;
+
+  /// No description provided for @symptomSad.
+  ///
+  /// In en, this message translates to:
+  /// **'Sad'**
+  String get symptomSad;
+
+  /// No description provided for @symptomHighEnergy.
+  ///
+  /// In en, this message translates to:
+  /// **'High energy'**
+  String get symptomHighEnergy;
+
+  /// No description provided for @symptomInsomnia.
+  ///
+  /// In en, this message translates to:
+  /// **'Insomnia'**
+  String get symptomInsomnia;
+
+  /// No description provided for @symptomDiarrhea.
+  ///
+  /// In en, this message translates to:
+  /// **'Diarrhea'**
+  String get symptomDiarrhea;
+
+  /// No description provided for @symptomConstipation.
+  ///
+  /// In en, this message translates to:
+  /// **'Constipation'**
+  String get symptomConstipation;
+
+  /// No description provided for @symptomDrySkin.
+  ///
+  /// In en, this message translates to:
+  /// **'Dry skin'**
+  String get symptomDrySkin;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

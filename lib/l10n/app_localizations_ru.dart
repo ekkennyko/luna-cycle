@@ -568,4 +568,31 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get moodAmazing => 'Отлично';
+
+  @override
+  String get symptomHappy => 'Радость';
+
+  @override
+  String get symptomIrritable => 'Раздражительность';
+
+  @override
+  String get symptomAnxious => 'Тревога';
+
+  @override
+  String get symptomSad => 'Грусть';
+
+  @override
+  String get symptomHighEnergy => 'Высокий тонус';
+
+  @override
+  String get symptomInsomnia => 'Бессонница';
+
+  @override
+  String get symptomDiarrhea => 'Диарея';
+
+  @override
+  String get symptomConstipation => 'Запор';
+
+  @override
+  String get symptomDrySkin => 'Сухость кожи';
 }

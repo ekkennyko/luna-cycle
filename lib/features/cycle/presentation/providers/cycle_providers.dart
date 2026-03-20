@@ -216,7 +216,7 @@ final periodStatusProvider = FutureProvider<(PeriodStatus, int)>((ref) async {
 final currentCyclePhaseProvider = FutureProvider<String?>((ref) async {
   final result = await ref.watch(currentPhaseProvider.future);
   if (result == null) return null;
-  return CyclePhaseCalculator.phaseName(result.phase).toLowerCase();
+  return result.phase.name;
 });
 
 class CycleNotifier extends AsyncNotifier<void> {

@@ -105,17 +105,6 @@ class CyclePhaseCalculator {
     );
   }
 
-  static String phaseName(CyclePhase phase) => switch (phase) {
-        CyclePhase.menstrual => 'Menstrual',
-        CyclePhase.follicular => 'Follicular',
-        CyclePhase.ovulation => 'Ovulation',
-        CyclePhase.luteal => 'Luteal',
-      };
-
-  static String phaseTip(CyclePhase phase) => switch (phase) {
-        CyclePhase.menstrual => 'Your body is releasing. Rest, use warmth, and be gentle with yourself.',
-        CyclePhase.follicular => 'Estrogen is rising — your energy and creativity are building.',
-        CyclePhase.ovulation => 'Peak energy and confidence! Ideal for social events and exercise.',
-        CyclePhase.luteal => 'Progesterone peaks then drops. Prioritize sleep and self-care.',
-      };
+  /// Returns the phase identifier key (matches [CyclePhase] enum name).
+  static String phaseName(CyclePhase phase) => phase.name;
 }

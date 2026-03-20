@@ -568,4 +568,31 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get moodAmazing => 'Amazing';
+
+  @override
+  String get symptomHappy => 'Happy';
+
+  @override
+  String get symptomIrritable => 'Irritable';
+
+  @override
+  String get symptomAnxious => 'Anxious';
+
+  @override
+  String get symptomSad => 'Sad';
+
+  @override
+  String get symptomHighEnergy => 'High energy';
+
+  @override
+  String get symptomInsomnia => 'Insomnia';
+
+  @override
+  String get symptomDiarrhea => 'Diarrhea';
+
+  @override
+  String get symptomConstipation => 'Constipation';
+
+  @override
+  String get symptomDrySkin => 'Dry skin';
 }

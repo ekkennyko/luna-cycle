@@ -248,5 +248,15 @@
   "moodOkay": "Okay",
   "moodGood": "Good",
   "moodHappy": "Happy",
-  "moodAmazing": "Amazing"
+  "moodAmazing": "Amazing",
+
+  "symptomHappy": "Happy",
+  "symptomIrritable": "Irritable",
+  "symptomAnxious": "Anxious",
+  "symptomSad": "Sad",
+  "symptomHighEnergy": "High energy",
+  "symptomInsomnia": "Insomnia",
+  "symptomDiarrhea": "Diarrhea",
+  "symptomConstipation": "Constipation",
+  "symptomDrySkin": "Dry skin"
 }

@@ -94,6 +94,36 @@ final allSymptomLogsProvider = FutureProvider<Map<String, List<String>>>((ref) a
   return map;
 });
 
+String _l10nPhaseName(AppLocalizations l10n, CyclePhase phase) => switch (phase) {
+      CyclePhase.menstrual => l10n.homePhaseMenstrual,
+      CyclePhase.follicular => l10n.homePhaseFollicular,
+      CyclePhase.ovulation => l10n.homePhaseOvulation,
+      CyclePhase.luteal => l10n.homePhaseLuteal,
+    };
+
+String _l10nSymptomName(AppLocalizations l10n, String name) => switch (name) {
+      'Cramps' => l10n.homeSymptomCramps,
+      'Bloating' => l10n.homeSymptomBloating,
+      'Headache' => l10n.homeSymptomHeadache,
+      'Fatigue' => l10n.homeSymptomFatigue,
+      'Breast tenderness' => l10n.homeSymptomBreastTenderness,
+      'Mood swings' => l10n.homeSymptomMoodSwings,
+      'Spotting' => l10n.homeSymptomSpotting,
+      'Nausea' => l10n.homeSymptomNausea,
+      'Back pain' => l10n.homeSymptomBackPain,
+      'Acne' => l10n.homeSymptomAcne,
+      'Happy' => l10n.symptomHappy,
+      'Irritable' => l10n.symptomIrritable,
+      'Anxious' => l10n.symptomAnxious,
+      'Sad' => l10n.symptomSad,
+      'High energy' => l10n.symptomHighEnergy,
+      'Insomnia' => l10n.symptomInsomnia,
+      'Diarrhea' => l10n.symptomDiarrhea,
+      'Constipation' => l10n.symptomConstipation,
+      'Dry skin' => l10n.symptomDrySkin,
+      _ => name,
+    };
+
 String _dateKey(DateTime d) {
   final local = d.toLocal();
   return '${local.year}-${local.month}-${local.day}';
@@ -696,7 +726,7 @@ class _DayDetailSheet extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.only(top: 2),
                       child: Text(
-                        '${CyclePhaseCalculator.phaseName(phase)}${l10n.calendarPhaseSuffix}',
+                        '${_l10nPhaseName(l10n, phase)}${l10n.calendarPhaseSuffix}',
                         style: TextStyle(
                           fontSize: 12,
                           color: _phaseColors[phase],
@@ -771,7 +801,7 @@ class _DayDetailSheet extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          moodLabels[mood - 1],
+                          l10n.moodLabel(mood - 1),
                           style: TextStyle(
                             fontSize: 13,
                             color: Colors.white.withValues(alpha: 0.7),
@@ -811,7 +841,7 @@ class _DayDetailSheet extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(AppRadius.pill),
                               ),
                               child: Text(
-                                s,
+                                _l10nSymptomName(l10n, s),
                                 style: const TextStyle(fontSize: 12, color: _accent),
                               ),
                             ),

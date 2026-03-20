@@ -187,5 +187,15 @@
   "moodOkay": "Нормально",
   "moodGood": "Хорошо",
   "moodHappy": "Радостно",
-  "moodAmazing": "Отлично"
+  "moodAmazing": "Отлично",
+
+  "symptomHappy": "Радость",
+  "symptomIrritable": "Раздражительность",
+  "symptomAnxious": "Тревога",
+  "symptomSad": "Грусть",
+  "symptomHighEnergy": "Высокий тонус",
+  "symptomInsomnia": "Бессонница",
+  "symptomDiarrhea": "Диарея",
+  "symptomConstipation": "Запор",
+  "symptomDrySkin": "Сухость кожи"
 }
