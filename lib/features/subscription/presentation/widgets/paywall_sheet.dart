@@ -19,6 +19,7 @@ class PaywallSheet {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       useSafeArea: true,
+      constraints: const BoxConstraints(maxWidth: double.infinity),
       builder: (_) => UncontrolledProviderScope(
         container: container,
         child: const _PaywallSheetContent(),
