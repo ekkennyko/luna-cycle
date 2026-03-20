@@ -90,31 +90,42 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     if (_saving || _periodStart == null) return;
     setState(() => _saving = true);
 
-    await ref.read(appDatabaseProvider).resetAllData();
+    try {
+      await ref.read(appDatabaseProvider).resetAllData();
 
-    final notifier = ref.read(cycleNotifierProvider.notifier);
+      final notifier = ref.read(cycleNotifierProvider.notifier);
 
-    if (_prevStart != null) {
-      await notifier.logPeriodStart(_prevStart!, flowIntensity: 2);
-      if (_prevEnd != null) {
-        await notifier.endPeriod(_prevEnd!);
+      if (_prevStart != null) {
+        await notifier.logPeriodStart(_prevStart!, flowIntensity: 2);
+        if (_prevEnd != null) {
+          await notifier.endPeriod(_prevEnd!);
+        }
       }
-    }
-    await notifier.logPeriodStart(_periodStart!, flowIntensity: 2);
+      await notifier.logPeriodStart(_periodStart!, flowIntensity: 2);
 
-    if (_periodEnd != null) {
-      await notifier.endPeriod(_periodEnd!);
-    }
+      if (_periodEnd != null) {
+        await notifier.endPeriod(_periodEnd!);
+      }
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(PrefsKeys.userCycleLength, _cycleLength ?? 28);
     await prefs.setInt(PrefsKeys.userPeriodLength, _periodLength ?? 5);
 
-    if (!mounted) return;
-    setState(() {
-      _saving = false;
-      _done = true;
-    });
+      if (!mounted) return;
+      setState(() {
+        _saving = false;
+        _done = true;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to save: $e'),
+          backgroundColor: Colors.red.shade800,
+        ),
+      );
+    }
   }
 
   Future<void> _startFresh() async {

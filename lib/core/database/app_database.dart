@@ -17,6 +17,13 @@ class AppDatabase extends _$AppDatabase {
           await m.createAll();
           await _seedDefaultSymptoms();
         },
+        onUpgrade: (m, from, to) async {
+          for (final table in allTables) {
+            await m.deleteTable(table.actualTableName);
+          }
+          await m.createAll();
+          await _seedDefaultSymptoms();
+        },
       );
 
   Future<void> resetAllData() async {
