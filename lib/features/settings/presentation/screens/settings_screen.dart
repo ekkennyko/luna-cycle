@@ -16,6 +16,7 @@ import 'package:luna/features/subscription/presentation/providers/subscription_p
 import 'package:luna/features/subscription/presentation/widgets/paywall_sheet.dart';
 import 'package:luna/shared/providers/core_providers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -76,7 +77,10 @@ class SettingsScreen extends ConsumerWidget {
           _SettingsTile(
             icon: Icons.privacy_tip_outlined,
             title: l10n.settingsPrivacyPolicy,
-            onTap: () {},
+            onTap: () => launchUrl(
+              Uri.parse(AppConstants.privacyPolicyUrl),
+              mode: LaunchMode.externalApplication,
+            ),
           ),
           if (kDebugMode) ...[
             _SectionHeader(l10n.settingsDebug),

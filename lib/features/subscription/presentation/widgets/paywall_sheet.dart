@@ -7,7 +7,9 @@ import 'package:luna/core/theme/app_colors.dart';
 import 'package:luna/features/cycle/presentation/providers/cycle_providers.dart';
 import 'package:luna/features/subscription/presentation/providers/subscription_providers.dart';
 import 'package:luna/l10n/app_localizations.dart';
+import 'package:luna/core/constants/app_constants.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class PaywallSheet {
   PaywallSheet._();
@@ -669,7 +671,13 @@ class _BottomCta extends StatelessWidget {
             children: [
               _FooterLink(label: l10n.paywallRestore, onTap: onRestore),
               const _FooterDot(),
-              _FooterLink(label: l10n.paywallPrivacyPolicy, onTap: () {}),
+              _FooterLink(
+                label: l10n.paywallPrivacyPolicy,
+                onTap: () => launchUrl(
+                  Uri.parse(AppConstants.privacyPolicyUrl),
+                  mode: LaunchMode.externalApplication,
+                ),
+              ),
               const _FooterDot(),
               _FooterLink(label: l10n.paywallTerms, onTap: () {}),
             ],

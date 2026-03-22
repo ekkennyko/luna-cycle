@@ -25,6 +25,8 @@ class AppConstants {
   static const String backupMimeType = 'application/octet-stream';
 
   static const Duration quickAnim = Duration(milliseconds: 200);
+
+  static const String privacyPolicyUrl = 'https://ekkennyko.github.io/luna-cycle.github.io/index.html';
 }
 
 class AppRadius {

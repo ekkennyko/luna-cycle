@@ -47,6 +47,7 @@ dependencies:
 
   # Navigation
   go_router: ^17.1.0
+  url_launcher: ^6.3.1
 
   # Non-sensitive settings
   shared_preferences: ^2.5.4
