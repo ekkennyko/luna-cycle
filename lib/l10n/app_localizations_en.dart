@@ -581,6 +581,93 @@ class AppLocalizationsEn extends AppLocalizations {
   String get analyticsComingSoon => 'Cycle charts — coming soon';
 
   @override
+  String get analyticsSubtitle => 'Cycle Insights';
+
+  @override
+  String get analyticsOverview => 'Overview';
+
+  @override
+  String get analyticsAvgCycle => 'Avg Cycle';
+
+  @override
+  String get analyticsAvgPeriod => 'Avg Period';
+
+  @override
+  String get analyticsTracked => 'Tracked';
+
+  @override
+  String get analyticsCyclesTotal => 'cycles total';
+
+  @override
+  String analyticsLastNCycles(int n) {
+    return 'last $n cycles';
+  }
+
+  @override
+  String analyticsLastNPeriods(int n) {
+    return 'last $n periods';
+  }
+
+  @override
+  String get analyticsCycleLength => 'Cycle Length';
+
+  @override
+  String get analyticsPeriodLength => 'Period Length';
+
+  @override
+  String get analyticsMoodByPhase => 'Mood by Phase';
+
+  @override
+  String analyticsMoodPeak(String phase) {
+    return 'Your mood tends to peak during $phase';
+  }
+
+  @override
+  String get analyticsUpgradeCharts => 'Upgrade to see detailed charts';
+
+  @override
+  String get analyticsTopSymptoms => 'Top Symptoms';
+
+  @override
+  String get analyticsHealthInsights => 'Health Insights';
+
+  @override
+  String get analyticsAllNormal => 'Everything looks normal';
+
+  @override
+  String get analyticsPremiumFeature => 'Premium feature';
+
+  @override
+  String get analyticsUnlock => 'Unlock →';
+
+  @override
+  String get analyticsCyclesAgo => 'cycles ago';
+
+  @override
+  String get analyticsLatest => 'Latest';
+
+  @override
+  String get analyticsNoData => 'Not enough data yet';
+
+  @override
+  String analyticsWarningLongCycle(int n) {
+    return 'Your last cycle was $n days — longer than usual. Consider discussing with your doctor if this continues.';
+  }
+
+  @override
+  String analyticsWarningShortCycle(int n) {
+    return 'Your cycle was $n days — shorter than usual. Consider discussing with your doctor if this continues.';
+  }
+
+  @override
+  String analyticsWarningLongPeriod(int n) {
+    return 'Your period lasted $n days. Periods longer than 8 days may be worth discussing with your doctor.';
+  }
+
+  @override
+  String get analyticsWarningIrregular => 'Your cycle length has been irregular recently. Consider tracking for a few more cycles.';
+
+  @override
   String get logPeriod => 'Period';
 
   @override

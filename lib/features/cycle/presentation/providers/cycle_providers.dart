@@ -315,3 +315,118 @@ final todaySymptomLogsProvider = StreamProvider<List<SymptomLog>>((ref) {
   final today = ref.watch(effectiveTodayProvider);
   return ref.read(symptomRepositoryProvider).watchLogsForDate(today);
 });
+
+enum WarningType { longCycle, shortCycle, longPeriod, irregularity }
+
+class HealthWarning {
+  const HealthWarning({required this.type, this.days = 0});
+  final WarningType type;
+  final int days;
+}
+
+CyclePhase? _phaseForDate(DateTime date, List<CycleEntry> periodStarts) {
+  if (periodStarts.isEmpty) return null;
+  CycleEntry? relevantStart;
+  for (final s in periodStarts) {
+    if (!s.date.isAfter(date)) {
+      relevantStart = s;
+    } else {
+      break;
+    }
+  }
+  if (relevantStart == null) return null;
+  final idx = periodStarts.indexOf(relevantStart);
+  final rawLen = idx < periodStarts.length - 1 ? periodStarts[idx + 1].date.difference(relevantStart.date).inDays : AppConstants.defaultCycleLength;
+  final cycleLen = rawLen.clamp(AppConstants.minCycleLength, AppConstants.maxCycleLength);
+  return CyclePhaseCalculator.calculate(
+    periodStart: relevantStart.date,
+    periodLength: AppConstants.defaultPeriodLength,
+    cycleLength: cycleLen,
+    today: date,
+  ).phase;
+}
+
+final totalCyclesProvider = FutureProvider<int>((ref) async {
+  final lengths = await ref.watch(cycleLengthsProvider.future);
+  return lengths.length;
+});
+
+final cycleLengthHistoryProvider = FutureProvider<List<int>>((ref) async {
+  final lengths = await ref.watch(cycleLengthsProvider.future);
+  if (lengths.isEmpty) return [];
+  return lengths.length <= 6 ? lengths : lengths.sublist(lengths.length - 6);
+});
+
+final periodLengthHistoryProvider = FutureProvider<List<int>>((ref) async {
+  final lengths = await ref.watch(completedPeriodLengthsProvider.future);
+  if (lengths.isEmpty) return [];
+  return lengths.length <= 6 ? lengths : lengths.sublist(lengths.length - 6);
+});
+
+final moodByPhaseProvider = FutureProvider<Map<CyclePhase, double>>((ref) async {
+  ref.watch(cycleEntriesProvider);
+  final entries = await ref.read(cycleRepositoryProvider).getAllEntries();
+  final periodStarts = entries.where((e) => e.type == 'period_start').toList()..sort((a, b) => a.date.compareTo(b.date));
+  if (periodStarts.isEmpty) return {};
+  final moodsByPhase = <CyclePhase, List<int>>{for (final p in CyclePhase.values) p: []};
+  for (final entry in entries.where((e) => e.mood != null)) {
+    final phase = _phaseForDate(entry.date, periodStarts);
+    if (phase != null) moodsByPhase[phase]!.add(entry.mood!);
+  }
+  return {
+    for (final e in moodsByPhase.entries)
+      if (e.value.isNotEmpty) e.key: e.value.reduce((a, b) => a + b) / e.value.length,
+  };
+});
+
+final topSymptomsProvider = FutureProvider<List<({String name, int count, CyclePhase phase})>>((ref) async {
+  ref.watch(cycleEntriesProvider);
+  final logs = await ref.read(symptomRepositoryProvider).getLogsBetween(DateTime(2000), DateTime(2100));
+  if (logs.isEmpty) return [];
+  final symptoms = await ref.read(symptomRepositoryProvider).getAllSymptoms();
+  final symptomMap = {for (final s in symptoms) s.id: s.name};
+  final allEntries = await ref.read(cycleRepositoryProvider).getAllEntries();
+  final periodStarts = allEntries.where((e) => e.type == 'period_start').toList()..sort((a, b) => a.date.compareTo(b.date));
+  final logsBySymptom = <int, List<DateTime>>{};
+  for (final log in logs) {
+    logsBySymptom.putIfAbsent(log.symptomId, () => []).add(log.date);
+  }
+  final result = <({String name, int count, CyclePhase phase})>[];
+  for (final entry in logsBySymptom.entries) {
+    final name = symptomMap[entry.key];
+    if (name == null) continue;
+    final phaseCounts = <CyclePhase, int>{};
+    for (final date in entry.value) {
+      final phase = _phaseForDate(date, periodStarts);
+      if (phase != null) phaseCounts[phase] = (phaseCounts[phase] ?? 0) + 1;
+    }
+    final mostCommon = phaseCounts.isEmpty ? CyclePhase.menstrual : phaseCounts.entries.reduce((a, b) => a.value > b.value ? a : b).key;
+    result.add((name: name, count: entry.value.length, phase: mostCommon));
+  }
+  result.sort((a, b) => b.count.compareTo(a.count));
+  return result.take(4).toList();
+});
+
+final healthWarningsProvider = FutureProvider<List<HealthWarning>>((ref) async {
+  final cycleLengths = await ref.watch(cycleLengthsProvider.future);
+  final periodLengths = await ref.watch(completedPeriodLengthsProvider.future);
+  final warnings = <HealthWarning>[];
+  if (cycleLengths.isNotEmpty) {
+    final last = cycleLengths.last;
+    if (last > 38) {
+      warnings.add(HealthWarning(type: WarningType.longCycle, days: last));
+    } else if (last < 24) {
+      warnings.add(HealthWarning(type: WarningType.shortCycle, days: last));
+    }
+    if (cycleLengths.length >= 3) {
+      final last3 = cycleLengths.sublist(cycleLengths.length - 3);
+      final avg = last3.reduce((a, b) => a + b) / last3.length;
+      final maxDev = last3.map((l) => (l - avg).abs()).reduce((a, b) => a > b ? a : b);
+      if (maxDev > 7) warnings.add(const HealthWarning(type: WarningType.irregularity));
+    }
+  }
+  if (periodLengths.isNotEmpty && periodLengths.last > 8) {
+    warnings.add(HealthWarning(type: WarningType.longPeriod, days: periodLengths.last));
+  }
+  return warnings;
+});

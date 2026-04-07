@@ -256,6 +256,50 @@
   "analyticsTryPremium": "Try Premium",
   "analyticsComingSoon": "Cycle charts — coming soon",
 
+  "analyticsSubtitle": "Cycle Insights",
+  "analyticsOverview": "Overview",
+  "analyticsAvgCycle": "Avg Cycle",
+  "analyticsAvgPeriod": "Avg Period",
+  "analyticsTracked": "Tracked",
+  "analyticsCyclesTotal": "cycles total",
+  "analyticsLastNCycles": "last {n} cycles",
+  "@analyticsLastNCycles": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "analyticsLastNPeriods": "last {n} periods",
+  "@analyticsLastNPeriods": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "analyticsCycleLength": "Cycle Length",
+  "analyticsPeriodLength": "Period Length",
+  "analyticsMoodByPhase": "Mood by Phase",
+  "analyticsMoodPeak": "Your mood tends to peak during {phase}",
+  "@analyticsMoodPeak": {
+    "placeholders": { "phase": { "type": "String" } }
+  },
+  "analyticsUpgradeCharts": "Upgrade to see detailed charts",
+  "analyticsTopSymptoms": "Top Symptoms",
+  "analyticsHealthInsights": "Health Insights",
+  "analyticsAllNormal": "Everything looks normal",
+  "analyticsPremiumFeature": "Premium feature",
+  "analyticsUnlock": "Unlock →",
+  "analyticsCyclesAgo": "cycles ago",
+  "analyticsLatest": "Latest",
+  "analyticsNoData": "Not enough data yet",
+  "analyticsWarningLongCycle": "Your last cycle was {n} days — longer than usual. Consider discussing with your doctor if this continues.",
+  "@analyticsWarningLongCycle": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "analyticsWarningShortCycle": "Your cycle was {n} days — shorter than usual. Consider discussing with your doctor if this continues.",
+  "@analyticsWarningShortCycle": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "analyticsWarningLongPeriod": "Your period lasted {n} days. Periods longer than 8 days may be worth discussing with your doctor.",
+  "@analyticsWarningLongPeriod": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "analyticsWarningIrregular": "Your cycle length has been irregular recently. Consider tracking for a few more cycles.",
+
   "logPeriod": "Period",
   "logFirstDayOngoing": "First day / ongoing",
   "logFlowIntensity": "Flow intensity",

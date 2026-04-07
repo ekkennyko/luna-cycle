@@ -581,6 +581,93 @@ class AppLocalizationsRu extends AppLocalizations {
   String get analyticsComingSoon => 'Графики цикла — скоро';
 
   @override
+  String get analyticsSubtitle => 'Аналитика цикла';
+
+  @override
+  String get analyticsOverview => 'Обзор';
+
+  @override
+  String get analyticsAvgCycle => 'Ср. цикл';
+
+  @override
+  String get analyticsAvgPeriod => 'Ср. период';
+
+  @override
+  String get analyticsTracked => 'Отслежено';
+
+  @override
+  String get analyticsCyclesTotal => 'циклов';
+
+  @override
+  String analyticsLastNCycles(int n) {
+    return 'за $n цикла';
+  }
+
+  @override
+  String analyticsLastNPeriods(int n) {
+    return 'за $n периода';
+  }
+
+  @override
+  String get analyticsCycleLength => 'Длина цикла';
+
+  @override
+  String get analyticsPeriodLength => 'Длина периода';
+
+  @override
+  String get analyticsMoodByPhase => 'Настроение по фазам';
+
+  @override
+  String analyticsMoodPeak(String phase) {
+    return 'Пик настроения: $phase';
+  }
+
+  @override
+  String get analyticsUpgradeCharts => 'Перейди на Premium для графиков';
+
+  @override
+  String get analyticsTopSymptoms => 'Частые симптомы';
+
+  @override
+  String get analyticsHealthInsights => 'Здоровье';
+
+  @override
+  String get analyticsAllNormal => 'Всё в норме';
+
+  @override
+  String get analyticsPremiumFeature => 'Функция Premium';
+
+  @override
+  String get analyticsUnlock => 'Открыть →';
+
+  @override
+  String get analyticsCyclesAgo => 'циклов назад';
+
+  @override
+  String get analyticsLatest => 'Последний';
+
+  @override
+  String get analyticsNoData => 'Недостаточно данных';
+
+  @override
+  String analyticsWarningLongCycle(int n) {
+    return 'Твой последний цикл составил $n дней — дольше обычного. Если это повторяется, обратись к врачу.';
+  }
+
+  @override
+  String analyticsWarningShortCycle(int n) {
+    return 'Твой цикл составил $n дней — короче обычного. Если это повторяется, обратись к врачу.';
+  }
+
+  @override
+  String analyticsWarningLongPeriod(int n) {
+    return 'Твои месячные длились $n дней. Периоды длиннее 8 дней стоит обсудить с врачом.';
+  }
+
+  @override
+  String get analyticsWarningIrregular => 'Длина цикла в последнее время нестабильна. Продолжай отслеживать ещё несколько циклов.';
+
+  @override
   String get logPeriod => 'Месячные';
 
   @override

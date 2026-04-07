@@ -1154,6 +1154,156 @@ abstract class AppLocalizations {
   /// **'Cycle charts — coming soon'**
   String get analyticsComingSoon;
 
+  /// No description provided for @analyticsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cycle Insights'**
+  String get analyticsSubtitle;
+
+  /// No description provided for @analyticsOverview.
+  ///
+  /// In en, this message translates to:
+  /// **'Overview'**
+  String get analyticsOverview;
+
+  /// No description provided for @analyticsAvgCycle.
+  ///
+  /// In en, this message translates to:
+  /// **'Avg Cycle'**
+  String get analyticsAvgCycle;
+
+  /// No description provided for @analyticsAvgPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Avg Period'**
+  String get analyticsAvgPeriod;
+
+  /// No description provided for @analyticsTracked.
+  ///
+  /// In en, this message translates to:
+  /// **'Tracked'**
+  String get analyticsTracked;
+
+  /// No description provided for @analyticsCyclesTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'cycles total'**
+  String get analyticsCyclesTotal;
+
+  /// No description provided for @analyticsLastNCycles.
+  ///
+  /// In en, this message translates to:
+  /// **'last {n} cycles'**
+  String analyticsLastNCycles(int n);
+
+  /// No description provided for @analyticsLastNPeriods.
+  ///
+  /// In en, this message translates to:
+  /// **'last {n} periods'**
+  String analyticsLastNPeriods(int n);
+
+  /// No description provided for @analyticsCycleLength.
+  ///
+  /// In en, this message translates to:
+  /// **'Cycle Length'**
+  String get analyticsCycleLength;
+
+  /// No description provided for @analyticsPeriodLength.
+  ///
+  /// In en, this message translates to:
+  /// **'Period Length'**
+  String get analyticsPeriodLength;
+
+  /// No description provided for @analyticsMoodByPhase.
+  ///
+  /// In en, this message translates to:
+  /// **'Mood by Phase'**
+  String get analyticsMoodByPhase;
+
+  /// No description provided for @analyticsMoodPeak.
+  ///
+  /// In en, this message translates to:
+  /// **'Your mood tends to peak during {phase}'**
+  String analyticsMoodPeak(String phase);
+
+  /// No description provided for @analyticsUpgradeCharts.
+  ///
+  /// In en, this message translates to:
+  /// **'Upgrade to see detailed charts'**
+  String get analyticsUpgradeCharts;
+
+  /// No description provided for @analyticsTopSymptoms.
+  ///
+  /// In en, this message translates to:
+  /// **'Top Symptoms'**
+  String get analyticsTopSymptoms;
+
+  /// No description provided for @analyticsHealthInsights.
+  ///
+  /// In en, this message translates to:
+  /// **'Health Insights'**
+  String get analyticsHealthInsights;
+
+  /// No description provided for @analyticsAllNormal.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything looks normal'**
+  String get analyticsAllNormal;
+
+  /// No description provided for @analyticsPremiumFeature.
+  ///
+  /// In en, this message translates to:
+  /// **'Premium feature'**
+  String get analyticsPremiumFeature;
+
+  /// No description provided for @analyticsUnlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock →'**
+  String get analyticsUnlock;
+
+  /// No description provided for @analyticsCyclesAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'cycles ago'**
+  String get analyticsCyclesAgo;
+
+  /// No description provided for @analyticsLatest.
+  ///
+  /// In en, this message translates to:
+  /// **'Latest'**
+  String get analyticsLatest;
+
+  /// No description provided for @analyticsNoData.
+  ///
+  /// In en, this message translates to:
+  /// **'Not enough data yet'**
+  String get analyticsNoData;
+
+  /// No description provided for @analyticsWarningLongCycle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your last cycle was {n} days — longer than usual. Consider discussing with your doctor if this continues.'**
+  String analyticsWarningLongCycle(int n);
+
+  /// No description provided for @analyticsWarningShortCycle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your cycle was {n} days — shorter than usual. Consider discussing with your doctor if this continues.'**
+  String analyticsWarningShortCycle(int n);
+
+  /// No description provided for @analyticsWarningLongPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Your period lasted {n} days. Periods longer than 8 days may be worth discussing with your doctor.'**
+  String analyticsWarningLongPeriod(int n);
+
+  /// No description provided for @analyticsWarningIrregular.
+  ///
+  /// In en, this message translates to:
+  /// **'Your cycle length has been irregular recently. Consider tracking for a few more cycles.'**
+  String get analyticsWarningIrregular;
+
   /// No description provided for @logPeriod.
   ///
   /// In en, this message translates to:

@@ -190,6 +190,50 @@
   "analyticsTryPremium": "Попробовать Premium",
   "analyticsComingSoon": "Графики цикла — скоро",
 
+  "analyticsSubtitle": "Аналитика цикла",
+  "analyticsOverview": "Обзор",
+  "analyticsAvgCycle": "Ср. цикл",
+  "analyticsAvgPeriod": "Ср. период",
+  "analyticsTracked": "Отслежено",
+  "analyticsCyclesTotal": "циклов",
+  "analyticsLastNCycles": "за {n} цикла",
+  "@analyticsLastNCycles": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "analyticsLastNPeriods": "за {n} периода",
+  "@analyticsLastNPeriods": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "analyticsCycleLength": "Длина цикла",
+  "analyticsPeriodLength": "Длина периода",
+  "analyticsMoodByPhase": "Настроение по фазам",
+  "analyticsMoodPeak": "Пик настроения: {phase}",
+  "@analyticsMoodPeak": {
+    "placeholders": { "phase": { "type": "String" } }
+  },
+  "analyticsUpgradeCharts": "Перейди на Premium для графиков",
+  "analyticsTopSymptoms": "Частые симптомы",
+  "analyticsHealthInsights": "Здоровье",
+  "analyticsAllNormal": "Всё в норме",
+  "analyticsPremiumFeature": "Функция Premium",
+  "analyticsUnlock": "Открыть →",
+  "analyticsCyclesAgo": "циклов назад",
+  "analyticsLatest": "Последний",
+  "analyticsNoData": "Недостаточно данных",
+  "analyticsWarningLongCycle": "Твой последний цикл составил {n} дней — дольше обычного. Если это повторяется, обратись к врачу.",
+  "@analyticsWarningLongCycle": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "analyticsWarningShortCycle": "Твой цикл составил {n} дней — короче обычного. Если это повторяется, обратись к врачу.",
+  "@analyticsWarningShortCycle": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "analyticsWarningLongPeriod": "Твои месячные длились {n} дней. Периоды длиннее 8 дней стоит обсудить с врачом.",
+  "@analyticsWarningLongPeriod": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "analyticsWarningIrregular": "Длина цикла в последнее время нестабильна. Продолжай отслеживать ещё несколько циклов.",
+
   "logPeriod": "Месячные",
   "logFirstDayOngoing": "Первый день / идут",
   "logFlowIntensity": "Интенсивность",
