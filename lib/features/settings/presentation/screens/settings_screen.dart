@@ -52,13 +52,13 @@ class SettingsScreen extends ConsumerWidget {
             title: l10n.settingsCreateBackup,
             subtitle: l10n.settingsEncryptedFile,
             isPremium: !isPremium,
-            onTap: isPremium ? () {} : () => context.push('/paywall'),
+            onTap: isPremium ? () {} : () => PaywallSheet.show(context),
           ),
           _SettingsTile(
             icon: Icons.restore_outlined,
             title: l10n.settingsRestoreFromBackup,
             isPremium: !isPremium,
-            onTap: isPremium ? () {} : () => context.push('/paywall'),
+            onTap: isPremium ? () {} : () => PaywallSheet.show(context),
           ),
           _SectionHeader(l10n.settingsCycle),
           _SettingsTile(
