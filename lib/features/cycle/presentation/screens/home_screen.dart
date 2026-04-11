@@ -200,14 +200,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
   }
 
   void _openStartPeriodSheet() {
+    final today = ref.read(effectiveTodayProvider);
+    final lastStart = ref.read(lastPeriodStartProvider).asData?.value?.date;
+    final avgCycleLen = ref.read(averageCycleLengthProvider).asData?.value ?? AppConstants.defaultCycleLength;
+    final expectedStart = lastStart?.add(Duration(days: avgCycleLen));
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => _PeriodSheet(
-        onStart: (intensity) async {
-          final today = ref.read(effectiveTodayProvider);
-          await ref.read(cycleNotifierProvider.notifier).logPeriodStart(today, flowIntensity: intensity);
+        effectiveToday: today,
+        expectedPeriodStart: expectedStart,
+        onStart: (date, intensity) async {
+          await ref.read(cycleNotifierProvider.notifier).logPeriodStart(date, flowIntensity: intensity);
         },
       ),
     );
@@ -1117,27 +1122,109 @@ class _SheetContainer extends StatelessWidget {
 }
 
 class _PeriodSheet extends StatefulWidget {
-  const _PeriodSheet({required this.onStart});
+  const _PeriodSheet({
+    required this.effectiveToday,
+    required this.onStart,
+    this.expectedPeriodStart,
+  });
 
-  final Future<void> Function(int intensity) onStart;
+  final DateTime effectiveToday;
+  final DateTime? expectedPeriodStart;
+  final Future<void> Function(DateTime date, int intensity) onStart;
 
   @override
   State<_PeriodSheet> createState() => _PeriodSheetState();
 }
 
 class _PeriodSheetState extends State<_PeriodSheet> {
-  int _intensity = 1; // 0–3 index
+  int _intensity = 1;
   bool _saving = false;
+  _PickMode _dateMode = _PickMode.today;
+  DateTime? _customDate;
+
+  int get _daysLate {
+    final expected = widget.expectedPeriodStart;
+    if (expected == null) return 0;
+    final diff = widget.effectiveToday.difference(expected).inDays;
+    return diff < 0 ? 0 : diff;
+  }
+
+  Future<void> _pickCustomDate() async {
+    final expected = widget.expectedPeriodStart ?? widget.effectiveToday;
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _customDate ?? expected,
+      firstDate: expected,
+      lastDate: widget.effectiveToday,
+      builder: (ctx, child) => Theme(
+        data: appDatePickerTheme(AppColors.phaseMenstrual),
+        child: child!,
+      ),
+    );
+    if (picked != null) {
+      setState(() {
+        _customDate = picked;
+        _dateMode = _PickMode.custom;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final today = widget.effectiveToday;
+    final yesterday = today.subtract(const Duration(days: 1));
+    final daysLate = _daysLate;
+
+    final selectedDate = switch (_dateMode) {
+      _PickMode.yesterday => yesterday,
+      _PickMode.today => today,
+      _PickMode.custom => _customDate ?? today,
+    };
+
     return _SheetContainer(
       title: l10n.homeLogPeriodTitle,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Flow intensity label
+          if (daysLate >= 1) ...[
+            Text(
+              l10n.homeWhenDidItStart,
+              style: TextStyle(fontSize: 14, color: Colors.white.withValues(alpha: 0.6)),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                _DateChip(
+                  label: l10n.homeYesterday,
+                  dateLabel: DateFormat('MMM d').format(yesterday),
+                  selected: _dateMode == _PickMode.yesterday,
+                  onTap: () => setState(() => _dateMode = _PickMode.yesterday),
+                ),
+                const SizedBox(width: 10),
+                _DateChip(
+                  label: l10n.homeToday,
+                  dateLabel: DateFormat('MMM d').format(today),
+                  selected: _dateMode == _PickMode.today,
+                  onTap: () => setState(() => _dateMode = _PickMode.today),
+                ),
+              ],
+            ),
+            if (daysLate >= 2) ...[
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  _DateChip(
+                    label: l10n.homePickADate,
+                    dateLabel: _customDate != null ? DateFormat('MMM d').format(_customDate!) : l10n.homeTapToSelect,
+                    selected: _dateMode == _PickMode.custom,
+                    onTap: _pickCustomDate,
+                  ),
+                ],
+              ),
+            ],
+            const SizedBox(height: 20),
+          ],
           Text(
             l10n.homeFlowIntensity,
             style: const TextStyle(
@@ -1147,8 +1234,6 @@ class _PeriodSheetState extends State<_PeriodSheet> {
             ),
           ),
           const SizedBox(height: 12),
-
-          // Intensity buttons
           Row(
             children: List.generate(4, (i) {
               final selected = i == _intensity;
@@ -1200,8 +1285,6 @@ class _PeriodSheetState extends State<_PeriodSheet> {
             }),
           ),
           const SizedBox(height: 20),
-
-          // Start period button
           GradientButton(
             label: l10n.homeStartPeriodButton,
             color: AppColors.phaseMenstrual,
@@ -1211,7 +1294,7 @@ class _PeriodSheetState extends State<_PeriodSheet> {
                 : () async {
                     setState(() => _saving = true);
                     final nav = Navigator.of(context);
-                    await widget.onStart(_intensity + 1); // 0-3 → 1-4
+                    await widget.onStart(selectedDate, _intensity + 1);
                     if (!mounted) return;
                     nav.pop();
                   },

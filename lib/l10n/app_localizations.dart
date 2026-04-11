@@ -230,6 +230,12 @@ abstract class AppLocalizations {
   /// **'End Period?'**
   String get homeEndPeriodTitle;
 
+  /// No description provided for @homeWhenDidItStart.
+  ///
+  /// In en, this message translates to:
+  /// **'When did it start?'**
+  String get homeWhenDidItStart;
+
   /// No description provided for @homeWhenDidPeriodEnd.
   ///
   /// In en, this message translates to:

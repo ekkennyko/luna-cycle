@@ -78,6 +78,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeEndPeriodTitle => 'End Period?';
 
   @override
+  String get homeWhenDidItStart => 'When did it start?';
+
+  @override
   String get homeWhenDidPeriodEnd => 'When did your period end?';
 
   @override

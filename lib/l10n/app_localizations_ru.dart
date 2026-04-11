@@ -78,6 +78,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get homeEndPeriodTitle => 'Завершить месячные?';
 
   @override
+  String get homeWhenDidItStart => 'Когда они начались?';
+
+  @override
   String get homeWhenDidPeriodEnd => 'Когда месячные закончились?';
 
   @override
