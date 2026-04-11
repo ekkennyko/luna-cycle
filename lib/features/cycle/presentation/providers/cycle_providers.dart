@@ -8,6 +8,7 @@ import 'package:luna/features/cycle/domain/cycle_phase_calculator.dart';
 import 'package:luna/features/cycle/domain/cycle_predictor.dart';
 import 'package:luna/features/cycle/domain/repositories/i_cycle_repository.dart';
 import 'package:luna/shared/providers/core_providers.dart';
+import 'package:luna/core/constants/entry_types.dart';
 import 'package:luna/core/constants/prefs_keys.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -84,8 +85,8 @@ final cycleLengthsProvider = FutureProvider<List<int>>((ref) async {
 });
 
 List<({DateTime start, DateTime end})> matchPeriodRanges(List<CycleEntry> entries) {
-  final starts = entries.where((e) => e.type == 'period_start').toList()..sort((a, b) => a.date.compareTo(b.date));
-  final ends = entries.where((e) => e.type == 'period_end').toList()..sort((a, b) => a.date.compareTo(b.date));
+  final starts = entries.where((e) => e.type == EntryTypes.periodStart).toList()..sort((a, b) => a.date.compareTo(b.date));
+  final ends = entries.where((e) => e.type == EntryTypes.periodEnd).toList()..sort((a, b) => a.date.compareTo(b.date));
 
   final ranges = <({DateTime start, DateTime end})>[];
   for (final s in starts) {
@@ -100,8 +101,7 @@ List<({DateTime start, DateTime end})> matchPeriodRanges(List<CycleEntry> entrie
 }
 
 final completedPeriodLengthsProvider = FutureProvider<List<int>>((ref) async {
-  ref.watch(cycleEntriesProvider);
-  final entries = await ref.read(cycleRepositoryProvider).getAllEntries();
+  final entries = await ref.watch(cycleEntriesProvider.future);
   return matchPeriodRanges(entries).map((r) => r.end.difference(r.start).inDays + 1).toList();
 });
 
@@ -208,7 +208,7 @@ class CycleNotifier extends AsyncNotifier<void> {
     if (existing != null) {
       await _repo.saveEntry(
         existing.toCompanion(true).copyWith(
-              type: const Value('period_start'),
+              type: const Value(EntryTypes.periodStart),
               flowIntensity: Value(flowIntensity),
             ),
       );
@@ -216,7 +216,7 @@ class CycleNotifier extends AsyncNotifier<void> {
       await _repo.saveEntry(
         CycleEntriesCompanion.insert(
           date: day,
-          type: 'period_start',
+          type: EntryTypes.periodStart,
           flowIntensity: Value(flowIntensity),
         ),
       );
@@ -230,10 +230,10 @@ class CycleNotifier extends AsyncNotifier<void> {
     final day = date.dateOnly;
     final existing = await _repo.getEntryForDate(date);
     if (existing != null) {
-      await _repo.updateEntryType(existing.id, 'period_end');
+      await _repo.updateEntryType(existing.id, EntryTypes.periodEnd);
     } else {
       await _repo.saveEntry(
-        CycleEntriesCompanion.insert(date: day, type: 'period_end'),
+        CycleEntriesCompanion.insert(date: day, type: EntryTypes.periodEnd),
       );
     }
     await _rescheduleNotifications();
@@ -247,16 +247,15 @@ class CycleNotifier extends AsyncNotifier<void> {
       final fertileEnabled = prefs.getBool(PrefsKeys.notificationsFertileEnabled) ?? true;
       final lateEnabled = prefs.getBool(PrefsKeys.notificationsLateEnabled) ?? true;
 
-      final lastStart = await _repo.getLastPeriodStart();
+      final lastStart = await ref.read(lastPeriodStartProvider.future);
       if (lastStart == null) return;
 
-      final allStarts = await _repo.getAllPeriodStarts();
-      final lengths = allStarts.length < 2 ? <int>[] : [for (int i = 1; i < allStarts.length; i++) allStarts[i].date.difference(allStarts[i - 1].date).inDays];
+      final lengths = await ref.read(cycleLengthsProvider.future);
       final avgCycleLen = lengths.isEmpty ? AppConstants.defaultCycleLength : CyclePredictor.predictNextCycleLength(lengths);
 
       final nextPeriod = lastStart.date.add(Duration(days: avgCycleLen));
 
-      final lastEnd = await _repo.getLastPeriodEnd();
+      final lastEnd = await ref.read(lastPeriodEndProvider.future);
       final periodEnd = (lastEnd != null && !lastEnd.date.isBefore(lastStart.date)) ? lastEnd.date : null;
 
       final userPeriodLen = prefs.getInt(PrefsKeys.userPeriodLength) ?? AppConstants.defaultPeriodLength;
@@ -358,7 +357,7 @@ final periodLengthHistoryProvider = FutureProvider<List<int>>((ref) async {
 
 final moodByPhaseProvider = FutureProvider<Map<CyclePhase, double>>((ref) async {
   final entries = await ref.watch(cycleEntriesProvider.future);
-  final periodStarts = entries.where((e) => e.type == 'period_start').toList()..sort((a, b) => a.date.compareTo(b.date));
+  final periodStarts = entries.where((e) => e.type == EntryTypes.periodStart).toList()..sort((a, b) => a.date.compareTo(b.date));
   if (periodStarts.isEmpty) return {};
   final moodsByPhase = <CyclePhase, List<int>>{for (final p in CyclePhase.values) p: []};
   for (final entry in entries.where((e) => e.mood != null)) {
@@ -377,7 +376,7 @@ final topSymptomsProvider = FutureProvider<List<({String name, int count, CycleP
   final symptoms = await ref.read(symptomRepositoryProvider).getAllSymptoms();
   final symptomMap = {for (final s in symptoms) s.id: s.name};
   final allEntries = await ref.watch(cycleEntriesProvider.future);
-  final periodStarts = allEntries.where((e) => e.type == 'period_start').toList()..sort((a, b) => a.date.compareTo(b.date));
+  final periodStarts = allEntries.where((e) => e.type == EntryTypes.periodStart).toList()..sort((a, b) => a.date.compareTo(b.date));
   final logsBySymptom = <int, List<DateTime>>{};
   for (final log in logs) {
     logsBySymptom.putIfAbsent(log.symptomId, () => []).add(log.date);

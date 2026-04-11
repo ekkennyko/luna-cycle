@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 import 'package:luna/core/database/app_database.dart';
 import 'package:luna/core/extensions/date_time_ext.dart';
+import 'package:luna/core/constants/entry_types.dart';
 import 'package:luna/features/cycle/domain/repositories/i_cycle_repository.dart';
 
 class CycleRepositoryImpl implements ICycleRepository {
@@ -36,7 +37,7 @@ class CycleRepositoryImpl implements ICycleRepository {
 
   @override
   Future<CycleEntry?> getLastPeriodStart() => (_db.select(_db.cycleEntries)
-        ..where((t) => t.type.equals('period_start'))
+        ..where((t) => t.type.equals(EntryTypes.periodStart))
         ..orderBy([(t) => OrderingTerm.desc(t.date)])
         ..limit(1))
       .getSingleOrNull();
@@ -50,7 +51,7 @@ class CycleRepositoryImpl implements ICycleRepository {
     } else {
       await saveEntry(CycleEntriesCompanion.insert(
         date: day,
-        type: 'mood_log',
+        type: EntryTypes.moodLog,
         mood: Value(mood),
       ));
     }
@@ -58,14 +59,14 @@ class CycleRepositoryImpl implements ICycleRepository {
 
   @override
   Future<CycleEntry?> getLastPeriodEnd() => (_db.select(_db.cycleEntries)
-        ..where((t) => t.type.equals('period_end'))
+        ..where((t) => t.type.equals(EntryTypes.periodEnd))
         ..orderBy([(t) => OrderingTerm.desc(t.date)])
         ..limit(1))
       .getSingleOrNull();
 
   @override
   Future<List<CycleEntry>> getAllPeriodStarts() => (_db.select(_db.cycleEntries)
-        ..where((t) => t.type.equals('period_start'))
+        ..where((t) => t.type.equals(EntryTypes.periodStart))
         ..orderBy([(t) => OrderingTerm.asc(t.date)]))
       .get();
 
