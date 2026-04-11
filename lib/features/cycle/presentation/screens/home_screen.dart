@@ -1142,6 +1142,15 @@ class _PeriodSheetState extends State<_PeriodSheet> {
   _PickMode _dateMode = _PickMode.today;
   DateTime? _customDate;
 
+  @override
+  void initState() {
+    super.initState();
+    if (_daysLate > 2) {
+      _dateMode = _PickMode.custom;
+      _customDate = widget.expectedPeriodStart;
+    }
+  }
+
   int get _daysLate {
     final expected = widget.expectedPeriodStart;
     if (expected == null) return 0;
@@ -1187,12 +1196,12 @@ class _PeriodSheetState extends State<_PeriodSheet> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (daysLate >= 1) ...[
-            Text(
-              l10n.homeWhenDidItStart,
-              style: TextStyle(fontSize: 14, color: Colors.white.withValues(alpha: 0.6)),
-            ),
-            const SizedBox(height: 12),
+          Text(
+            l10n.homeWhenDidItStart,
+            style: TextStyle(fontSize: 14, color: Colors.white.withValues(alpha: 0.6)),
+          ),
+          const SizedBox(height: 12),
+          if (daysLate <= 2)
             Row(
               children: [
                 _DateChip(
@@ -1209,22 +1218,19 @@ class _PeriodSheetState extends State<_PeriodSheet> {
                   onTap: () => setState(() => _dateMode = _PickMode.today),
                 ),
               ],
+            )
+          else
+            Row(
+              children: [
+                _DateChip(
+                  label: l10n.homePickADate,
+                  dateLabel: _customDate != null ? DateFormat('MMM d').format(_customDate!) : l10n.homeTapToSelect,
+                  selected: _dateMode == _PickMode.custom,
+                  onTap: _pickCustomDate,
+                ),
+              ],
             ),
-            if (daysLate >= 2) ...[
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  _DateChip(
-                    label: l10n.homePickADate,
-                    dateLabel: _customDate != null ? DateFormat('MMM d').format(_customDate!) : l10n.homeTapToSelect,
-                    selected: _dateMode == _PickMode.custom,
-                    onTap: _pickCustomDate,
-                  ),
-                ],
-              ),
-            ],
-            const SizedBox(height: 20),
-          ],
+          const SizedBox(height: 20),
           Text(
             l10n.homeFlowIntensity,
             style: const TextStyle(
