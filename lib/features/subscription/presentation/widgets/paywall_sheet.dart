@@ -10,7 +10,10 @@ import 'package:luna/features/subscription/presentation/providers/subscription_p
 import 'package:luna/l10n/app_localizations.dart';
 import 'package:luna/core/constants/app_constants.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:luna/shared/widgets/gradient_button.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+enum _PlanType { yearly, monthly }
 
 class PaywallSheet {
   PaywallSheet._();
@@ -39,11 +42,11 @@ class _PaywallSheetContent extends ConsumerStatefulWidget {
 }
 
 class _PaywallSheetContentState extends ConsumerState<_PaywallSheetContent> {
-  String _selected = 'yearly';
+  _PlanType _selected = _PlanType.yearly;
   bool _purchased = false;
-  bool _loading = false;
+  bool _purchasing = false;
+  bool _restoring = false;
   Offerings? _offerings;
-  // On non-mobile platforms show fallback prices immediately (no loading spinner).
   bool _offeringsLoaded = !(Platform.isAndroid || Platform.isIOS);
 
   Color get _accent => switch (ref.watch(currentCyclePhaseProvider).asData?.value) {
@@ -79,38 +82,36 @@ class _PaywallSheetContentState extends ConsumerState<_PaywallSheetContent> {
       Navigator.of(context).pop();
       return;
     }
-    final package = _selected == 'yearly' ? _offerings?.current?.annual : _offerings?.current?.monthly;
+    final package = _selected == _PlanType.yearly ? _offerings?.current?.annual : _offerings?.current?.monthly;
     if (package == null) return;
 
-    setState(() => _loading = true);
+    setState(() => _purchasing = true);
     try {
       // ignore: deprecated_member_use
       await Purchases.purchasePackage(package);
       ref.invalidate(customerInfoProvider);
-      ref.invalidate(isPremiumProvider);
       if (mounted) setState(() => _purchased = true);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
       }
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) setState(() => _purchasing = false);
     }
   }
 
   Future<void> _restore() async {
     if (!Platform.isAndroid && !Platform.isIOS) return;
-    setState(() => _loading = true);
+    setState(() => _restoring = true);
     try {
       await Purchases.restorePurchases();
       ref.invalidate(customerInfoProvider);
-      ref.invalidate(isPremiumProvider);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
       }
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) setState(() => _restoring = false);
     }
   }
 
@@ -141,7 +142,6 @@ class _PaywallSheetContentState extends ConsumerState<_PaywallSheetContent> {
       ),
       child: Column(
         children: [
-          // Handle bar
           Center(
             child: Container(
               margin: const EdgeInsets.only(top: 12, bottom: 4),
@@ -153,7 +153,6 @@ class _PaywallSheetContentState extends ConsumerState<_PaywallSheetContent> {
               ),
             ),
           ),
-          // Scrollable content with ambient glow behind it
           Expanded(
             child: Stack(
               children: [
@@ -196,7 +195,7 @@ class _PaywallSheetContentState extends ConsumerState<_PaywallSheetContent> {
                       const SizedBox(height: 8),
                       _FinePrint(
                         l10n: l10n,
-                        price: _selected == 'yearly' ? '$_yearlyPrice/year' : '$_monthlyPrice/month',
+                        price: _selected == _PlanType.yearly ? '$_yearlyPrice/year' : '$_monthlyPrice/month',
                       ),
                       const SizedBox(height: 8),
                     ],
@@ -205,11 +204,11 @@ class _PaywallSheetContentState extends ConsumerState<_PaywallSheetContent> {
               ],
             ),
           ),
-          // Fixed CTA
           _BottomCta(
             accent: accent,
             l10n: l10n,
-            loading: _loading,
+            loading: _purchasing,
+            restoring: _restoring,
             onSubscribe: _purchase,
             onRestore: _restore,
           ),
@@ -252,21 +251,7 @@ class _HeaderState extends State<_Header> with SingleTickerProviderStateMixin {
       children: [
         FadeTransition(
           opacity: _opacity,
-          child: Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: widget.accent.withValues(alpha: 0.13),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: widget.accent.withValues(alpha: 0.25)),
-              boxShadow: [
-                BoxShadow(color: widget.accent.withValues(alpha: 0.19), blurRadius: 30),
-              ],
-            ),
-            child: const Center(
-              child: Text('✦', style: TextStyle(fontSize: 26, color: Colors.white)),
-            ),
-          ),
+          child: _AccentBadge(accent: widget.accent, size: 56, borderRadius: 18, blurRadius: 30, fontSize: 26),
         ),
         const SizedBox(height: 16),
         Text(
@@ -426,12 +411,12 @@ class _PricingRow extends StatelessWidget {
 
   final Color accent;
   final AppLocalizations l10n;
-  final String selected;
+  final _PlanType selected;
   final String yearlyPrice;
   final String yearlyPerMonth;
   final String monthlyPrice;
   final bool offeringsLoaded;
-  final ValueChanged<String> onSelect;
+  final ValueChanged<_PlanType> onSelect;
 
   @override
   Widget build(BuildContext context) {
@@ -448,9 +433,9 @@ class _PricingRow extends StatelessWidget {
               priceLabel: '$yearlyPerMonth ${l10n.paywallPerMonth}',
               oldPrice: '\$35.88',
               badge: l10n.paywallBestValue,
-              selected: selected == 'yearly',
+              selected: selected == _PlanType.yearly,
               loading: !offeringsLoaded,
-              onTap: () => onSelect('yearly'),
+              onTap: () => onSelect(_PlanType.yearly),
             ),
           ),
           const SizedBox(width: 10),
@@ -463,9 +448,9 @@ class _PricingRow extends StatelessWidget {
               priceLabel: null,
               oldPrice: null,
               badge: null,
-              selected: selected == 'monthly',
+              selected: selected == _PlanType.monthly,
               loading: !offeringsLoaded,
-              onTap: () => onSelect('monthly'),
+              onTap: () => onSelect(_PlanType.monthly),
             ),
           ),
         ],
@@ -559,7 +544,7 @@ class _PlanCard extends StatelessWidget {
                 ],
               ),
             ),
-          ), // SizedBox.expand
+          ),
           if (badge != null)
             Positioned(
               top: -10,
@@ -611,6 +596,7 @@ class _BottomCta extends StatelessWidget {
     required this.accent,
     required this.l10n,
     required this.loading,
+    required this.restoring,
     required this.onSubscribe,
     required this.onRestore,
   });
@@ -618,6 +604,7 @@ class _BottomCta extends StatelessWidget {
   final Color accent;
   final AppLocalizations l10n;
   final bool loading;
+  final bool restoring;
   final VoidCallback onSubscribe;
   final VoidCallback onRestore;
 
@@ -667,8 +654,8 @@ class _BottomCta extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _FooterLink(label: l10n.paywallRestore, onTap: onRestore),
-              const _FooterDot(),
+              _FooterLink(label: l10n.paywallRestore, onTap: restoring ? null : onRestore),
+              const Text('·', style: TextStyle(color: Color(0x4DFFFFFF), fontSize: 11)),
               _FooterLink(
                 label: l10n.paywallPrivacyPolicy,
                 onTap: () => launchUrl(
@@ -676,7 +663,7 @@ class _BottomCta extends StatelessWidget {
                   mode: LaunchMode.externalApplication,
                 ),
               ),
-              const _FooterDot(),
+              const Text('·', style: TextStyle(color: Color(0x4DFFFFFF), fontSize: 11)),
               _FooterLink(label: l10n.paywallTerms, onTap: () {}),
             ],
           ),
@@ -687,10 +674,10 @@ class _BottomCta extends StatelessWidget {
 }
 
 class _FooterLink extends StatelessWidget {
-  const _FooterLink({required this.label, required this.onTap});
+  const _FooterLink({required this.label, this.onTap});
 
   final String label;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -704,12 +691,28 @@ class _FooterLink extends StatelessWidget {
   }
 }
 
-class _FooterDot extends StatelessWidget {
-  const _FooterDot();
+class _AccentBadge extends StatelessWidget {
+  const _AccentBadge({required this.accent, required this.size, required this.borderRadius, required this.blurRadius, required this.fontSize});
+
+  final Color accent;
+  final double size;
+  final double borderRadius;
+  final double blurRadius;
+  final double fontSize;
 
   @override
   Widget build(BuildContext context) {
-    return const Text('·', style: TextStyle(color: Color(0x4DFFFFFF), fontSize: 11));
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.13),
+        borderRadius: BorderRadius.circular(borderRadius),
+        border: Border.all(color: accent.withValues(alpha: 0.25)),
+        boxShadow: [BoxShadow(color: accent.withValues(alpha: 0.19), blurRadius: blurRadius)],
+      ),
+      child: Center(child: Text('✦', style: TextStyle(fontSize: fontSize, color: Colors.white))),
+    );
   }
 }
 
@@ -732,21 +735,7 @@ class _SuccessView extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              color: accent.withValues(alpha: 0.13),
-              borderRadius: BorderRadius.circular(28),
-              border: Border.all(color: accent.withValues(alpha: 0.25)),
-              boxShadow: [
-                BoxShadow(color: accent.withValues(alpha: 0.19), blurRadius: 40),
-              ],
-            ),
-            child: const Center(
-              child: Text('✦', style: TextStyle(fontSize: 36, color: Colors.white)),
-            ),
-          ),
+          _AccentBadge(accent: accent, size: 80, borderRadius: 28, blurRadius: 40, fontSize: 36),
           const SizedBox(height: 24),
           Text(
             l10n.paywallSuccessTitle,
@@ -764,26 +753,12 @@ class _SuccessView extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 40),
-          GestureDetector(
+          GradientButton(
+            label: l10n.paywallContinue,
+            color: accent,
             onTap: onContinue,
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [accent, accent.withValues(alpha: 0.8)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(18),
-              ),
-              child: Center(
-                child: Text(
-                  l10n.paywallContinue,
-                  style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
-                ),
-              ),
-            ),
+            fontSize: 16,
+            borderRadius: 18,
           ),
         ],
       ),
