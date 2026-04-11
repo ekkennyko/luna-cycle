@@ -321,7 +321,11 @@ class HealthWarning {
   final int days;
 }
 
-CyclePhase? _phaseForDate(DateTime date, List<CycleEntry> periodStarts) {
+CyclePhase? _phaseForDate(
+  DateTime date,
+  List<CycleEntry> periodStarts,
+  Map<DateTime, int> periodLengthMap,
+) {
   if (periodStarts.isEmpty) return null;
   CycleEntry? relevantStart;
   for (final s in periodStarts) {
@@ -335,9 +339,10 @@ CyclePhase? _phaseForDate(DateTime date, List<CycleEntry> periodStarts) {
   final idx = periodStarts.indexOf(relevantStart);
   final rawLen = idx < periodStarts.length - 1 ? periodStarts[idx + 1].date.difference(relevantStart.date).inDays : AppConstants.defaultCycleLength;
   final cycleLen = rawLen.clamp(AppConstants.minCycleLength, AppConstants.maxCycleLength);
+  final periodLen = periodLengthMap[relevantStart.date] ?? AppConstants.defaultPeriodLength;
   return CyclePhaseCalculator.calculate(
     periodStart: relevantStart.date,
-    periodLength: AppConstants.defaultPeriodLength,
+    periodLength: periodLen,
     cycleLength: cycleLen,
     today: date,
   ).phase;
@@ -359,9 +364,10 @@ final moodByPhaseProvider = FutureProvider<Map<CyclePhase, double>>((ref) async 
   final entries = await ref.watch(cycleEntriesProvider.future);
   final periodStarts = entries.where((e) => e.type == EntryTypes.periodStart).toList()..sort((a, b) => a.date.compareTo(b.date));
   if (periodStarts.isEmpty) return {};
+  final periodLengthMap = {for (final r in matchPeriodRanges(entries)) r.start: r.end.difference(r.start).inDays + 1};
   final moodsByPhase = <CyclePhase, List<int>>{for (final p in CyclePhase.values) p: []};
   for (final entry in entries.where((e) => e.mood != null)) {
-    final phase = _phaseForDate(entry.date, periodStarts);
+    final phase = _phaseForDate(entry.date, periodStarts, periodLengthMap);
     if (phase != null) moodsByPhase[phase]!.add(entry.mood!);
   }
   return {
@@ -377,6 +383,7 @@ final topSymptomsProvider = FutureProvider<List<({String name, int count, CycleP
   final symptomMap = {for (final s in symptoms) s.id: s.name};
   final allEntries = await ref.watch(cycleEntriesProvider.future);
   final periodStarts = allEntries.where((e) => e.type == EntryTypes.periodStart).toList()..sort((a, b) => a.date.compareTo(b.date));
+  final periodLengthMap = {for (final r in matchPeriodRanges(allEntries)) r.start: r.end.difference(r.start).inDays + 1};
   final logsBySymptom = <int, List<DateTime>>{};
   for (final log in logs) {
     logsBySymptom.putIfAbsent(log.symptomId, () => []).add(log.date);
@@ -387,7 +394,7 @@ final topSymptomsProvider = FutureProvider<List<({String name, int count, CycleP
     if (name == null) continue;
     final phaseCounts = <CyclePhase, int>{};
     for (final date in entry.value) {
-      final phase = _phaseForDate(date, periodStarts);
+      final phase = _phaseForDate(date, periodStarts, periodLengthMap);
       if (phase != null) phaseCounts[phase] = (phaseCounts[phase] ?? 0) + 1;
     }
     final mostCommon = phaseCounts.isEmpty ? CyclePhase.menstrual : phaseCounts.entries.reduce((a, b) => a.value > b.value ? a : b).key;
