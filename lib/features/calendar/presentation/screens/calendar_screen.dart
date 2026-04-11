@@ -218,7 +218,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header
                 Padding(
                   padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
                   child: Column(
@@ -240,7 +239,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   ),
                 ),
 
-                // Legend
                 Padding(
                   padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
                   child: Wrap(
@@ -262,7 +260,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
                 const SizedBox(height: 16),
 
-                // Scrollable months
                 Expanded(
                   child: ListView.builder(
                     controller: _scrollController,
@@ -290,7 +287,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             ),
           ),
 
-          // Bottom sheet overlay
           if (_selectedDay != null) ...[
             GestureDetector(
               onTap: () => setState(() => _selectedDay = null),
@@ -367,14 +363,12 @@ class _MonthGrid extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Month header
           Text(
             monthName,
             style: AppTextStyles.monthLabel,
           ),
           const SizedBox(height: 16),
 
-          // Weekday headers
           Row(
             children: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
                 .map(
@@ -395,7 +389,6 @@ class _MonthGrid extends StatelessWidget {
           ),
           const SizedBox(height: 8),
 
-          // Day cells
           ...List.generate(
             (days.length / 7).ceil(),
             (row) {
@@ -460,9 +453,9 @@ class _DayCell extends StatelessWidget {
     final isToday = dateNorm == todayNorm;
     final isFuture = dateNorm.isAfter(todayNorm);
 
-    final periodPos = _getPeriodPosition(dateNorm, ranges);
+    final periodPos = _getRangePosition(dateNorm, ranges);
     final isPeriod = periodPos != null;
-    final predPos = !isPeriod ? _getPredictedPosition(dateNorm, predicted) : null;
+    final predPos = !isPeriod ? _getRangePosition(dateNorm, predicted) : null;
     final isPredicted = predPos != null;
     final phase = _getPhaseForDay(dateNorm, allStarts, cycleLen, periodLen, ranges);
     final key = _dateKey(dateNorm);
@@ -598,27 +591,15 @@ class _RangePos {
   bool get isSingle => isFirst && isLast;
 }
 
-_RangePos? _getPeriodPosition(
+_RangePos? _getRangePosition(
   DateTime date,
   List<({DateTime start, DateTime end})> ranges,
 ) {
   for (final r in ranges) {
-    final s = DateTime(r.start.toLocal().year, r.start.toLocal().month, r.start.toLocal().day);
-    final e = DateTime(r.end.toLocal().year, r.end.toLocal().month, r.end.toLocal().day);
-    if (!date.isBefore(s) && !date.isAfter(e)) {
-      return _RangePos(isFirst: date == s, isLast: date == e);
-    }
-  }
-  return null;
-}
-
-_RangePos? _getPredictedPosition(
-  DateTime date,
-  List<({DateTime start, DateTime end})> predictions,
-) {
-  for (final pred in predictions) {
-    final s = DateTime(pred.start.toLocal().year, pred.start.toLocal().month, pred.start.toLocal().day);
-    final e = DateTime(pred.end.toLocal().year, pred.end.toLocal().month, pred.end.toLocal().day);
+    final rl = r.start.toLocal();
+    final el = r.end.toLocal();
+    final s = DateTime(rl.year, rl.month, rl.day);
+    final e = DateTime(el.year, el.month, el.day);
     if (!date.isBefore(s) && !date.isAfter(e)) {
       return _RangePos(isFirst: date == s, isLast: date == e);
     }
@@ -637,7 +618,8 @@ CyclePhase? _getPhaseForDay(
 
   CycleEntry? lastStart;
   for (final s in allStarts) {
-    final sNorm = DateTime(s.date.toLocal().year, s.date.toLocal().month, s.date.toLocal().day);
+    final sl = s.date.toLocal();
+    final sNorm = DateTime(sl.year, sl.month, sl.day);
     if (!sNorm.isAfter(date)) {
       lastStart = s;
     } else {
@@ -653,9 +635,11 @@ CyclePhase? _getPhaseForDay(
 
   int effectivePeriodLen = periodLength;
   for (final r in ranges) {
-    final rs = DateTime(r.start.toLocal().year, r.start.toLocal().month, r.start.toLocal().day);
+    final rsl = r.start.toLocal();
+    final rs = DateTime(rsl.year, rsl.month, rsl.day);
     if (rs == start) {
-      final re = DateTime(r.end.toLocal().year, r.end.toLocal().month, r.end.toLocal().day);
+      final rel = r.end.toLocal();
+      final re = DateTime(rel.year, rel.month, rel.day);
       effectivePeriodLen = re.difference(start).inDays + 1;
       break;
     }
@@ -695,8 +679,8 @@ class _DayDetailSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final dateNorm = DateTime(date.year, date.month, date.day);
-    final isPeriod = _getPeriodPosition(dateNorm, ranges) != null;
-    final isPredicted = !isPeriod && _getPredictedPosition(dateNorm, predicted) != null;
+    final isPeriod = _getRangePosition(dateNorm, ranges) != null;
+    final isPredicted = !isPeriod && _getRangePosition(dateNorm, predicted) != null;
     final phase = _getPhaseForDay(dateNorm, allStarts, cycleLen, periodLen, ranges);
     final key = _dateKey(dateNorm);
     final mood = moods[key];
@@ -711,7 +695,6 @@ class _DayDetailSheet extends StatelessWidget {
           const DragHandle(),
           const SizedBox(height: 20),
 
-          // Date header row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -769,7 +752,6 @@ class _DayDetailSheet extends StatelessWidget {
 
           const SizedBox(height: 16),
 
-          // Empty state
           if (!hasAnyData && !isPredicted)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 20),
@@ -782,7 +764,6 @@ class _DayDetailSheet extends StatelessWidget {
               ),
             ),
 
-          // Mood card
           if (mood != null) ...[
             Padding(
               padding: const EdgeInsets.only(bottom: 14),
@@ -815,7 +796,6 @@ class _DayDetailSheet extends StatelessWidget {
             ),
           ],
 
-          // Symptoms card
           if (symptoms != null && symptoms.isNotEmpty)
             SizedBox(
               width: double.infinity,
