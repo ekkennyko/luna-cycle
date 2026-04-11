@@ -452,7 +452,7 @@ class _DayCell extends StatelessWidget {
     final isPeriod = periodPos != null;
     final predPos = !isPeriod ? _getRangePosition(dateNorm, predicted) : null;
     final isPredicted = predPos != null;
-    final phase = _getPhaseForDay(dateNorm, allStarts, cycleLen, periodLen, ranges);
+    final phase = _getPhaseForDay(dateNorm, allStarts, cycleLen, periodLen, ranges) ?? _getPhaseForPredictedDay(dateNorm, predicted, cycleLen);
     final key = _dateKey(dateNorm);
     final hasMood = moods.containsKey(key);
     final hasSymptoms = symptomLogs.containsKey(key);
@@ -466,7 +466,7 @@ class _DayCell extends StatelessWidget {
         child: Stack(
           children: [
             // Phase background
-            if (phase != null && !isPeriod)
+            if (phase != null && !isPeriod && !isPredicted)
               Positioned(
                 top: 2,
                 bottom: 2,
@@ -626,6 +626,7 @@ CyclePhase? _getPhaseForDay(
   final sLocal = lastStart.date.toLocal();
   final start = DateTime(sLocal.year, sLocal.month, sLocal.day);
   final dayOfCycle = date.difference(start).inDays + 1;
+  if (dayOfCycle > cycleLength) return null;
 
   int effectivePeriodLen = periodLength;
   for (final r in ranges) {
@@ -644,6 +645,28 @@ CyclePhase? _getPhaseForDay(
   if (dayOfCycle < ovDay - 2) return CyclePhase.follicular;
   if (dayOfCycle <= ovDay + 2) return CyclePhase.ovulation;
   return CyclePhase.luteal;
+}
+
+CyclePhase? _getPhaseForPredictedDay(
+  DateTime date,
+  List<({DateTime start, DateTime end})> predicted,
+  int cycleLength,
+) {
+  for (final p in predicted) {
+    final sl = p.start.toLocal();
+    final start = DateTime(sl.year, sl.month, sl.day);
+    final dayOfCycle = date.difference(start).inDays + 1;
+    if (dayOfCycle < 1 || dayOfCycle > cycleLength) continue;
+    final el = p.end.toLocal();
+    final end = DateTime(el.year, el.month, el.day);
+    final periodLen = end.difference(start).inDays + 1;
+    final ovDay = cycleLength - 14;
+    if (dayOfCycle <= periodLen) return CyclePhase.menstrual;
+    if (dayOfCycle < ovDay - 2) return CyclePhase.follicular;
+    if (dayOfCycle <= ovDay + 2) return CyclePhase.ovulation;
+    return CyclePhase.luteal;
+  }
+  return null;
 }
 
 class _DayDetailSheet extends StatelessWidget {
@@ -675,7 +698,7 @@ class _DayDetailSheet extends StatelessWidget {
     final dateNorm = DateTime(date.year, date.month, date.day);
     final isPeriod = _getRangePosition(dateNorm, ranges) != null;
     final isPredicted = !isPeriod && _getRangePosition(dateNorm, predicted) != null;
-    final phase = _getPhaseForDay(dateNorm, allStarts, cycleLen, periodLen, ranges);
+    final phase = _getPhaseForDay(dateNorm, allStarts, cycleLen, periodLen, ranges) ?? _getPhaseForPredictedDay(dateNorm, predicted, cycleLen);
     final key = _dateKey(dateNorm);
     final mood = moods[key];
     final symptoms = symptomLogs[key];
