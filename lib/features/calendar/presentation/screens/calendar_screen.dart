@@ -626,7 +626,6 @@ CyclePhase? _getPhaseForDay(
   final sLocal = lastStart.date.toLocal();
   final start = DateTime(sLocal.year, sLocal.month, sLocal.day);
   final dayOfCycle = date.difference(start).inDays + 1;
-  if (dayOfCycle < 1 || dayOfCycle > cycleLength) return null;
 
   int effectivePeriodLen = periodLength;
   for (final r in ranges) {
