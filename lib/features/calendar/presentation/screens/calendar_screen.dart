@@ -238,7 +238,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                     ],
                   ),
                 ),
-
                 Padding(
                   padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
                   child: Wrap(
@@ -257,9 +256,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 16),
-
                 Expanded(
                   child: ListView.builder(
                     controller: _scrollController,
@@ -368,7 +365,6 @@ class _MonthGrid extends StatelessWidget {
             style: AppTextStyles.monthLabel,
           ),
           const SizedBox(height: 16),
-
           Row(
             children: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
                 .map(
@@ -388,7 +384,6 @@ class _MonthGrid extends StatelessWidget {
                 .toList(),
           ),
           const SizedBox(height: 8),
-
           ...List.generate(
             (days.length / 7).ceil(),
             (row) {
@@ -694,7 +689,6 @@ class _DayDetailSheet extends StatelessWidget {
         children: [
           const DragHandle(),
           const SizedBox(height: 20),
-
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -749,9 +743,7 @@ class _DayDetailSheet extends StatelessWidget {
                 ),
             ],
           ),
-
           const SizedBox(height: 16),
-
           if (!hasAnyData && !isPredicted)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 20),
@@ -763,7 +755,6 @@ class _DayDetailSheet extends StatelessWidget {
                 ),
               ),
             ),
-
           if (mood != null) ...[
             Padding(
               padding: const EdgeInsets.only(bottom: 14),
@@ -795,7 +786,6 @@ class _DayDetailSheet extends StatelessWidget {
               ),
             ),
           ],
-
           if (symptoms != null && symptoms.isNotEmpty)
             SizedBox(
               width: double.infinity,
