@@ -191,11 +191,9 @@ final periodStatusProvider = FutureProvider<(PeriodStatus, int)>((ref) async {
   return (PeriodStatus.upcoming, 0);
 });
 
-// Phase name string for consumers that need a plain string (e.g. nav bar color).
-final currentCyclePhaseProvider = FutureProvider<String?>((ref) async {
+final currentCyclePhaseProvider = FutureProvider<CyclePhase?>((ref) async {
   final result = await ref.watch(currentPhaseProvider.future);
-  if (result == null) return null;
-  return result.phase.name;
+  return result?.phase;
 });
 
 class CycleNotifier extends AsyncNotifier<void> {
@@ -346,11 +344,6 @@ CyclePhase? _phaseForDate(DateTime date, List<CycleEntry> periodStarts) {
   ).phase;
 }
 
-final totalCyclesProvider = FutureProvider<int>((ref) async {
-  final lengths = await ref.watch(cycleLengthsProvider.future);
-  return lengths.length;
-});
-
 final cycleLengthHistoryProvider = FutureProvider<List<int>>((ref) async {
   final lengths = await ref.watch(cycleLengthsProvider.future);
   if (lengths.isEmpty) return [];
@@ -364,8 +357,7 @@ final periodLengthHistoryProvider = FutureProvider<List<int>>((ref) async {
 });
 
 final moodByPhaseProvider = FutureProvider<Map<CyclePhase, double>>((ref) async {
-  ref.watch(cycleEntriesProvider);
-  final entries = await ref.read(cycleRepositoryProvider).getAllEntries();
+  final entries = await ref.watch(cycleEntriesProvider.future);
   final periodStarts = entries.where((e) => e.type == 'period_start').toList()..sort((a, b) => a.date.compareTo(b.date));
   if (periodStarts.isEmpty) return {};
   final moodsByPhase = <CyclePhase, List<int>>{for (final p in CyclePhase.values) p: []};
@@ -380,12 +372,11 @@ final moodByPhaseProvider = FutureProvider<Map<CyclePhase, double>>((ref) async 
 });
 
 final topSymptomsProvider = FutureProvider<List<({String name, int count, CyclePhase phase})>>((ref) async {
-  ref.watch(cycleEntriesProvider);
   final logs = await ref.read(symptomRepositoryProvider).getLogsBetween(DateTime(2000), DateTime(2100));
   if (logs.isEmpty) return [];
   final symptoms = await ref.read(symptomRepositoryProvider).getAllSymptoms();
   final symptomMap = {for (final s in symptoms) s.id: s.name};
-  final allEntries = await ref.read(cycleRepositoryProvider).getAllEntries();
+  final allEntries = await ref.watch(cycleEntriesProvider.future);
   final periodStarts = allEntries.where((e) => e.type == 'period_start').toList()..sort((a, b) => a.date.compareTo(b.date));
   final logsBySymptom = <int, List<DateTime>>{};
   for (final log in logs) {

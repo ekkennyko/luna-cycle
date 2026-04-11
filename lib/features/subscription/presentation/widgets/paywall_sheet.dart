@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:luna/core/theme/app_colors.dart';
+import 'package:luna/features/cycle/domain/cycle_phase_calculator.dart';
 import 'package:luna/features/cycle/presentation/providers/cycle_providers.dart';
 import 'package:luna/features/subscription/presentation/providers/subscription_providers.dart';
 import 'package:luna/l10n/app_localizations.dart';
@@ -45,16 +46,13 @@ class _PaywallSheetContentState extends ConsumerState<_PaywallSheetContent> {
   // On non-mobile platforms show fallback prices immediately (no loading spinner).
   bool _offeringsLoaded = !(Platform.isAndroid || Platform.isIOS);
 
-  Color get _accent {
-    final phase = ref.watch(currentCyclePhaseProvider).asData?.value;
-    return switch (phase) {
-      'menstrual' => AppColors.phaseMenstrual,
-      'follicular' => AppColors.phaseFolicular,
-      'ovulation' => AppColors.phaseOvulation,
-      'luteal' => AppColors.phaseLuteal,
-      _ => AppColors.phaseMenstrual,
-    };
-  }
+  Color get _accent => switch (ref.watch(currentCyclePhaseProvider).asData?.value) {
+        CyclePhase.menstrual => AppColors.phaseMenstrual,
+        CyclePhase.follicular => AppColors.phaseFolicular,
+        CyclePhase.ovulation => AppColors.phaseOvulation,
+        CyclePhase.luteal => AppColors.phaseLuteal,
+        null => AppColors.phaseMenstrual,
+      };
 
   @override
   void initState() {

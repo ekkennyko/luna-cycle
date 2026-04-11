@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:luna/core/constants/app_constants.dart';
 import 'package:luna/core/theme/app_colors.dart';
+import 'package:luna/features/cycle/domain/cycle_phase_calculator.dart';
 import 'package:luna/features/cycle/presentation/providers/cycle_providers.dart';
 import 'package:luna/features/cycle/presentation/screens/home_screen.dart';
 import 'package:luna/features/cycle/presentation/screens/log_screen.dart';
@@ -70,12 +71,12 @@ class _MainShell extends ConsumerWidget {
 
   final Widget child;
 
-  static Color _phaseColor(String? phase) => switch (phase) {
-        'menstrual' => AppColors.phaseMenstrual,
-        'follicular' => AppColors.phaseFolicular,
-        'ovulation' => AppColors.phaseOvulation,
-        'luteal' => AppColors.phaseLuteal,
-        _ => AppColors.phaseMenstrual,
+  static Color _phaseColor(CyclePhase? phase) => switch (phase) {
+        CyclePhase.menstrual => AppColors.phaseMenstrual,
+        CyclePhase.follicular => AppColors.phaseFolicular,
+        CyclePhase.ovulation => AppColors.phaseOvulation,
+        CyclePhase.luteal => AppColors.phaseLuteal,
+        null => AppColors.phaseMenstrual,
       };
 
   @override

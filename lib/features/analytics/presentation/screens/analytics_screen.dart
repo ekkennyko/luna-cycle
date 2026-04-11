@@ -8,14 +8,6 @@ import 'package:luna/features/subscription/presentation/providers/subscription_p
 import 'package:luna/features/subscription/presentation/widgets/paywall_sheet.dart';
 import 'package:luna/l10n/app_localizations.dart';
 
-Color _accentFromPhase(String? phase) => switch (phase) {
-      'menstrual' => AppColors.phaseMenstrual,
-      'follicular' => AppColors.phaseFolicular,
-      'ovulation' => AppColors.phaseOvulation,
-      'luteal' => AppColors.phaseLuteal,
-      _ => AppColors.phaseMenstrual,
-    };
-
 Color _cyclePhaseColor(CyclePhase phase) => switch (phase) {
       CyclePhase.menstrual => AppColors.phaseMenstrual,
       CyclePhase.follicular => AppColors.phaseFolicular,
@@ -40,7 +32,7 @@ class AnalyticsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final isPremium = ref.watch(isPremiumProvider).asData?.value ?? false;
-    final accent = _accentFromPhase(ref.watch(currentCyclePhaseProvider).asData?.value);
+    final accent = _cyclePhaseColor(ref.watch(currentCyclePhaseProvider).asData?.value ?? CyclePhase.menstrual);
 
     return Scaffold(
       backgroundColor: AppColors.appBackground,
@@ -320,53 +312,34 @@ class _PremiumBlur extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    return Container(
       height: 100,
-      child: Stack(
+      decoration: BoxDecoration(
+        color: const Color(0xFF120A0A).withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: accent.withValues(alpha: 0.15)),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Positioned.fill(
-            child: Opacity(
-              opacity: 0.4,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.03),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-            ),
+          const Text('✦', style: TextStyle(fontSize: 20, color: Colors.white70)),
+          const SizedBox(height: 10),
+          Text(
+            l10n.analyticsPremiumFeature,
+            style: const TextStyle(color: Color(0xB3FFFFFF), fontSize: 13, fontWeight: FontWeight.w500),
           ),
-          Positioned.fill(
+          const SizedBox(height: 10),
+          GestureDetector(
+            onTap: onUnlock,
             child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               decoration: BoxDecoration(
-                color: const Color(0xFF120A0A).withValues(alpha: 0.6),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: accent.withValues(alpha: 0.15)),
+                gradient: LinearGradient(colors: [accent, accent.withValues(alpha: 0.8)]),
+                borderRadius: BorderRadius.circular(12),
               ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text('✦', style: TextStyle(fontSize: 20, color: Colors.white70)),
-                  const SizedBox(height: 10),
-                  Text(
-                    l10n.analyticsPremiumFeature,
-                    style: const TextStyle(color: Color(0xB3FFFFFF), fontSize: 13, fontWeight: FontWeight.w500),
-                  ),
-                  const SizedBox(height: 10),
-                  GestureDetector(
-                    onTap: onUnlock,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(colors: [accent, accent.withValues(alpha: 0.8)]),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        l10n.analyticsUnlock,
-                        style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                  ),
-                ],
+              child: Text(
+                l10n.analyticsUnlock,
+                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
               ),
             ),
           ),
@@ -406,7 +379,6 @@ class _OverviewSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final avgCycle = ref.watch(averageCycleLengthProvider).asData?.value;
     final avgPeriod = ref.watch(averagePeriodLengthProvider).asData?.value;
-    final total = ref.watch(totalCyclesProvider).asData?.value ?? 0;
     final cycleLengths = ref.watch(cycleLengthsProvider).asData?.value ?? [];
     final periodLengths = ref.watch(completedPeriodLengthsProvider).asData?.value ?? [];
 
@@ -433,7 +405,7 @@ class _OverviewSection extends ConsumerWidget {
         Expanded(
           child: _StatCard(
             label: l10n.analyticsTracked,
-            value: '$total',
+            value: '${cycleLengths.length}',
             sub: l10n.analyticsCyclesTotal,
             color: AppColors.phaseOvulation,
           ),
