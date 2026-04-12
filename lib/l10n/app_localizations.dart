@@ -764,6 +764,54 @@ abstract class AppLocalizations {
   /// **'{count} day cycle — calculated from your data ✓'**
   String onboardingDayCycleCalculated(int count);
 
+  /// No description provided for @onboardingSelectPeriodDates.
+  ///
+  /// In en, this message translates to:
+  /// **'Select your last period dates'**
+  String get onboardingSelectPeriodDates;
+
+  /// No description provided for @onboardingDaysCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} days'**
+  String onboardingDaysCount(int n);
+
+  /// No description provided for @datePickerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Select period dates'**
+  String get datePickerTitle;
+
+  /// No description provided for @datePickerHintStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to select start date'**
+  String get datePickerHintStart;
+
+  /// No description provided for @datePickerHintEnd.
+  ///
+  /// In en, this message translates to:
+  /// **'Now select end date (optional)'**
+  String get datePickerHintEnd;
+
+  /// No description provided for @datePickerStillOngoing.
+  ///
+  /// In en, this message translates to:
+  /// **'Still ongoing'**
+  String get datePickerStillOngoing;
+
+  /// No description provided for @datePickerConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get datePickerConfirm;
+
+  /// No description provided for @datePickerDaysCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} days'**
+  String datePickerDaysCount(int n);
+
   /// No description provided for @settingsTitle.
   ///
   /// In en, this message translates to:

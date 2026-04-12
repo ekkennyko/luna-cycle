@@ -171,6 +171,25 @@
       "count": { "type": "int" }
     }
   },
+  "onboardingSelectPeriodDates": "Select your last period dates",
+  "onboardingDaysCount": "{n} days",
+  "@onboardingDaysCount": {
+    "placeholders": {
+      "n": { "type": "int" }
+    }
+  },
+
+  "datePickerTitle": "Select period dates",
+  "datePickerHintStart": "Tap to select start date",
+  "datePickerHintEnd": "Now select end date (optional)",
+  "datePickerStillOngoing": "Still ongoing",
+  "datePickerConfirm": "Confirm",
+  "datePickerDaysCount": "{n} days",
+  "@datePickerDaysCount": {
+    "placeholders": {
+      "n": { "type": "int" }
+    }
+  },
 
   "settingsTitle": "Settings",
   "settingsUpgradeToPremium": "Upgrade to Premium",

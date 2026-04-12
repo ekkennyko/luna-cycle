@@ -120,6 +120,25 @@
   "onboardingDayPeriod": "{count} дн. месячных — записано!",
   "onboardingDays": "{count} дн.",
   "onboardingDayCycleCalculated": "{count} дн. цикл — рассчитано из данных ✓",
+  "onboardingSelectPeriodDates": "Выбери даты последних месячных",
+  "onboardingDaysCount": "{n} дн.",
+  "@onboardingDaysCount": {
+    "placeholders": {
+      "n": { "type": "int" }
+    }
+  },
+
+  "datePickerTitle": "Выбери даты месячных",
+  "datePickerHintStart": "Нажми, чтобы выбрать начало",
+  "datePickerHintEnd": "Теперь выбери конец (необязательно)",
+  "datePickerStillOngoing": "Ещё идут",
+  "datePickerConfirm": "Подтвердить",
+  "datePickerDaysCount": "{n} дн.",
+  "@datePickerDaysCount": {
+    "placeholders": {
+      "n": { "type": "int" }
+    }
+  },
 
   "settingsTitle": "Настройки",
   "settingsUpgradeToPremium": "Перейти на Premium",

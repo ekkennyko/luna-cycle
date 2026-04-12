@@ -10,7 +10,7 @@ import 'package:luna/core/constants/app_constants.dart';
 import 'package:luna/core/constants/prefs_keys.dart';
 import 'package:luna/l10n/app_localizations.dart';
 import 'package:luna/core/theme/app_colors.dart';
-import 'package:luna/core/theme/date_picker_theme.dart';
+import 'package:luna/core/widgets/luna_date_range_picker.dart';
 import 'package:luna/shared/widgets/gradient_button.dart';
 import 'package:luna/shared/widgets/section_label.dart';
 
@@ -33,7 +33,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   DateTime? _periodEnd;
   DateTime? _prevStart;
   DateTime? _prevEnd;
-  bool _periodOngoing = false;
 
   int? get _periodLength {
     if (_periodStart == null || _periodEnd == null) return null;
@@ -47,29 +46,44 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     return diff > 0 ? diff : null;
   }
 
-  int? get _prevPeriodLength {
-    if (_prevStart == null || _prevEnd == null) return null;
-    final diff = _prevEnd!.difference(_prevStart!).inDays;
-    return diff >= 0 ? diff + 1 : null;
-  }
-
   bool get _canProceed => _step == 0 ? _periodStart != null : true;
 
-  Future<DateTime?> _pickDate(
-    BuildContext context, {
-    DateTime? initial,
-    DateTime? firstDate,
-    DateTime? lastDate,
-  }) {
-    final now = DateTime.now();
-    return showDatePicker(
+  Future<void> _openDateRangePicker() async {
+    await showModalBottomSheet<void>(
       context: context,
-      initialDate: initial ?? now.subtract(const Duration(days: 1)),
-      firstDate: firstDate ?? now.subtract(const Duration(days: 365 * 2)),
-      lastDate: lastDate ?? now,
-      builder: (ctx, child) => Theme(
-        data: appDatePickerTheme(_accent),
-        child: child!,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => LunaDateRangePicker(
+        initialStart: _periodStart,
+        initialEnd: _periodEnd,
+        onConfirm: (start, end) {
+          setState(() {
+            _periodStart = start;
+            _periodEnd = end;
+          });
+        },
+      ),
+    );
+  }
+
+  Future<void> _openPrevDateRangePicker() async {
+    final lastDay = _periodStart?.subtract(const Duration(days: 1));
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => LunaDateRangePicker(
+        initialStart: _prevStart,
+        initialEnd: _prevEnd,
+        lastDay: lastDay,
+        allowOngoing: false,
+        autoRangeDays: _periodLength,
+        onConfirm: (start, end) {
+          setState(() {
+            _prevStart = start;
+            _prevEnd = end;
+          });
+        },
       ),
     );
   }
@@ -303,89 +317,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             ),
           ),
           const SizedBox(height: 28),
-          _DatePickerField(
-            label: l10n.onboardingWhenDidItStart,
-            date: _periodStart,
-            onTap: () async {
-              final d = await _pickDate(context, initial: _periodStart);
-              if (d != null) {
-                setState(() {
-                  _periodStart = d;
-                  // Clear end if it's no longer valid
-                  if (_periodEnd != null && !_periodEnd!.isAfter(d)) {
-                    _periodEnd = null;
-                  }
-                });
-              }
-            },
-          ),
-          const SizedBox(height: 16),
-          AnimatedSize(
-            duration: const Duration(milliseconds: 260),
-            curve: Curves.easeOut,
-            child: _periodOngoing
-                ? const SizedBox.shrink()
-                : _DatePickerField(
-                    label: l10n.onboardingWhenDidItEnd,
-                    date: _periodEnd,
-                    optional: true,
-                    hint: _periodLength != null ? l10n.onboardingDayPeriod(_periodLength!) : null,
-                    onTap: () async {
-                      if (_periodStart == null) return;
-                      final d = await _pickDate(
-                        context,
-                        initial: _periodEnd,
-                        firstDate: _periodStart!,
-                      );
-                      if (d != null) {
-                        setState(() {
-                          _periodEnd = d;
-                          _periodOngoing = false;
-                        });
-                      }
-                    },
-                  ),
-          ),
-          const SizedBox(height: 12),
-          AnimatedSize(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-            child: _periodEnd == null
-                ? AnimatedOpacity(
-                    opacity: 1.0,
-                    duration: AppConstants.quickAnim,
-                    child: GestureDetector(
-                      onTap: () => setState(() {
-                        _periodOngoing = !_periodOngoing;
-                        if (_periodOngoing) _periodEnd = null;
-                      }),
-                      behavior: HitTestBehavior.opaque,
-                      child: Row(
-                        children: [
-                          Switch(
-                            value: _periodOngoing,
-                            onChanged: (v) => setState(() {
-                              _periodOngoing = v;
-                              if (v) _periodEnd = null;
-                            }),
-                            activeThumbColor: _accent,
-                            activeTrackColor: _accent.withValues(alpha: 0.28),
-                            inactiveThumbColor: Colors.white.withValues(alpha: 0.35),
-                            inactiveTrackColor: Colors.white.withValues(alpha: 0.08),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            l10n.onboardingStillOngoing,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: _periodOngoing ? Colors.white : Colors.white.withValues(alpha: 0.45),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
-                : const SizedBox.shrink(),
+          _PeriodRangeField(
+            periodStart: _periodStart,
+            periodEnd: _periodEnd,
+            onTap: _openDateRangePicker,
           ),
           const SizedBox(height: 16),
           // Privacy notice
@@ -431,14 +366,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   Widget _buildStep1() {
     final l10n = AppLocalizations.of(context)!;
-    final prevPl = _prevPeriodLength;
     final cl = _cycleLength;
 
+    final pl = _periodLength;
     final String periodLenStr;
-    if (prevPl != null) {
-      periodLenStr = l10n.onboardingDays(prevPl);
-    } else if (_prevStart != null && _prevEnd == null) {
-      periodLenStr = '—';
+    if (pl != null) {
+      periodLenStr = l10n.onboardingDaysCount(pl);
+    } else if (_periodStart != null && _periodEnd == null) {
+      periodLenStr = l10n.onboardingStillOngoing;
     } else {
       periodLenStr = '—';
     }
@@ -471,46 +406,15 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             ),
           ),
           const SizedBox(height: 28),
-          _DatePickerField(
-            label: l10n.onboardingPrevPeriodStart,
-            date: _prevStart,
-            optional: true,
-            hint: cl != null ? l10n.onboardingDayCycleCalculated(cl) : null,
-            onTap: () async {
-              final last = _periodStart?.subtract(const Duration(days: 1));
-              final d = await _pickDate(
-                context,
-                initial: _prevStart ?? last,
-                lastDate: last,
-              );
-              if (d != null) {
-                setState(() {
-                  _prevStart = d;
-                  if (_prevEnd != null && !_prevEnd!.isAfter(d)) {
-                    _prevEnd = null;
-                  }
-                });
-              }
-            },
+          _PeriodRangeField(
+            periodStart: _prevStart,
+            periodEnd: _prevEnd,
+            onTap: _openPrevDateRangePicker,
+            allowOngoing: false,
           ),
-          if (_prevStart != null) ...[
-            const SizedBox(height: 16),
-            _DatePickerField(
-              label: l10n.onboardingPrevPeriodEnd,
-              date: _prevEnd,
-              optional: true,
-              hint: prevPl != null ? l10n.onboardingDayPeriod(prevPl) : null,
-              onTap: () async {
-                final maxDate = _periodStart?.subtract(const Duration(days: 1));
-                final d = await _pickDate(
-                  context,
-                  initial: _prevEnd ?? _prevStart!,
-                  firstDate: _prevStart!,
-                  lastDate: maxDate,
-                );
-                if (d != null) setState(() => _prevEnd = d);
-              },
-            ),
+          if (cl != null) ...[
+            const SizedBox(height: 8),
+            _HintChip(text: l10n.onboardingDayCycleCalculated(cl)),
           ],
           const SizedBox(height: 16),
           // Preview card
@@ -833,103 +737,106 @@ class _PreviewRow extends StatelessWidget {
   }
 }
 
-class _DatePickerField extends StatelessWidget {
-  const _DatePickerField({
-    required this.label,
-    required this.date,
+class _PeriodRangeField extends StatelessWidget {
+  const _PeriodRangeField({
+    required this.periodStart,
+    required this.periodEnd,
     required this.onTap,
-    this.optional = false,
-    this.hint,
+    this.allowOngoing = true,
   });
 
-  final String label;
-  final DateTime? date;
+  final DateTime? periodStart;
+  final DateTime? periodEnd;
   final VoidCallback onTap;
-  final bool optional;
-  final String? hint;
+  final bool allowOngoing;
+
+  int? get _days {
+    if (periodStart == null || periodEnd == null) return null;
+    final diff = periodEnd!.difference(periodStart!).inDays;
+    return diff >= 0 ? diff + 1 : null;
+  }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final hasDate = date != null;
-    final showHint = hasDate && hint != null;
+    final hasStart = periodStart != null;
+    final hasEnd = periodEnd != null;
+    final days = _days;
+
+    final String label;
+    final Color labelColor;
+    if (!hasStart) {
+      label = l10n.onboardingSelectPeriodDates;
+      labelColor = Colors.white.withValues(alpha: 0.3);
+    } else if (!hasEnd) {
+      label = allowOngoing ? '${DateFormat('MMM d').format(periodStart!)} \u2192 ${l10n.onboardingStillOngoing}' : DateFormat('MMM d').format(periodStart!);
+      labelColor = _accent;
+    } else {
+      label = '${DateFormat('MMM d').format(periodStart!)} \u2192 ${DateFormat('MMM d').format(periodEnd!)} (${l10n.onboardingDaysCount(days!)})';
+      labelColor = _accent;
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              label,
-              style: TextStyle(fontSize: 13, color: Colors.white.withValues(alpha: 0.44)),
-            ),
-            if (optional)
-              Text(
-                l10n.onboardingOptional,
-                style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.19)),
-              ),
-          ],
-        ),
-        const SizedBox(height: 8),
         GestureDetector(
           onTap: onTap,
           child: AnimatedContainer(
             duration: AppConstants.quickAnim,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
-              color: hasDate ? _accent.withValues(alpha: 0.12) : Colors.white.withValues(alpha: 0.05),
+              color: hasStart ? _accent.withValues(alpha: 0.12) : Colors.white.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(AppRadius.container),
               border: Border.all(
-                color: hasDate ? _accent.withValues(alpha: 0.31) : Colors.white.withValues(alpha: 0.1),
+                color: hasStart ? _accent.withValues(alpha: 0.31) : Colors.white.withValues(alpha: 0.1),
               ),
             ),
             child: Row(
               children: [
+                if (!hasStart)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 10),
+                    child: Icon(Icons.calendar_today, size: 16, color: Colors.white.withValues(alpha: 0.3)),
+                  ),
                 Expanded(
                   child: Text(
-                    date != null ? DateFormat('MMMM d, y').format(date!) : l10n.onboardingTapToSelect,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: hasDate ? Colors.white : Colors.white.withValues(alpha: 0.25),
-                    ),
+                    label,
+                    style: TextStyle(fontSize: 14, color: labelColor),
                   ),
                 ),
-                if (hasDate) Icon(Icons.check_circle, size: 18, color: _accent.withValues(alpha: 0.8)),
+                if (hasStart) Icon(Icons.check_circle, size: 18, color: _accent.withValues(alpha: 0.8)),
               ],
             ),
           ),
         ),
-        AnimatedSize(
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-          child: showHint
-              ? Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: _accent.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: _accent.withValues(alpha: 0.19)),
-                    ),
-                    child: Row(
-                      children: [
-                        const Text('✦', style: TextStyle(color: _accent, fontSize: 11)),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            hint!,
-                            style: const TextStyle(color: _accent, fontSize: 12),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-              : const SizedBox.shrink(),
-        ),
       ],
+    );
+  }
+}
+
+class _HintChip extends StatelessWidget {
+  const _HintChip({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: _accent.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: _accent.withValues(alpha: 0.19)),
+      ),
+      child: Row(
+        children: [
+          const Text('✦', style: TextStyle(color: _accent, fontSize: 11)),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(text, style: const TextStyle(color: _accent, fontSize: 12)),
+          ),
+        ],
+      ),
     );
   }
 }

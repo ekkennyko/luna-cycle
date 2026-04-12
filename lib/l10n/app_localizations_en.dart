@@ -380,6 +380,34 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get onboardingSelectPeriodDates => 'Select your last period dates';
+
+  @override
+  String onboardingDaysCount(int n) {
+    return '$n days';
+  }
+
+  @override
+  String get datePickerTitle => 'Select period dates';
+
+  @override
+  String get datePickerHintStart => 'Tap to select start date';
+
+  @override
+  String get datePickerHintEnd => 'Now select end date (optional)';
+
+  @override
+  String get datePickerStillOngoing => 'Still ongoing';
+
+  @override
+  String get datePickerConfirm => 'Confirm';
+
+  @override
+  String datePickerDaysCount(int n) {
+    return '$n days';
+  }
+
+  @override
   String get settingsTitle => 'Settings';
 
   @override

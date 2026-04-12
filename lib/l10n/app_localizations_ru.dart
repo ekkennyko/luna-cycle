@@ -380,6 +380,34 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get onboardingSelectPeriodDates => 'Выбери даты последних месячных';
+
+  @override
+  String onboardingDaysCount(int n) {
+    return '$n дн.';
+  }
+
+  @override
+  String get datePickerTitle => 'Выбери даты месячных';
+
+  @override
+  String get datePickerHintStart => 'Нажми, чтобы выбрать начало';
+
+  @override
+  String get datePickerHintEnd => 'Теперь выбери конец (необязательно)';
+
+  @override
+  String get datePickerStillOngoing => 'Ещё идут';
+
+  @override
+  String get datePickerConfirm => 'Подтвердить';
+
+  @override
+  String datePickerDaysCount(int n) {
+    return '$n дн.';
+  }
+
+  @override
   String get settingsTitle => 'Настройки';
 
   @override
