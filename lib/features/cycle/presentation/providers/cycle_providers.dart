@@ -108,7 +108,7 @@ final completedPeriodLengthsProvider = FutureProvider<List<int>>((ref) async {
 final averagePeriodLengthProvider = FutureProvider<int>((ref) async {
   final lengths = await ref.watch(completedPeriodLengthsProvider.future);
   if (lengths.isEmpty) return await ref.watch(userPeriodLengthProvider.future);
-  return CyclePredictor.predictNextCycleLength(lengths);
+  return CyclePredictor.predictNextCycleLength(lengths, minValid: 2, maxValid: 10);
 });
 
 final averageCycleLengthProvider = FutureProvider<int>((ref) async {
@@ -165,12 +165,10 @@ final currentPhaseProvider = FutureProvider<PhaseResult?>((ref) async {
   final lastEnd = await ref.watch(lastPeriodEndProvider.future);
   final periodEnd = (lastEnd != null && !lastEnd.date.isBefore(lastStart.date)) ? lastEnd.date : null;
 
-  final periodLen = await ref.watch(userPeriodLengthProvider.future);
   final cycleLen = await ref.watch(averageCycleLengthProvider.future);
 
   return CyclePhaseCalculator.calculate(
     periodStart: lastStart.date,
-    periodLength: periodLen,
     cycleLength: cycleLen,
     today: ref.watch(effectiveTodayProvider),
     periodEnd: periodEnd,
@@ -258,11 +256,9 @@ class CycleNotifier extends AsyncNotifier<void> {
       final lastEnd = await ref.read(lastPeriodEndProvider.future);
       final periodEnd = (lastEnd != null && !lastEnd.date.isBefore(lastStart.date)) ? lastEnd.date : null;
 
-      final userPeriodLen = prefs.getInt(PrefsKeys.userPeriodLength) ?? AppConstants.defaultPeriodLength;
       final today = ref.read(effectiveTodayProvider);
       final phase = CyclePhaseCalculator.calculate(
         periodStart: lastStart.date,
-        periodLength: userPeriodLen,
         cycleLength: avgCycleLen,
         today: today,
         periodEnd: periodEnd,
@@ -340,12 +336,11 @@ CyclePhase? _phaseForDate(
   final rawLen = idx < periodStarts.length - 1 ? periodStarts[idx + 1].date.difference(relevantStart.date).inDays : AppConstants.defaultCycleLength;
   final cycleLen = rawLen.clamp(AppConstants.minCycleLength, AppConstants.maxCycleLength);
   final periodLen = periodLengthMap[relevantStart.date] ?? AppConstants.defaultPeriodLength;
-  return CyclePhaseCalculator.calculate(
-    periodStart: relevantStart.date,
+  return CyclePhaseCalculator.phaseForDay(
+    dayOfCycle: date.difference(relevantStart.date).inDays + 1,
     periodLength: periodLen,
     cycleLength: cycleLen,
-    today: date,
-  ).phase;
+  );
 }
 
 final cycleLengthHistoryProvider = FutureProvider<List<int>>((ref) async {

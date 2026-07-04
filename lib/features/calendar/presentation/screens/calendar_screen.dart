@@ -295,6 +295,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               right: 0,
               child: _DayDetailSheet(
                 date: _selectedDay!,
+                today: today,
                 ranges: ranges,
                 predicted: predicted,
                 allStarts: allStarts,
@@ -452,7 +453,7 @@ class _DayCell extends StatelessWidget {
     final isPeriod = periodPos != null;
     final predPos = !isPeriod ? _getRangePosition(dateNorm, predicted) : null;
     final isPredicted = predPos != null;
-    final phase = _getPhaseForDay(dateNorm, allStarts, cycleLen, periodLen, ranges) ?? _getPhaseForPredictedDay(dateNorm, predicted, cycleLen);
+    final phase = _getPhaseForDay(dateNorm, todayNorm, allStarts, cycleLen, periodLen, ranges) ?? _getPhaseForPredictedDay(dateNorm, predicted, cycleLen);
     final key = _dateKey(dateNorm);
     final hasMood = moods.containsKey(key);
     final hasSymptoms = symptomLogs.containsKey(key);
@@ -604,6 +605,7 @@ _RangePos? _getRangePosition(
 
 CyclePhase? _getPhaseForDay(
   DateTime date,
+  DateTime today,
   List<CycleEntry> allStarts,
   int cycleLength,
   int periodLength,
@@ -612,12 +614,14 @@ CyclePhase? _getPhaseForDay(
   if (allStarts.isEmpty) return null;
 
   CycleEntry? lastStart;
+  DateTime? nextStart;
   for (final s in allStarts) {
     final sl = s.date.toLocal();
     final sNorm = DateTime(sl.year, sl.month, sl.day);
     if (!sNorm.isAfter(date)) {
       lastStart = s;
     } else {
+      nextStart = sNorm;
       break;
     }
   }
@@ -626,7 +630,16 @@ CyclePhase? _getPhaseForDay(
   final sLocal = lastStart.date.toLocal();
   final start = DateTime(sLocal.year, sLocal.month, sLocal.day);
   final dayOfCycle = date.difference(start).inDays + 1;
-  if (dayOfCycle > cycleLength) return null;
+
+  // Past cycles use their actual length; the ongoing cycle uses the predicted
+  // one, with future days beyond it rendered by the predicted-cycle logic.
+  final int effectiveCycleLen;
+  if (nextStart != null) {
+    effectiveCycleLen = nextStart.difference(start).inDays.clamp(AppConstants.minCycleLength, AppConstants.maxCycleLength);
+  } else {
+    if (date.isAfter(today) && dayOfCycle > cycleLength) return null;
+    effectiveCycleLen = cycleLength;
+  }
 
   int effectivePeriodLen = periodLength;
   for (final r in ranges) {
@@ -640,11 +653,11 @@ CyclePhase? _getPhaseForDay(
     }
   }
 
-  final ovDay = cycleLength - 14;
-  if (dayOfCycle <= effectivePeriodLen) return CyclePhase.menstrual;
-  if (dayOfCycle < ovDay - 2) return CyclePhase.follicular;
-  if (dayOfCycle <= ovDay + 2) return CyclePhase.ovulation;
-  return CyclePhase.luteal;
+  return CyclePhaseCalculator.phaseForDay(
+    dayOfCycle: dayOfCycle,
+    periodLength: effectivePeriodLen,
+    cycleLength: effectiveCycleLen,
+  );
 }
 
 CyclePhase? _getPhaseForPredictedDay(
@@ -660,11 +673,11 @@ CyclePhase? _getPhaseForPredictedDay(
     final el = p.end.toLocal();
     final end = DateTime(el.year, el.month, el.day);
     final periodLen = end.difference(start).inDays + 1;
-    final ovDay = cycleLength - 14;
-    if (dayOfCycle <= periodLen) return CyclePhase.menstrual;
-    if (dayOfCycle < ovDay - 2) return CyclePhase.follicular;
-    if (dayOfCycle <= ovDay + 2) return CyclePhase.ovulation;
-    return CyclePhase.luteal;
+    return CyclePhaseCalculator.phaseForDay(
+      dayOfCycle: dayOfCycle,
+      periodLength: periodLen,
+      cycleLength: cycleLength,
+    );
   }
   return null;
 }
@@ -672,6 +685,7 @@ CyclePhase? _getPhaseForPredictedDay(
 class _DayDetailSheet extends StatelessWidget {
   const _DayDetailSheet({
     required this.date,
+    required this.today,
     required this.ranges,
     required this.predicted,
     required this.allStarts,
@@ -683,6 +697,7 @@ class _DayDetailSheet extends StatelessWidget {
   });
 
   final DateTime date;
+  final DateTime today;
   final List<({DateTime start, DateTime end})> ranges;
   final List<({DateTime start, DateTime end})> predicted;
   final List<CycleEntry> allStarts;
@@ -696,9 +711,10 @@ class _DayDetailSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final dateNorm = DateTime(date.year, date.month, date.day);
+    final todayNorm = DateTime(today.year, today.month, today.day);
     final isPeriod = _getRangePosition(dateNorm, ranges) != null;
     final isPredicted = !isPeriod && _getRangePosition(dateNorm, predicted) != null;
-    final phase = _getPhaseForDay(dateNorm, allStarts, cycleLen, periodLen, ranges) ?? _getPhaseForPredictedDay(dateNorm, predicted, cycleLen);
+    final phase = _getPhaseForDay(dateNorm, todayNorm, allStarts, cycleLen, periodLen, ranges) ?? _getPhaseForPredictedDay(dateNorm, predicted, cycleLen);
     final key = _dateKey(dateNorm);
     final mood = moods[key];
     final symptoms = symptomLogs[key];

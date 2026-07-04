@@ -12,7 +12,6 @@ import 'package:luna/shared/providers/core_providers.dart';
 import 'package:luna/core/constants/app_constants.dart';
 import 'package:luna/core/constants/mood_data.dart';
 import 'package:luna/core/constants/strings/home_strings.dart';
-import 'package:luna/core/extensions/date_time_ext.dart';
 import 'package:luna/l10n/app_localizations.dart';
 import 'package:luna/core/constants/prefs_keys.dart';
 import 'package:luna/core/theme/app_colors.dart';
@@ -271,16 +270,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
         onSave: (selected) async {
           final repo = ref.read(symptomRepositoryProvider);
           final today = ref.read(effectiveTodayProvider);
-          await repo.deleteLogsForDate(today);
           final syms = await ref.read(activeSymptomsProvider.future);
-          final day = today.dateOnly;
-          for (final sym in syms) {
-            if (selected.contains(sym.name)) {
-              await repo.saveLog(
-                SymptomLogsCompanion.insert(date: day, symptomId: sym.id),
-              );
-            }
-          }
+          final ids = [
+            for (final sym in syms)
+              if (selected.contains(sym.name)) sym.id,
+          ];
+          await repo.replaceLogsForDate(today, ids);
         },
       ),
     );
@@ -333,7 +328,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
       PeriodStatus.upcoming => phaseResult != null ? l10n.homePeriodInDays(phaseResult.daysUntilNextPeriod) : '',
     };
 
-    final now = DateTime.now();
+    final now = DateTime.now().add(Duration(days: ref.watch(debugDayOffsetProvider)));
     final isBannerVisible = isLate && (_bannerHiddenUntil == null || now.isAfter(_bannerHiddenUntil!));
     final isLongerThanUsual = isPeriodActive && activePeriodDay != null && periodLen != null && activePeriodDay > periodLen + 2;
 
@@ -1335,10 +1330,18 @@ class _EndPeriodSheetState extends State<_EndPeriodSheet> {
   late _PickMode _mode;
   DateTime? _customDate;
 
+  // Yesterday is not a valid end date when the period started today.
+  bool get _yesterdayValid {
+    final start = widget.periodStart;
+    if (start == null) return true;
+    final startNorm = DateTime(start.year, start.month, start.day);
+    return !widget.effectiveToday.subtract(const Duration(days: 1)).isBefore(startNorm);
+  }
+
   @override
   void initState() {
     super.initState();
-    _mode = DateTime.now().hour >= 12 ? _PickMode.today : _PickMode.yesterday;
+    _mode = _yesterdayValid && DateTime.now().hour < 12 ? _PickMode.yesterday : _PickMode.today;
   }
 
   bool get _showPickDate {
@@ -1394,13 +1397,15 @@ class _EndPeriodSheetState extends State<_EndPeriodSheet> {
           const SizedBox(height: 12),
           Row(
             children: [
-              _DateChip(
-                label: l10n.homeYesterday,
-                dateLabel: DateFormat('MMM d').format(yesterday),
-                selected: _mode == _PickMode.yesterday,
-                onTap: () => setState(() => _mode = _PickMode.yesterday),
-              ),
-              const SizedBox(width: 10),
+              if (_yesterdayValid) ...[
+                _DateChip(
+                  label: l10n.homeYesterday,
+                  dateLabel: DateFormat('MMM d').format(yesterday),
+                  selected: _mode == _PickMode.yesterday,
+                  onTap: () => setState(() => _mode = _PickMode.yesterday),
+                ),
+                const SizedBox(width: 10),
+              ],
               _DateChip(
                 label: l10n.homeToday,
                 dateLabel: DateFormat('MMM d').format(today),

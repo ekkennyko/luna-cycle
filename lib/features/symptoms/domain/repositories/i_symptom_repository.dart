@@ -11,6 +11,7 @@ abstract interface class ISymptomRepository {
   Future<void> saveLog(SymptomLogsCompanion log);
   Future<void> deleteLog(int id);
   Future<void> deleteLogsForDate(DateTime date);
+  Future<void> replaceLogsForDate(DateTime date, List<int> symptomIds);
 
   Stream<List<SymptomLog>> watchLogsForDate(DateTime date);
 }

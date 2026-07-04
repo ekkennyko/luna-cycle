@@ -36,18 +36,31 @@ class PhaseResult {
 class CyclePhaseCalculator {
   CyclePhaseCalculator._();
 
+  /// Phase for a 1-based [dayOfCycle] given period and cycle lengths.
+  /// Luteal extends past [cycleLength] when the cycle runs long.
+  static CyclePhase phaseForDay({
+    required int dayOfCycle,
+    required int periodLength,
+    required int cycleLength,
+  }) {
+    final ovDay = cycleLength - 14;
+    if (dayOfCycle <= periodLength) return CyclePhase.menstrual;
+    if (dayOfCycle < ovDay - 2) return CyclePhase.follicular;
+    if (dayOfCycle <= ovDay + 2) return CyclePhase.ovulation;
+    return CyclePhase.luteal;
+  }
+
   /// Calculates the current cycle phase and related dates for [today].
   ///
   /// Phase boundaries based on a fixed 14-day luteal phase:
-  ///   - Menstrual:  day 1 → [periodLength]
-  ///   - Follicular: day [periodLength]+1 → ovulation day − 3
+  ///   - Menstrual:  day 1 → period end (or current day while ongoing)
+  ///   - Follicular: next day → ovulation day − 3
   ///   - Ovulation:  ovulation day − 2 → ovulation day + 2
   ///   - Luteal:     ovulation day + 3 → [cycleLength]
   ///
   /// Ovulation day = [cycleLength] − 14 (standard luteal phase length).
   static PhaseResult calculate({
     required DateTime periodStart,
-    required int periodLength,
     required int cycleLength,
     required DateTime today,
     DateTime? periodEnd,
@@ -63,7 +76,7 @@ class CyclePhaseCalculator {
     if (periodEnd != null) {
       final e = periodEnd.toLocal();
       final endNorm = DateTime.utc(e.year, e.month, e.day);
-      actualPeriodLength = endNorm.difference(start).inDays;
+      actualPeriodLength = endNorm.difference(start).inDays + 1;
     } else {
       // Period is still active — menstrual phase extends through current day.
       actualPeriodLength = dayOfCycle;
@@ -71,16 +84,11 @@ class CyclePhaseCalculator {
 
     final ovDay = cycleLength - 14;
 
-    final CyclePhase phase;
-    if (dayOfCycle <= actualPeriodLength) {
-      phase = CyclePhase.menstrual;
-    } else if (dayOfCycle < ovDay - 2) {
-      phase = CyclePhase.follicular;
-    } else if (dayOfCycle <= ovDay + 2) {
-      phase = CyclePhase.ovulation;
-    } else {
-      phase = CyclePhase.luteal;
-    }
+    final phase = phaseForDay(
+      dayOfCycle: dayOfCycle,
+      periodLength: actualPeriodLength,
+      cycleLength: cycleLength,
+    );
 
     final nextPeriodDate = start.add(Duration(days: cycleLength));
     final daysUntilNextPeriod = nextPeriodDate.difference(now).inDays;

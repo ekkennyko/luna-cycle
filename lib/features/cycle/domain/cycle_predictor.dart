@@ -6,7 +6,13 @@ class CyclePredictor {
   /// Predicts next cycle length from historical cycle lengths (oldest → newest).
   /// Uses simple average for ≤2 cycles, weighted average for 3-6,
   /// and trimmed weighted average for 7+.
-  static int predictNextCycleLength(List<int> cycleLengths) {
+  /// [minValid]/[maxValid] bound the outlier trim; pass period-length bounds
+  /// when predicting period length instead of cycle length.
+  static int predictNextCycleLength(
+    List<int> cycleLengths, {
+    int minValid = 21,
+    int maxValid = 35,
+  }) {
     if (cycleLengths.isEmpty) return 28;
 
     if (cycleLengths.length <= 2) {
@@ -17,7 +23,7 @@ class CyclePredictor {
       return _weightedAverage(cycleLengths);
     }
 
-    final trimmed = _trimOutliers(cycleLengths);
+    final trimmed = _trimOutliers(cycleLengths, minValid, maxValid);
     if (trimmed.isEmpty) {
       return _weightedAverage(cycleLengths);
     }
@@ -41,8 +47,8 @@ class CyclePredictor {
         _ => [0.4, 0.3, 0.2, 0.1],
       };
 
-  static List<int> _trimOutliers(List<int> cycles) {
-    final filtered = cycles.where((c) => c >= 21 && c <= 35).toList();
+  static List<int> _trimOutliers(List<int> cycles, int minValid, int maxValid) {
+    final filtered = cycles.where((c) => c >= minValid && c <= maxValid).toList();
     if (filtered.length < 3) return filtered;
 
     final mean = filtered.reduce((a, b) => a + b) / filtered.length;

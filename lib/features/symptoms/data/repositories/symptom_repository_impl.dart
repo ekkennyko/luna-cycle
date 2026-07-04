@@ -50,6 +50,20 @@ class SymptomRepositoryImpl implements ISymptomRepository {
   }
 
   @override
+  Future<void> replaceLogsForDate(DateTime date, List<int> symptomIds) {
+    final day = date.dateOnly;
+    final next = day.add(const Duration(days: 1));
+    return _db.transaction(() async {
+      await (_db.delete(_db.symptomLogs)..where((t) => t.date.isBiggerOrEqualValue(day) & t.date.isSmallerThanValue(next))).go();
+      await _db.batch((b) {
+        b.insertAll(_db.symptomLogs, [
+          for (final id in symptomIds) SymptomLogsCompanion.insert(date: day, symptomId: id),
+        ]);
+      });
+    });
+  }
+
+  @override
   Stream<List<SymptomLog>> watchLogsForDate(DateTime date) {
     final day = date.dateOnly;
     final next = day.add(const Duration(days: 1));
