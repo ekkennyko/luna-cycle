@@ -27,6 +27,7 @@ class AppConstants {
   static const Duration quickAnim = Duration(milliseconds: 200);
 
   static const String privacyPolicyUrl = 'https://ekkennyko.github.io/luna-cycle.github.io/index.html';
+  static const String termsUrl = 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/';
 }
 
 class AppRadius {

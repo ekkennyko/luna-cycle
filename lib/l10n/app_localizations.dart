@@ -1067,8 +1067,8 @@ abstract class AppLocalizations {
   /// No description provided for @paywallTrialBadge.
   ///
   /// In en, this message translates to:
-  /// **'7-day free trial — cancel anytime'**
-  String get paywallTrialBadge;
+  /// **'{days}-day free trial - cancel anytime'**
+  String paywallTrialBadge(int days);
 
   /// No description provided for @paywallFeatureAnalytics.
   ///
@@ -1139,8 +1139,38 @@ abstract class AppLocalizations {
   /// No description provided for @paywallCta.
   ///
   /// In en, this message translates to:
-  /// **'Start 7-Day Free Trial'**
-  String get paywallCta;
+  /// **'Start {days}-Day Free Trial'**
+  String paywallCta(int days);
+
+  /// No description provided for @paywallCtaNoTrial.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscribe'**
+  String get paywallCtaNoTrial;
+
+  /// No description provided for @paywallFinePrintNoTrial.
+  ///
+  /// In en, this message translates to:
+  /// **'{price}. Cancel anytime in App Store / Google Play.'**
+  String paywallFinePrintNoTrial(String price);
+
+  /// No description provided for @paywallPricePerYear.
+  ///
+  /// In en, this message translates to:
+  /// **'{price}/year'**
+  String paywallPricePerYear(String price);
+
+  /// No description provided for @paywallPricePerMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'{price}/month'**
+  String paywallPricePerMonth(String price);
+
+  /// No description provided for @paywallNothingToRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'No active purchases found'**
+  String get paywallNothingToRestore;
 
   /// No description provided for @paywallRestore.
   ///
@@ -1177,6 +1207,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Continue →'**
   String get paywallContinue;
+
+  /// No description provided for @backupPasswordTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup password'**
+  String get backupPasswordTitle;
+
+  /// No description provided for @backupPasswordNote.
+  ///
+  /// In en, this message translates to:
+  /// **'The file cannot be opened without this password.'**
+  String get backupPasswordNote;
+
+  /// No description provided for @backupPasswordHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get backupPasswordHint;
+
+  /// No description provided for @backupPasswordRepeat.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeat password'**
+  String get backupPasswordRepeat;
+
+  /// No description provided for @backupPasswordMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Passwords don\'t match'**
+  String get backupPasswordMismatch;
+
+  /// No description provided for @backupCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup saved'**
+  String get backupCreated;
+
+  /// No description provided for @backupRestoreQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore from backup?'**
+  String get backupRestoreQuestion;
+
+  /// No description provided for @backupRestoreBody.
+  ///
+  /// In en, this message translates to:
+  /// **'All current data will be replaced with the data from the file.'**
+  String get backupRestoreBody;
+
+  /// No description provided for @backupRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get backupRestore;
+
+  /// No description provided for @backupRestored.
+  ///
+  /// In en, this message translates to:
+  /// **'Data restored'**
+  String get backupRestored;
+
+  /// No description provided for @backupWrongPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Wrong password or damaged file'**
+  String get backupWrongPassword;
+
+  /// No description provided for @backupInvalidFile.
+  ///
+  /// In en, this message translates to:
+  /// **'This is not a Luna backup file'**
+  String get backupInvalidFile;
 
   /// No description provided for @analyticsTitle.
   ///

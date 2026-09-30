@@ -538,7 +538,16 @@ class AppLocalizationsRu extends AppLocalizations {
   String get paywallTitle => 'Luna Premium';
 
   @override
-  String get paywallTrialBadge => '7 дней бесплатно — отмена в любое время';
+  String paywallTrialBadge(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days дней',
+      few: '$days дня',
+      one: '$days день',
+    );
+    return '$_temp0 бесплатно - отмена в любое время';
+  }
 
   @override
   String get paywallFeatureAnalytics => 'Продвинутая аналитика';
@@ -576,7 +585,37 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get paywallCta => 'Начать 7 дней бесплатно';
+  String paywallCta(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days дней',
+      few: '$days дня',
+      one: '$days день',
+    );
+    return 'Начать $_temp0 бесплатно';
+  }
+
+  @override
+  String get paywallCtaNoTrial => 'Оформить подписку';
+
+  @override
+  String paywallFinePrintNoTrial(String price) {
+    return '$price. Отмена в App Store / Google Play.';
+  }
+
+  @override
+  String paywallPricePerYear(String price) {
+    return '$price/год';
+  }
+
+  @override
+  String paywallPricePerMonth(String price) {
+    return '$price/мес';
+  }
+
+  @override
+  String get paywallNothingToRestore => 'Активных покупок не найдено';
 
   @override
   String get paywallRestore => 'Восстановить покупки';
@@ -595,6 +634,42 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get paywallContinue => 'Продолжить →';
+
+  @override
+  String get backupPasswordTitle => 'Пароль бэкапа';
+
+  @override
+  String get backupPasswordNote => 'Без этого пароля файл открыть нельзя.';
+
+  @override
+  String get backupPasswordHint => 'Пароль';
+
+  @override
+  String get backupPasswordRepeat => 'Повтори пароль';
+
+  @override
+  String get backupPasswordMismatch => 'Пароли не совпадают';
+
+  @override
+  String get backupCreated => 'Бэкап сохранён';
+
+  @override
+  String get backupRestoreQuestion => 'Восстановить из бэкапа?';
+
+  @override
+  String get backupRestoreBody => 'Все текущие данные будут заменены данными из файла.';
+
+  @override
+  String get backupRestore => 'Восстановить';
+
+  @override
+  String get backupRestored => 'Данные восстановлены';
+
+  @override
+  String get backupWrongPassword => 'Неверный пароль или файл повреждён';
+
+  @override
+  String get backupInvalidFile => 'Это не файл бэкапа Luna';
 
   @override
   String get analyticsTitle => 'Аналитика';

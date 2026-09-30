@@ -538,7 +538,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get paywallTitle => 'Luna Premium';
 
   @override
-  String get paywallTrialBadge => '7-day free trial — cancel anytime';
+  String paywallTrialBadge(int days) {
+    return '$days-day free trial - cancel anytime';
+  }
 
   @override
   String get paywallFeatureAnalytics => 'Advanced Analytics';
@@ -576,7 +578,30 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get paywallCta => 'Start 7-Day Free Trial';
+  String paywallCta(int days) {
+    return 'Start $days-Day Free Trial';
+  }
+
+  @override
+  String get paywallCtaNoTrial => 'Subscribe';
+
+  @override
+  String paywallFinePrintNoTrial(String price) {
+    return '$price. Cancel anytime in App Store / Google Play.';
+  }
+
+  @override
+  String paywallPricePerYear(String price) {
+    return '$price/year';
+  }
+
+  @override
+  String paywallPricePerMonth(String price) {
+    return '$price/month';
+  }
+
+  @override
+  String get paywallNothingToRestore => 'No active purchases found';
 
   @override
   String get paywallRestore => 'Restore purchases';
@@ -595,6 +620,42 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get paywallContinue => 'Continue →';
+
+  @override
+  String get backupPasswordTitle => 'Backup password';
+
+  @override
+  String get backupPasswordNote => 'The file cannot be opened without this password.';
+
+  @override
+  String get backupPasswordHint => 'Password';
+
+  @override
+  String get backupPasswordRepeat => 'Repeat password';
+
+  @override
+  String get backupPasswordMismatch => 'Passwords don\'t match';
+
+  @override
+  String get backupCreated => 'Backup saved';
+
+  @override
+  String get backupRestoreQuestion => 'Restore from backup?';
+
+  @override
+  String get backupRestoreBody => 'All current data will be replaced with the data from the file.';
+
+  @override
+  String get backupRestore => 'Restore';
+
+  @override
+  String get backupRestored => 'Data restored';
+
+  @override
+  String get backupWrongPassword => 'Wrong password or damaged file';
+
+  @override
+  String get backupInvalidFile => 'This is not a Luna backup file';
 
   @override
   String get analyticsTitle => 'Analytics';

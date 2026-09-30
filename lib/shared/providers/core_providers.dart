@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:luna/core/database/app_database.dart';
 import 'package:luna/core/encryption/encryption_service.dart';
+import 'package:luna/features/backup/data/backup_service.dart';
 import 'package:luna/features/cycle/data/repositories/cycle_repository_impl.dart';
 import 'package:luna/features/cycle/domain/repositories/i_cycle_repository.dart';
 import 'package:luna/features/symptoms/data/repositories/symptom_repository_impl.dart';
@@ -22,6 +23,10 @@ final appDatabaseProvider = Provider<AppDatabase>((ref) {
   ref.onDispose(db.close);
   return db;
 });
+
+final backupServiceProvider = Provider<BackupService>(
+  (ref) => BackupService(ref.read(appDatabaseProvider)),
+);
 
 final cycleRepositoryProvider = Provider<ICycleRepository>(
   (ref) => CycleRepositoryImpl(ref.read(appDatabaseProvider)),

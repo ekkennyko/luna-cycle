@@ -1,11 +1,12 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:luna/core/constants/app_constants.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 
 Future<void> initRevenueCat() async {
-  await Purchases.setLogLevel(LogLevel.debug);
+  if (kDebugMode) await Purchases.setLogLevel(LogLevel.debug);
 
   final config = PurchasesConfiguration(
     Platform.isAndroid ? AppConstants.revenueCatApiKeyAndroid : AppConstants.revenueCatApiKeyIos,

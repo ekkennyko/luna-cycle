@@ -1,13 +1,16 @@
 import 'dart:io';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:luna/core/constants/app_constants.dart';
 import 'package:luna/core/constants/prefs_keys.dart';
 import 'package:luna/core/notifications/notification_service.dart';
+import 'package:luna/features/backup/data/backup_service.dart';
 import 'package:luna/features/settings/presentation/screens/set_pin_screen.dart';
 import 'package:luna/features/settings/presentation/widgets/lock_screen.dart';
 import 'package:luna/l10n/app_localizations.dart';
@@ -52,13 +55,13 @@ class SettingsScreen extends ConsumerWidget {
             title: l10n.settingsCreateBackup,
             subtitle: l10n.settingsEncryptedFile,
             isPremium: !isPremium,
-            onTap: isPremium ? () {} : () => PaywallSheet.show(context),
+            onTap: isPremium ? () => _createBackup(context, ref) : () => PaywallSheet.show(context),
           ),
           _SettingsTile(
             icon: Icons.restore_outlined,
             title: l10n.settingsRestoreFromBackup,
             isPremium: !isPremium,
-            onTap: isPremium ? () {} : () => PaywallSheet.show(context),
+            onTap: isPremium ? () => _restoreBackup(context, ref) : () => PaywallSheet.show(context),
           ),
           _SectionHeader(l10n.settingsCycle),
           _SettingsTile(
@@ -97,6 +100,57 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
+  Future<void> _createBackup(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context)!;
+    final messenger = ScaffoldMessenger.of(context);
+    final password = await showDialog<String>(
+      context: context,
+      builder: (ctx) => _BackupPasswordDialog(
+        title: l10n.backupPasswordTitle,
+        body: l10n.backupPasswordNote,
+        actionLabel: MaterialLocalizations.of(ctx).okButtonLabel,
+        repeatPassword: true,
+      ),
+    );
+    if (password == null) return;
+
+    final bytes = await ref.read(backupServiceProvider).create(password);
+    final date = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    final saved = await FilePicker.saveFile(
+      fileName: 'luna-$date${AppConstants.backupFileExtension}',
+      bytes: bytes,
+      mimeType: AppConstants.backupMimeType,
+    );
+    if (saved != null) messenger.showSnackBar(SnackBar(content: Text(l10n.backupCreated)));
+  }
+
+  Future<void> _restoreBackup(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context)!;
+    final messenger = ScaffoldMessenger.of(context);
+    final file = await FilePicker.pickFile();
+    if (file == null) return;
+    final bytes = await file.readAsBytes();
+    if (!BackupService.isBackup(bytes)) {
+      messenger.showSnackBar(SnackBar(content: Text(l10n.backupInvalidFile)));
+      return;
+    }
+    if (!context.mounted) return;
+
+    final password = await showDialog<String>(
+      context: context,
+      builder: (_) => _BackupPasswordDialog(
+        title: l10n.backupRestoreQuestion,
+        body: l10n.backupRestoreBody,
+        actionLabel: l10n.backupRestore,
+      ),
+    );
+    if (password == null) return;
+
+    final restored = await ref.read(backupServiceProvider).restore(bytes, password);
+    if (restored) ref.invalidate(userPeriodLengthProvider);
+    messenger.showSnackBar(SnackBar(content: Text(restored ? l10n.backupRestored : l10n.backupWrongPassword)));
+  }
+
   Future<void> _confirmReset(BuildContext context, WidgetRef ref) async {
     final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
@@ -124,6 +178,86 @@ class SettingsScreen extends ConsumerWidget {
       ref.read(debugDayOffsetProvider.notifier).reset();
       if (context.mounted) context.go('/onboarding');
     }
+  }
+}
+
+class _BackupPasswordDialog extends StatefulWidget {
+  const _BackupPasswordDialog({
+    required this.title,
+    required this.body,
+    required this.actionLabel,
+    this.repeatPassword = false,
+  });
+
+  final String title;
+  final String body;
+  final String actionLabel;
+  final bool repeatPassword;
+
+  @override
+  State<_BackupPasswordDialog> createState() => _BackupPasswordDialogState();
+}
+
+class _BackupPasswordDialogState extends State<_BackupPasswordDialog> {
+  final _password = TextEditingController();
+  final _repeat = TextEditingController();
+  bool _mismatch = false;
+
+  @override
+  void dispose() {
+    _password.dispose();
+    _repeat.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (_password.text.isEmpty) return;
+    if (widget.repeatPassword && _password.text != _repeat.text) {
+      setState(() => _mismatch = true);
+      return;
+    }
+    Navigator.of(context).pop(_password.text);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return AlertDialog(
+      scrollable: true,
+      title: Text(widget.title),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(widget.body),
+          TextField(
+            controller: _password,
+            obscureText: true,
+            autofocus: true,
+            decoration: InputDecoration(labelText: l10n.backupPasswordHint),
+          ),
+          if (widget.repeatPassword)
+            TextField(
+              controller: _repeat,
+              obscureText: true,
+              decoration: InputDecoration(
+                labelText: l10n.backupPasswordRepeat,
+                errorText: _mismatch ? l10n.backupPasswordMismatch : null,
+              ),
+            ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l10n.settingsCancel),
+        ),
+        TextButton(
+          onPressed: _submit,
+          child: Text(widget.actionLabel),
+        ),
+      ],
+    );
   }
 }
 

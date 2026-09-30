@@ -1,8 +1,10 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:luna/core/theme/app_colors.dart';
 import 'package:luna/features/cycle/domain/cycle_phase_calculator.dart';
 import 'package:luna/features/cycle/presentation/providers/cycle_providers.dart';
@@ -82,7 +84,7 @@ class _PaywallSheetContentState extends ConsumerState<_PaywallSheetContent> {
       Navigator.of(context).pop();
       return;
     }
-    final package = _selected == _PlanType.yearly ? _offerings?.current?.annual : _offerings?.current?.monthly;
+    final package = _selectedPackage;
     if (package == null) return;
 
     setState(() => _purchasing = true);
@@ -92,6 +94,7 @@ class _PaywallSheetContentState extends ConsumerState<_PaywallSheetContent> {
       ref.invalidate(customerInfoProvider);
       if (mounted) setState(() => _purchased = true);
     } catch (e) {
+      if (e is PlatformException && PurchasesErrorHelper.getErrorCode(e) == PurchasesErrorCode.purchaseCancelledError) return;
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
       }
@@ -104,8 +107,14 @@ class _PaywallSheetContentState extends ConsumerState<_PaywallSheetContent> {
     if (!Platform.isAndroid && !Platform.isIOS) return;
     setState(() => _restoring = true);
     try {
-      await Purchases.restorePurchases();
+      final info = await Purchases.restorePurchases();
       ref.invalidate(customerInfoProvider);
+      if (!mounted) return;
+      if (info.entitlements.active.containsKey(AppConstants.premiumEntitlement)) {
+        setState(() => _purchased = true);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.paywallNothingToRestore)));
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
@@ -118,17 +127,42 @@ class _PaywallSheetContentState extends ConsumerState<_PaywallSheetContent> {
   String get _yearlyPrice => _offerings?.current?.annual?.storeProduct.priceString ?? '\$19.99';
 
   String get _yearlyPerMonth {
-    final price = _offerings?.current?.annual?.storeProduct.price;
-    if (price == null) return '\$1.67';
-    return '\$${(price / 12).toStringAsFixed(2)}';
+    final product = _offerings?.current?.annual?.storeProduct;
+    if (product == null) return '\$1.67';
+    return _formatPrice(product.price / 12, product.currencyCode);
   }
 
   String get _monthlyPrice => _offerings?.current?.monthly?.storeProduct.priceString ?? '\$2.99';
+
+  String get _monthlyPriceForYear {
+    final product = _offerings?.current?.monthly?.storeProduct;
+    if (product == null) return '\$35.88';
+    return _formatPrice(product.price * 12, product.currencyCode);
+  }
+
+  String _formatPrice(double amount, String currencyCode) =>
+      NumberFormat.simpleCurrency(locale: Localizations.localeOf(context).toString(), name: currencyCode).format(amount);
+
+  Package? get _selectedPackage => _selected == _PlanType.yearly ? _offerings?.current?.annual : _offerings?.current?.monthly;
+
+  int? get _trialDays {
+    final intro = _selectedPackage?.storeProduct.introductoryPrice;
+    if (intro == null || intro.price != 0) return null;
+    return switch (intro.periodUnit) {
+      PeriodUnit.day => intro.periodNumberOfUnits,
+      PeriodUnit.week => intro.periodNumberOfUnits * 7,
+      PeriodUnit.month => intro.periodNumberOfUnits * 30,
+      PeriodUnit.year => intro.periodNumberOfUnits * 365,
+      PeriodUnit.unknown => null,
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
     final accent = _accent;
     final l10n = AppLocalizations.of(context)!;
+    final trialDays = _trialDays;
+    final priceWithPeriod = _selected == _PlanType.yearly ? l10n.paywallPricePerYear(_yearlyPrice) : l10n.paywallPricePerMonth(_monthlyPrice);
 
     if (_purchased) {
       return _SuccessView(accent: accent, l10n: l10n, onContinue: () => Navigator.of(context).pop());
@@ -178,8 +212,10 @@ class _PaywallSheetContentState extends ConsumerState<_PaywallSheetContent> {
                     children: [
                       _Header(accent: accent, l10n: l10n),
                       const SizedBox(height: 20),
-                      _TrialBadge(accent: accent, l10n: l10n),
-                      const SizedBox(height: 20),
+                      if (trialDays != null) ...[
+                        _TrialBadge(accent: accent, label: l10n.paywallTrialBadge(trialDays)),
+                        const SizedBox(height: 20),
+                      ],
                       _FeaturesList(accent: accent, l10n: l10n),
                       const SizedBox(height: 20),
                       _PricingRow(
@@ -189,13 +225,13 @@ class _PaywallSheetContentState extends ConsumerState<_PaywallSheetContent> {
                         yearlyPrice: _yearlyPrice,
                         yearlyPerMonth: _yearlyPerMonth,
                         monthlyPrice: _monthlyPrice,
+                        monthlyPriceForYear: _monthlyPriceForYear,
                         offeringsLoaded: _offeringsLoaded,
                         onSelect: (v) => setState(() => _selected = v),
                       ),
                       const SizedBox(height: 8),
                       _FinePrint(
-                        l10n: l10n,
-                        price: _selected == _PlanType.yearly ? '$_yearlyPrice/year' : '$_monthlyPrice/month',
+                        text: trialDays != null ? l10n.paywallFinePrint(priceWithPeriod) : l10n.paywallFinePrintNoTrial(priceWithPeriod),
                       ),
                       const SizedBox(height: 8),
                     ],
@@ -207,6 +243,7 @@ class _PaywallSheetContentState extends ConsumerState<_PaywallSheetContent> {
           _BottomCta(
             accent: accent,
             l10n: l10n,
+            ctaLabel: trialDays != null ? l10n.paywallCta(trialDays) : l10n.paywallCtaNoTrial,
             loading: _purchasing,
             restoring: _restoring,
             onSubscribe: _purchase,
@@ -273,10 +310,10 @@ class _HeaderState extends State<_Header> with SingleTickerProviderStateMixin {
 }
 
 class _TrialBadge extends StatelessWidget {
-  const _TrialBadge({required this.accent, required this.l10n});
+  const _TrialBadge({required this.accent, required this.label});
 
   final Color accent;
-  final AppLocalizations l10n;
+  final String label;
 
   @override
   Widget build(BuildContext context) {
@@ -293,7 +330,7 @@ class _TrialBadge extends StatelessWidget {
           const Text('🎁', style: TextStyle(fontSize: 14)),
           const SizedBox(width: 8),
           Text(
-            l10n.paywallTrialBadge,
+            label,
             style: TextStyle(color: accent, fontSize: 13, fontWeight: FontWeight.w600),
           ),
         ],
@@ -312,9 +349,7 @@ class _FeaturesList extends StatelessWidget {
   Widget build(BuildContext context) {
     final features = [
       ('📊', l10n.paywallFeatureAnalytics, l10n.paywallFeatureAnalyticsSubtitle),
-      ('📱', l10n.paywallFeatureWidget, l10n.paywallFeatureWidgetSubtitle),
-      ('🤰', l10n.paywallFeaturePregnancy, l10n.paywallFeaturePregnancySubtitle),
-      ('📤', l10n.paywallFeatureExport, l10n.paywallFeatureExportSubtitle),
+      ('🔐', l10n.paywallEncryptedBackup, l10n.paywallBackupSubtitle),
     ];
 
     return Column(
@@ -405,6 +440,7 @@ class _PricingRow extends StatelessWidget {
     required this.yearlyPrice,
     required this.yearlyPerMonth,
     required this.monthlyPrice,
+    required this.monthlyPriceForYear,
     required this.offeringsLoaded,
     required this.onSelect,
   });
@@ -415,6 +451,7 @@ class _PricingRow extends StatelessWidget {
   final String yearlyPrice;
   final String yearlyPerMonth;
   final String monthlyPrice;
+  final String monthlyPriceForYear;
   final bool offeringsLoaded;
   final ValueChanged<_PlanType> onSelect;
 
@@ -431,7 +468,7 @@ class _PricingRow extends StatelessWidget {
               price: yearlyPrice,
               priceColor: accent,
               priceLabel: '$yearlyPerMonth ${l10n.paywallPerMonth}',
-              oldPrice: '\$35.88',
+              oldPrice: monthlyPriceForYear,
               badge: l10n.paywallBestValue,
               selected: selected == _PlanType.yearly,
               loading: !offeringsLoaded,
@@ -576,15 +613,14 @@ class _PlanCard extends StatelessWidget {
 }
 
 class _FinePrint extends StatelessWidget {
-  const _FinePrint({required this.l10n, required this.price});
+  const _FinePrint({required this.text});
 
-  final AppLocalizations l10n;
-  final String price;
+  final String text;
 
   @override
   Widget build(BuildContext context) {
     return Text(
-      l10n.paywallFinePrint(price),
+      text,
       textAlign: TextAlign.center,
       style: const TextStyle(color: Color(0x40FFFFFF), fontSize: 11, height: 1.6),
     );
@@ -595,6 +631,7 @@ class _BottomCta extends StatelessWidget {
   const _BottomCta({
     required this.accent,
     required this.l10n,
+    required this.ctaLabel,
     required this.loading,
     required this.restoring,
     required this.onSubscribe,
@@ -603,6 +640,7 @@ class _BottomCta extends StatelessWidget {
 
   final Color accent;
   final AppLocalizations l10n;
+  final String ctaLabel;
   final bool loading;
   final bool restoring;
   final VoidCallback onSubscribe;
@@ -640,7 +678,7 @@ class _BottomCta extends StatelessWidget {
                         child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                       )
                     : Text(
-                        l10n.paywallCta,
+                        ctaLabel,
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 16,
@@ -664,7 +702,13 @@ class _BottomCta extends StatelessWidget {
                 ),
               ),
               const Text('·', style: TextStyle(color: Color(0x4DFFFFFF), fontSize: 11)),
-              _FooterLink(label: l10n.paywallTerms, onTap: () {}),
+              _FooterLink(
+                label: l10n.paywallTerms,
+                onTap: () => launchUrl(
+                  Uri.parse(AppConstants.termsUrl),
+                  mode: LaunchMode.externalApplication,
+                ),
+              ),
             ],
           ),
         ],

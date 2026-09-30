@@ -245,7 +245,12 @@
   },
 
   "paywallTitle": "Luna Premium",
-  "paywallTrialBadge": "7-day free trial — cancel anytime",
+  "paywallTrialBadge": "{days}-day free trial - cancel anytime",
+  "@paywallTrialBadge": {
+    "placeholders": {
+      "days": { "type": "int" }
+    }
+  },
   "paywallFeatureAnalytics": "Advanced Analytics",
   "paywallFeatureAnalyticsSubtitle": "Charts, patterns, insights",
   "paywallFeatureWidget": "Home Screen Widget",
@@ -262,13 +267,51 @@
       "price": { "type": "String" }
     }
   },
-  "paywallCta": "Start 7-Day Free Trial",
+  "paywallCta": "Start {days}-Day Free Trial",
+  "@paywallCta": {
+    "placeholders": {
+      "days": { "type": "int" }
+    }
+  },
+  "paywallCtaNoTrial": "Subscribe",
+  "paywallFinePrintNoTrial": "{price}. Cancel anytime in App Store / Google Play.",
+  "@paywallFinePrintNoTrial": {
+    "placeholders": {
+      "price": { "type": "String" }
+    }
+  },
+  "paywallPricePerYear": "{price}/year",
+  "@paywallPricePerYear": {
+    "placeholders": {
+      "price": { "type": "String" }
+    }
+  },
+  "paywallPricePerMonth": "{price}/month",
+  "@paywallPricePerMonth": {
+    "placeholders": {
+      "price": { "type": "String" }
+    }
+  },
+  "paywallNothingToRestore": "No active purchases found",
   "paywallRestore": "Restore purchases",
   "paywallPrivacyPolicy": "Privacy Policy",
   "paywallTerms": "Terms of Use",
   "paywallSuccessTitle": "Welcome to Premium!",
   "paywallSuccessSubtitle": "All features are now unlocked.\nEnjoy your Luna Premium experience.",
   "paywallContinue": "Continue →",
+
+  "backupPasswordTitle": "Backup password",
+  "backupPasswordNote": "The file cannot be opened without this password.",
+  "backupPasswordHint": "Password",
+  "backupPasswordRepeat": "Repeat password",
+  "backupPasswordMismatch": "Passwords don't match",
+  "backupCreated": "Backup saved",
+  "backupRestoreQuestion": "Restore from backup?",
+  "backupRestoreBody": "All current data will be replaced with the data from the file.",
+  "backupRestore": "Restore",
+  "backupRestored": "Data restored",
+  "backupWrongPassword": "Wrong password or damaged file",
+  "backupInvalidFile": "This is not a Luna backup file",
 
   "analyticsTitle": "Analytics",
   "analyticsPremiumTitle": "Analytics — Premium",
