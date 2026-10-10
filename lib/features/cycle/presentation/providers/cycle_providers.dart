@@ -89,12 +89,14 @@ List<({DateTime start, DateTime end})> matchPeriodRanges(List<CycleEntry> entrie
   final ends = entries.where((e) => e.type == EntryTypes.periodEnd).toList()..sort((a, b) => a.date.compareTo(b.date));
 
   final ranges = <({DateTime start, DateTime end})>[];
-  for (final s in starts) {
+  for (int i = 0; i < starts.length; i++) {
+    final s = starts[i];
+    final nextStart = i + 1 < starts.length ? starts[i + 1].date : null;
     for (final e in ends) {
-      if (!e.date.isBefore(s.date)) {
-        ranges.add((start: s.date, end: e.date));
-        break;
-      }
+      if (e.date.isBefore(s.date)) continue;
+      // An end after the next start belongs to that period, not this one.
+      if (nextStart == null || e.date.isBefore(nextStart)) ranges.add((start: s.date, end: e.date));
+      break;
     }
   }
   return ranges;
