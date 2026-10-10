@@ -414,7 +414,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get settingsUpgradeToPremium => 'Перейти на Premium';
 
   @override
-  String get settingsUpgradeSubtitle => 'Аналитика, виджет, бэкап и другое';
+  String get settingsUpgradeSubtitle => 'Аналитика и зашифрованный бэкап';
 
   @override
   String get settingsPrivacy => 'Приватность';
@@ -706,12 +706,26 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String analyticsLastNCycles(int n) {
-    return 'за $n цикла';
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'за $n циклов',
+      few: 'за $n цикла',
+      one: 'за $n цикл',
+    );
+    return '$_temp0';
   }
 
   @override
   String analyticsLastNPeriods(int n) {
-    return 'за $n периода';
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'за $n периодов',
+      few: 'за $n периода',
+      one: 'за $n период',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -890,7 +904,14 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String settingsReminderDays(int days) {
-    return 'За $days дней';
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'За $days дней',
+      few: 'За $days дня',
+      one: 'За $days день',
+    );
+    return '$_temp0';
   }
 
   @override

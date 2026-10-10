@@ -77,6 +77,8 @@ dev_dependencies:
   # Drift code generation
   drift_dev: ^2.32.0
   build_runner: ^2.4.13
+  integration_test:
+    sdk: flutter
 
 flutter:
   uses-material-design: true

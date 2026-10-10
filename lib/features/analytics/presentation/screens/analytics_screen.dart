@@ -313,7 +313,7 @@ class _PremiumBlur extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 100,
+      constraints: const BoxConstraints(minHeight: 100),
       decoration: BoxDecoration(
         color: const Color(0xFF120A0A).withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(16),

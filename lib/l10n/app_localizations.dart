@@ -827,7 +827,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsUpgradeSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Analytics, widget, backup and more'**
+  /// **'Analytics and encrypted backup'**
   String get settingsUpgradeSubtitle;
 
   /// No description provided for @settingsPrivacy.

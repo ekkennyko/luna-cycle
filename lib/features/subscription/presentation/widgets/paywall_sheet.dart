@@ -689,8 +689,9 @@ class _BottomCta extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+          Wrap(
+            alignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               _FooterLink(label: l10n.paywallRestore, onTap: restoring ? null : onRestore),
               const Text('·', style: TextStyle(color: Color(0x4DFFFFFF), fontSize: 11)),

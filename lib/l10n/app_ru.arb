@@ -142,7 +142,7 @@
 
   "settingsTitle": "Настройки",
   "settingsUpgradeToPremium": "Перейти на Premium",
-  "settingsUpgradeSubtitle": "Аналитика, виджет, бэкап и другое",
+  "settingsUpgradeSubtitle": "Аналитика и зашифрованный бэкап",
   "settingsPrivacy": "Приватность",
   "settingsData": "Данные",
   "settingsCycle": "Цикл",
@@ -234,11 +234,11 @@
   "analyticsAvgPeriod": "Ср. период",
   "analyticsTracked": "Отслежено",
   "analyticsCyclesTotal": "циклов",
-  "analyticsLastNCycles": "за {n} цикла",
+  "analyticsLastNCycles": "{n, plural, one{за {n} цикл} few{за {n} цикла} other{за {n} циклов}}",
   "@analyticsLastNCycles": {
     "placeholders": { "n": { "type": "int" } }
   },
-  "analyticsLastNPeriods": "за {n} периода",
+  "analyticsLastNPeriods": "{n, plural, one{за {n} период} few{за {n} периода} other{за {n} периодов}}",
   "@analyticsLastNPeriods": {
     "placeholders": { "n": { "type": "int" } }
   },
@@ -324,7 +324,7 @@
   "settingsFertileWindowSubtitle": "Уведомить когда начинается фертильное окно",
   "settingsLatePeriod": "Задержка",
   "settingsLatePeriodSubtitle": "Уведомить при задержке",
-  "settingsReminderDays": "За {days} дней",
+  "settingsReminderDays": "{days, plural, one{За {days} день} few{За {days} дня} other{За {days} дней}}",
   "@settingsReminderDays": {
     "placeholders": {
       "days": { "type": "int" }

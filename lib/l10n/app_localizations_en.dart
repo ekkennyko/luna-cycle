@@ -414,7 +414,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsUpgradeToPremium => 'Upgrade to Premium';
 
   @override
-  String get settingsUpgradeSubtitle => 'Analytics, widget, backup and more';
+  String get settingsUpgradeSubtitle => 'Analytics and encrypted backup';
 
   @override
   String get settingsPrivacy => 'Privacy';
